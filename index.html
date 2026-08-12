@@ -55,6 +55,16 @@
         html.dark .search-combobox-list { background:#1e293b; border-color:#475569; }
         html.dark .search-combobox-option { color:#e2e8f0; }
         html.dark .search-combobox-option:hover, html.dark .search-combobox-option.active { background:#334155; color:#93c5fd; }
+    
+        .form-field { min-width: 0; width: 100%; }
+        input[type="date"], input[type="time"], input[type="number"] { min-width: 0; max-width: 100%; box-sizing: border-box; }
+        @media (max-width: 767px) {
+            #form-import, #view-pricing form { grid-template-columns: minmax(0, 1fr) !important; }
+            #form-import > *, #view-pricing form > * { min-width: 0; width: 100%; }
+            input[type="date"], input[type="time"] { width: 100%; font-size: 16px; }
+            .search-combobox-list { position: fixed; left: .75rem; right: .75rem; top: auto; bottom: .75rem; max-height: 55dvh; z-index: 9999; border-radius: 1rem; padding: .5rem; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; }
+            .search-combobox-option { min-height: 48px; touch-action: manipulation; }
+        }
     </style>
 </head>
 <body class="bg-gray-50 text-gray-800 min-h-screen md:h-screen overflow-x-hidden md:overflow-hidden flex flex-col md:flex-row">
@@ -218,10 +228,10 @@
                     <div class="bg-white p-5 sm:p-6 rounded-2xl shadow-sm border border-gray-100 mb-6">
                         <div class="flex items-center gap-3 mb-4"><i class="fa-solid fa-truck-ramp-box text-blue-600 text-xl"></i><div><h3 class="text-lg font-semibold text-gray-800">Receive Today's Egg Import</h3><p class="text-sm text-gray-500">Quickly record the arrival time, weight, and purchase price.</p></div></div>
                         <form id="form-import" onsubmit="app.processImport(event)" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 items-end">
-                            <div><label class="block text-sm font-medium text-gray-600 mb-1">Import Date</label><input type="date" id="import-date" required class="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500"></div>
-                            <div><label class="block text-sm font-medium text-gray-600 mb-1">Arrival Time</label><input type="time" id="import-time" required class="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500"></div>
-                            <div><label class="block text-sm font-medium text-gray-600 mb-1">Weight (Total kg)</label><input type="number" id="import-qty" step="0.1" min="0.1" required class="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500"></div>
-                            <div><label class="block text-sm font-medium text-gray-600 mb-1">Cost Price Per kg ($)</label><input type="number" id="import-cost" step="0.01" min="0" required class="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="e.g., 0.15"></div>
+                            <div class="form-field"><label class="block text-sm font-medium text-gray-600 mb-1">Import Date</label><input type="date" id="import-date" required class="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500"></div>
+                            <div class="form-field"><label class="block text-sm font-medium text-gray-600 mb-1">Arrival Time</label><input type="time" id="import-time" required class="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500"></div>
+                            <div class="form-field"><label class="block text-sm font-medium text-gray-600 mb-1">Weight (Total kg)</label><input type="number" id="import-qty" step="0.1" min="0.1" required class="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500"></div>
+                            <div class="form-field"><label class="block text-sm font-medium text-gray-600 mb-1">Cost Price Per kg ($)</label><input type="number" id="import-cost" step="0.01" min="0" required class="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="e.g., 0.15"></div>
                             <button type="submit" class="w-full p-3 bg-slate-800 hover:bg-slate-900 text-white font-semibold rounded-lg"><i class="fa-solid fa-plus mr-2"></i>Add Import</button>
                         </form>
                     </div>
@@ -370,7 +380,7 @@
                 <div class="max-w-6xl mx-auto">
                     <div class="bg-white p-5 sm:p-6 rounded-2xl shadow-sm border border-gray-100 mb-6">
                         <div class="flex items-center gap-3 mb-4"><i class="fa-solid fa-tag text-blue-600 text-xl"></i><div><h3 class="text-lg font-semibold text-gray-800">Set Daily Egg Price</h3><p class="text-sm text-gray-500">Adjust a day's price and immediately review the change below.</p></div></div>
-                        <form onsubmit="app.updatePriceOnly(event)" class="grid grid-cols-1 sm:grid-cols-3 gap-4 items-end"><div><label class="block text-sm font-medium text-gray-600 mb-1">Price Effective Date</label><input type="date" id="pricing-date" required class="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg"></div><div><label class="block text-sm font-medium text-gray-600 mb-1">Selling Price (Per Egg)</label><input type="number" id="pricing-price" step="0.01" min="0.01" required class="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg"></div><button type="submit" class="w-full p-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg"><i class="fa-solid fa-floppy-disk mr-2"></i>Save Daily Price</button></form>
+                        <form onsubmit="app.updatePriceOnly(event)" class="grid grid-cols-1 sm:grid-cols-3 gap-4 items-end"><div class="form-field"><label class="block text-sm font-medium text-gray-600 mb-1">Price Effective Date</label><input type="date" id="pricing-date" required class="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg"></div><div class="form-field"><label class="block text-sm font-medium text-gray-600 mb-1">Selling Price (Per Egg)</label><input type="number" id="pricing-price" step="0.01" min="0.01" required class="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg"></div><button type="submit" class="w-full p-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg"><i class="fa-solid fa-floppy-disk mr-2"></i>Save Daily Price</button></form>
                     </div>
                     <div class="bg-white p-5 sm:p-6 rounded-2xl shadow-sm border border-gray-100 mb-6">
                         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
@@ -1123,13 +1133,13 @@
                     input.addEventListener('input', () => { this.renderComboboxOptions(box,input.value,false); list.classList.remove('hidden'); input.setAttribute('aria-expanded','true'); });
                     input.addEventListener('keydown', e => { const options=[...list.querySelectorAll('.search-combobox-option')]; let i=options.findIndex(o=>o.classList.contains('active')); if(e.key==='ArrowDown'){e.preventDefault(); i=Math.min(i+1,options.length-1); options.forEach(o=>o.classList.remove('active')); options[i]?.classList.add('active');options[i]?.scrollIntoView({block:'nearest'});} else if(e.key==='ArrowUp'){e.preventDefault();i=Math.max(i-1,0);options.forEach(o=>o.classList.remove('active'));options[i]?.classList.add('active');options[i]?.scrollIntoView({block:'nearest'});} else if(e.key==='Enter'&&i>=0){e.preventDefault();options[i].click();} else if(e.key==='Escape'){list.classList.add('hidden');input.setAttribute('aria-expanded','false');} });
                 });
-                if (!this.comboboxOutsideBound) { document.addEventListener('click', e => { if(!e.target.closest('.search-combobox')) this.closeSettingsComboboxes(); }); this.comboboxOutsideBound=true; }
+                if (!this.comboboxOutsideBound) { document.addEventListener('pointerdown', e => { if(!e.target.closest('.search-combobox')) this.closeSettingsComboboxes(); }); this.comboboxOutsideBound=true; }
             },
             renderComboboxOptions(box, query='', showAll=false) {
                 const type=box.dataset.combobox, list=box.querySelector('.search-combobox-list'), input=box.querySelector('input'), q=showAll?'':query.trim().toLowerCase();
                 const options=this.getSettingsOptions(type).filter(o=>!q||o.value.toLowerCase().includes(q)||o.label.toLowerCase().includes(q));
                 list.innerHTML=options.length?options.map(o=>`<button type="button" class="search-combobox-option" role="option" data-value="${o.value}"><span class="font-medium">${o.label}</span>${o.label!==o.value?`<span class="block text-xs text-gray-500">${o.value}</span>`:''}</button>`).join(''):`<div class="search-combobox-empty">${i18n.t('No matching options.')}</div>`;
-                list.querySelectorAll('.search-combobox-option').forEach(option=>option.addEventListener('click',()=>{input.value=option.dataset.value;list.classList.add('hidden');input.setAttribute('aria-expanded','false');input.dispatchEvent(new Event('change',{bubbles:true}));}));
+                list.querySelectorAll('.search-combobox-option').forEach(option=>{const selectOption=(event)=>{event.preventDefault();event.stopPropagation();input.value=option.dataset.value;list.classList.add('hidden');input.setAttribute('aria-expanded','false');input.dispatchEvent(new Event('change',{bubbles:true}));input.focus();};option.addEventListener('pointerdown',selectOption);option.addEventListener('click',event=>{if(event.detail===0)selectOption(event);});});
             },
             closeSettingsComboboxes(except=null) { document.querySelectorAll('.search-combobox').forEach(box=>{if(box!==except){box.querySelector('.search-combobox-list')?.classList.add('hidden');box.querySelector('input')?.setAttribute('aria-expanded','false');}}); },
             loadBasicSettingsUI(){const a=this.state.appSettings||{};const languageInput=document.getElementById('setting-language');if(document.activeElement!==languageInput)languageInput.value=i18n.language;document.getElementById('setting-theme').value=a.theme||'light';document.getElementById('setting-currency').value=a.currency||'USD';document.getElementById('setting-egg-weight').value=this.state.eggWeight;document.getElementById('setting-low-stock').value=a.lowStock??10;document.getElementById('setting-timezone').value=a.timezone||'UTC';this.initSettingsComboboxes();},
