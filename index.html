@@ -44,17 +44,6 @@
         html.dark input, html.dark select { background:#0f172a !important; color:#f8fafc !important; border-color:#475569 !important; }
         html.dark tr:hover { background:#334155 !important; }
     
-        .search-combobox { position: relative; }
-        .search-combobox-input { padding-right: 3rem !important; }
-        .search-combobox-toggle { position:absolute; right:.25rem; top:50%; transform:translateY(-50%); width:2.5rem; height:2.5rem; min-height:0; display:flex; align-items:center; justify-content:center; border-radius:.5rem; color:#64748b; }
-        .search-combobox-toggle:hover { background:#e2e8f0; color:#0f172a; }
-        .search-combobox-list { position:absolute; z-index:60; left:0; right:0; top:calc(100% + .35rem); max-height:18rem; overflow:auto; background:white; border:1px solid #d1d5db; border-radius:.75rem; box-shadow:0 12px 30px rgba(15,23,42,.2); padding:.35rem; }
-        .search-combobox-option { width:100%; min-height:0; padding:.7rem .8rem; text-align:left; border-radius:.5rem; color:#334155; }
-        .search-combobox-option:hover, .search-combobox-option.active { background:#eff6ff; color:#1d4ed8; }
-        .search-combobox-empty { padding:.8rem; color:#64748b; text-align:center; font-size:.875rem; }
-        html.dark .search-combobox-list { background:#1e293b; border-color:#475569; }
-        html.dark .search-combobox-option { color:#e2e8f0; }
-        html.dark .search-combobox-option:hover, html.dark .search-combobox-option.active { background:#334155; color:#93c5fd; }
     
         .form-field { min-width: 0; width: 100%; }
         input[type="date"], input[type="time"], input[type="number"] { min-width: 0; max-width: 100%; box-sizing: border-box; }
@@ -62,8 +51,48 @@
             #form-import, #view-pricing form { grid-template-columns: minmax(0, 1fr) !important; }
             #form-import > *, #view-pricing form > * { min-width: 0; width: 100%; }
             input[type="date"], input[type="time"] { width: 100%; font-size: 16px; }
-            .search-combobox-list { position: fixed; left: .75rem; right: .75rem; top: auto; bottom: .75rem; max-height: 55dvh; z-index: 9999; border-radius: 1rem; padding: .5rem; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; }
-            .search-combobox-option { min-height: 48px; touch-action: manipulation; }
+        }
+    
+        /* iPhone Safari date/time input containment */
+        main, #main-scroll-area, #view-inventory, #view-pricing,
+        #view-inventory > div, #view-pricing > div { min-width: 0; width: 100%; max-width: 100%; }
+        #form-import, #view-pricing form { min-width: 0; max-width: 100%; overflow: hidden; }
+        .form-field { min-width: 0; max-width: 100%; overflow: hidden; }
+        .form-field input[type="date"],
+        .form-field input[type="time"],
+        .form-field input[type="number"] {
+            display: block;
+            inline-size: 100%;
+            width: 100%;
+            min-inline-size: 0;
+            min-width: 0;
+            max-inline-size: 100%;
+            max-width: 100%;
+            box-sizing: border-box;
+        }
+        .form-field input[type="date"]::-webkit-date-and-time-value,
+        .form-field input[type="time"]::-webkit-date-and-time-value {
+            min-width: 0;
+            text-align: left;
+        }
+        .form-field input[type="date"]::-webkit-datetime-edit,
+        .form-field input[type="time"]::-webkit-datetime-edit {
+            min-width: 0;
+            padding: 0;
+        }
+        @supports (-webkit-touch-callout: none) {
+            .form-field input[type="date"], .form-field input[type="time"] {
+                -webkit-appearance: none;
+                appearance: none;
+                height: 48px;
+                line-height: 1.25;
+            }
+        }
+        @media (max-width: 767px) {
+            #main-scroll-area { padding-left: .75rem !important; padding-right: .75rem !important; }
+            #view-inventory .bg-white, #view-pricing .bg-white { max-width: 100%; overflow: hidden; }
+            #form-import, #view-pricing form { display: flex !important; flex-direction: column; align-items: stretch; }
+            #form-import > *, #view-pricing form > * { flex: 0 0 auto; min-width: 0; max-width: 100%; width: 100%; }
         }
     </style>
 </head>
@@ -118,7 +147,7 @@
                 <li>
                     <button onclick="app.navigate('settings')" id="nav-settings" class="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left hover:bg-slate-800 transition-colors text-slate-300 nav-item">
                         <i class="fa-solid fa-tags w-5 text-center"></i>
-                        <span class="font-medium">Pricing & Settings</span>
+                        <span class="font-medium">System Settings</span>
                     </button>
                 </li>
             </ul>
@@ -135,7 +164,7 @@
     </nav>
 
     <!-- Main Content -->
-    <main class="flex-1 flex flex-col h-full overflow-hidden relative">
+    <main class="flex-1 min-w-0 w-full flex flex-col h-full overflow-hidden relative">
         <!-- Top Header -->
         <header class="bg-white shadow-sm z-10 px-4 sm:px-6 py-3 sm:py-4 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
             <h2 id="page-title" class="text-xl sm:text-2xl font-semibold text-gray-800 self-start">Point of Sale</h2>
@@ -424,12 +453,12 @@
 
             <!-- Basic Settings View -->
             <section id="view-settings" class="hidden"><div class="max-w-4xl mx-auto space-y-6">
-                <div class="bg-white p-5 sm:p-8 rounded-2xl border border-gray-100 shadow-sm"><div class="flex items-center gap-3 mb-6"><i class="fa-solid fa-sliders text-blue-500 text-xl"></i><div><h3 class="text-xl font-semibold text-gray-800">Basic Settings</h3><p class="text-sm text-gray-500">Personalize appearance, language, region, and inventory behavior.</p></div></div>
+                <div class="bg-white p-5 sm:p-8 rounded-2xl border border-gray-100 shadow-sm"><div class="flex items-center gap-3 mb-6"><i class="fa-solid fa-sliders text-blue-500 text-xl"></i><div><h3 class="text-xl font-semibold text-gray-800">System Settings</h3><p class="text-sm text-gray-500">Personalize appearance, language, region, and inventory behavior.</p></div></div>
                 <form onsubmit="app.saveBasicSettings(event)" class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div><label class="block text-sm font-medium mb-2">Language</label><div class="search-combobox" data-combobox="language"><input id="setting-language" class="search-combobox-input w-full p-3 border rounded-xl" placeholder="Search or select language" autocomplete="off" role="combobox" aria-expanded="false"><button type="button" class="search-combobox-toggle" aria-label="Show all options"><i class="fa-solid fa-chevron-down"></i></button><div class="search-combobox-list hidden" role="listbox"></div></div></div>
-                    <div><label class="block text-sm font-medium mb-2">Theme</label><div class="search-combobox" data-combobox="theme"><input id="setting-theme" class="search-combobox-input w-full p-3 border rounded-xl" placeholder="Search or select theme" autocomplete="off" role="combobox" aria-expanded="false"><button type="button" class="search-combobox-toggle" aria-label="Show all options"><i class="fa-solid fa-chevron-down"></i></button><div class="search-combobox-list hidden" role="listbox"></div></div></div>
-                    <div><label class="block text-sm font-medium mb-2">Timezone</label><div class="search-combobox" data-combobox="timezone"><input id="setting-timezone" class="search-combobox-input w-full p-3 border rounded-xl" placeholder="Search timezone, city, or UTC offset" autocomplete="off" role="combobox" aria-expanded="false"><button type="button" class="search-combobox-toggle" aria-label="Show all options"><i class="fa-solid fa-chevron-down"></i></button><div class="search-combobox-list hidden" role="listbox"></div></div></div>
-                    <div><label class="block text-sm font-medium mb-2">Currency</label><div class="search-combobox" data-combobox="currency"><input id="setting-currency" class="search-combobox-input w-full p-3 border rounded-xl" placeholder="Search or select currency" autocomplete="off" role="combobox" aria-expanded="false"><button type="button" class="search-combobox-toggle" aria-label="Show all options"><i class="fa-solid fa-chevron-down"></i></button><div class="search-combobox-list hidden" role="listbox"></div></div></div>
+                    <div><label class="block text-sm font-medium mb-2">Language</label><select id="setting-language" class="w-full p-3 border rounded-xl"><option value="en">English</option><option value="zh-TW">繁體中文</option><option value="my">မြန်မာဘာသာ</option></select></div>
+                    <div><label class="block text-sm font-medium mb-2">Theme</label><select id="setting-theme" class="w-full p-3 border rounded-xl"><option value="light">Light Mode</option><option value="dark">Dark Mode</option><option value="system">Use System Theme</option></select></div>
+                    <div><label class="block text-sm font-medium mb-2">Timezone</label><select id="setting-timezone" class="w-full p-3 border rounded-xl"></select></div>
+                    <div><label class="block text-sm font-medium mb-2">Currency</label><select id="setting-currency" class="w-full p-3 border rounded-xl"><option value="USD">USD ($)</option><option value="MMK">MMK (Ks)</option><option value="TWD">TWD (NT$)</option></select></div>
                     <div><label class="block text-sm font-medium mb-2">Average Egg Weight (kg)</label><input type="number" id="setting-egg-weight" step="0.001" min="0.01" class="w-full p-3 border rounded-xl"></div>
                     <div><label class="block text-sm font-medium mb-2">Low Stock Alert (kg)</label><input type="number" id="setting-low-stock" step="0.1" min="0" class="w-full p-3 border rounded-xl"></div>
                     <div class="md:col-span-2"><button class="w-full p-3 bg-blue-600 text-white font-semibold rounded-xl">Save Basic Settings</button></div>
@@ -525,8 +554,8 @@
             'Egg Price Tracker':'ဥစျေးနှုန်းစောင့်ကြည့်မှု','Daily Egg Price History':'နေ့စဉ်ဥစျေးနှုန်းမှတ်တမ်း','Search, filter, sort, or export the daily records.':'နေ့စဉ်မှတ်တမ်းများကို ရှာဖွေ၊ စစ်ထုတ်၊ အစဉ်လိုက်စီ သို့မဟုတ် ထုတ်ယူပါ။','Search date or price...':'ရက်စွဲ သို့မဟုတ် စျေးနှုန်းရှာရန်...','Date':'ရက်စွဲ','Price Per Egg':'တစ်လုံးစျေး','Last Updated':'နောက်ဆုံးပြင်ဆင်ချိန်','Change':'ပြောင်းလဲမှု','No price records found.':'စျေးနှုန်းမှတ်တမ်း မတွေ့ပါ။','Price history exported successfully!':'စျေးနှုန်းမှတ်တမ်းကို အောင်မြင်စွာ ထုတ်ယူပြီးပါပြီ။','No data to export based on current filters.':'လက်ရှိစစ်ထုတ်မှုအရ ထုတ်ယူရန်ဒေတာမရှိပါ။'
         });
 
-        Object.assign(i18n.translations['zh-TW'], {'Basic Settings':'基本設定','Theme':'主題','Light Mode':'淺色模式','Dark Mode':'深色模式','Use System Theme':'使用系統主題','Timezone':'時區','Currency':'貨幣','Low Stock Alert (kg)':'低庫存警示（公斤）','Save Basic Settings':'儲存基本設定','Set Daily Egg Price':'設定每日雞蛋價格','Save Daily Price':'儲存每日價格','Arrival Time':'到貨時間',"Receive Today's Egg Import":"接收今日雞蛋進貨",'Add Import':'新增進貨','Inventory Import History':'進貨歷史','Total Imported':'進貨總量','Inventory Value':'庫存價值','All Statuses':'所有狀態','Active':'有效','Depleted':'已用完','Operator Page Access':'操作員頁面存取','Daily price saved successfully!':'每日價格已成功儲存！','Basic settings saved successfully!':'基本設定已成功儲存！'});
-        Object.assign(i18n.translations['my'], {'Basic Settings':'အခြေခံဆက်တင်များ','Theme':'အပြင်အဆင်','Light Mode':'အလင်းမုဒ်','Dark Mode':'အမှောင်မုဒ်','Use System Theme':'စနစ်အပြင်အဆင်သုံးရန်','Timezone':'အချိန်ဇုန်','Currency':'ငွေကြေး','Low Stock Alert (kg)':'လက်ကျန်နည်းသတိပေးချက် (kg)','Save Basic Settings':'အခြေခံဆက်တင်များ သိမ်းရန်','Set Daily Egg Price':'နေ့စဉ်ဥစျေး သတ်မှတ်ရန်','Save Daily Price':'နေ့စဉ်စျေး သိမ်းရန်','Arrival Time':'ရောက်ရှိချိန်',"Receive Today's Egg Import":"ယနေ့ဥကုန်ဝင် လက်ခံရန်",'Add Import':'ကုန်ဝင်ထည့်ရန်','Inventory Import History':'ကုန်ဝင်မှတ်တမ်း','Total Imported':'စုစုပေါင်းကုန်ဝင်','Inventory Value':'ကုန်တန်ဖိုး','All Statuses':'အခြေအနေအားလုံး','Active':'အသုံးပြုနိုင်','Depleted':'ကုန်သွားပြီ','Operator Page Access':'အော်ပရေတာ စာမျက်နှာဝင်ခွင့်','Daily price saved successfully!':'နေ့စဉ်စျေးကို သိမ်းပြီးပါပြီ။','Basic settings saved successfully!':'အခြေခံဆက်တင်များ သိမ်းပြီးပါပြီ။'});
+        Object.assign(i18n.translations['zh-TW'], {'Basic Settings':'基本設定','System Settings':'系統設定','Theme':'主題','Light Mode':'淺色模式','Dark Mode':'深色模式','Use System Theme':'使用系統主題','Timezone':'時區','Currency':'貨幣','Low Stock Alert (kg)':'低庫存警示（公斤）','Save Basic Settings':'儲存基本設定','Set Daily Egg Price':'設定每日雞蛋價格','Save Daily Price':'儲存每日價格','Arrival Time':'到貨時間',"Receive Today's Egg Import":"接收今日雞蛋進貨",'Add Import':'新增進貨','Inventory Import History':'進貨歷史','Total Imported':'進貨總量','Inventory Value':'庫存價值','All Statuses':'所有狀態','Active':'有效','Depleted':'已用完','Operator Page Access':'操作員頁面存取','Daily price saved successfully!':'每日價格已成功儲存！','Basic settings saved successfully!':'基本設定已成功儲存！'});
+        Object.assign(i18n.translations['my'], {'Basic Settings':'အခြေခံဆက်တင်များ','System Settings':'စနစ်ဆက်တင်များ','Theme':'အပြင်အဆင်','Light Mode':'အလင်းမုဒ်','Dark Mode':'အမှောင်မုဒ်','Use System Theme':'စနစ်အပြင်အဆင်သုံးရန်','Timezone':'အချိန်ဇုန်','Currency':'ငွေကြေး','Low Stock Alert (kg)':'လက်ကျန်နည်းသတိပေးချက် (kg)','Save Basic Settings':'အခြေခံဆက်တင်များ သိမ်းရန်','Set Daily Egg Price':'နေ့စဉ်ဥစျေး သတ်မှတ်ရန်','Save Daily Price':'နေ့စဉ်စျေး သိမ်းရန်','Arrival Time':'ရောက်ရှိချိန်',"Receive Today's Egg Import":"ယနေ့ဥကုန်ဝင် လက်ခံရန်",'Add Import':'ကုန်ဝင်ထည့်ရန်','Inventory Import History':'ကုန်ဝင်မှတ်တမ်း','Total Imported':'စုစုပေါင်းကုန်ဝင်','Inventory Value':'ကုန်တန်ဖိုး','All Statuses':'အခြေအနေအားလုံး','Active':'အသုံးပြုနိုင်','Depleted':'ကုန်သွားပြီ','Operator Page Access':'အော်ပရေတာ စာမျက်နှာဝင်ခွင့်','Daily price saved successfully!':'နေ့စဉ်စျေးကို သိမ်းပြီးပါပြီ။','Basic settings saved successfully!':'အခြေခံဆက်တင်များ သိမ်းပြီးပါပြီ။'});
 
 
         Object.assign(i18n.translations['zh-TW'], {"Switch Role": "切換角色", "Quickly record the arrival time, weight, and purchase price.": "快速記錄到貨時間、重量與進貨價格。", "Search, filter, sort, and export your import records.": "搜尋、篩選、排序並匯出進貨紀錄。", "Adjust a day's price and immediately review the change below.": "調整指定日期的價格，並立即在下方查看變動。", "Choose every page the operator may access.": "選擇操作員可以存取的所有頁面。", "Process sales and view live stock.": "處理銷售並查看即時庫存。", "Add imports and use the inventory table.": "新增進貨並使用庫存表格。", "View revenue and transaction history.": "查看營收與交易紀錄。", "Change prices and review price history.": "變更價格並查看價格歷史。", "Change language, appearance, and regional settings.": "變更語言、外觀與地區設定。", "Manage operator page access. Grant with care.": "管理操作員頁面權限，請審慎授予。", "Personalize appearance, language, region, and inventory behavior.": "自訂外觀、語言、地區與庫存行為。", "Search or select language": "搜尋或選擇語言", "Search or select theme": "搜尋或選擇主題", "Search timezone, city, or UTC offset": "搜尋時區、城市或 UTC 時差", "Search or select currency": "搜尋或選擇貨幣", "Imported kg": "進貨公斤數", "Remaining kg": "剩餘公斤數", "Cost / kg": "每公斤成本", "Remaining Value": "剩餘價值", "Batch ID": "批次編號", "Search batch, date, or price...": "搜尋批次、日期或價格...", "Status": "狀態", "Date & Time": "日期與時間", "No inventory records found.": "找不到庫存紀錄。", "Access Control": "存取控制"});
@@ -649,7 +678,7 @@
                 if (window.innerWidth < 768) { mobileNav.classList.add('hidden'); mobileNav.classList.remove('flex'); }
 
                 // Update Title
-                const titles = { pos: 'Point of Sale', inventory: 'Inventory Management', dashboard: 'Financial Dashboard', pricing: 'Egg Price Tracker', settings: 'Basic Settings', permissions: 'Access Control' };
+                const titles = { pos: 'Point of Sale', inventory: 'Inventory Management', dashboard: 'Financial Dashboard', pricing: 'Egg Price Tracker', settings: 'System Settings', permissions: 'Access Control' };
                 document.getElementById('page-title').innerText = i18n.t(titles[view]);
 
                 this.updateUI();
@@ -1116,35 +1145,22 @@
                 this.showToast(i18n.t('Price history exported successfully!'),'success');
             },
             updatePriceOnly(e) { e.preventDefault(); const date=document.getElementById('pricing-date').value,price=parseFloat(document.getElementById('pricing-price').value); if(!date||price<=0)return; const rec={date,price,updatedAt:new Date().toISOString()},idx=this.state.priceHistory.findIndex(x=>x.date===date); if(idx>=0)this.state.priceHistory[idx]=rec;else this.state.priceHistory.push(rec);this.state.priceHistory.sort((a,b)=>a.date.localeCompare(b.date));this.state.dailyPrice=Number(this.state.priceHistory.at(-1).price);this.saveData();this.renderPriceTracker();this.showToast(i18n.t('Daily price saved successfully!'),'success'); },
-            getSettingsOptions(type) {
-                if (type === 'language') return [{value:'en',label:'English'},{value:'zh-TW',label:'繁體中文'},{value:'my',label:'မြန်မာဘာသာ'}];
-                if (type === 'theme') return [{value:'light',label:i18n.t('Light Mode')},{value:'dark',label:i18n.t('Dark Mode')},{value:'system',label:i18n.t('Use System Theme')}];
-                if (type === 'currency') return [{value:'USD',label:'USD ($)'},{value:'MMK',label:'MMK (Ks)'},{value:'TWD',label:'TWD (NT$)'}];
-                const zones = Intl.supportedValuesOf ? Intl.supportedValuesOf('timeZone') : ['UTC','Asia/Yangon','Asia/Taipei'];
-                return zones.map(zone => { let offset='UTC'; try { const part=new Intl.DateTimeFormat('en-US',{timeZone:zone,timeZoneName:'longOffset'}).formatToParts(new Date()).find(p=>p.type==='timeZoneName')?.value||'GMT'; offset=part.replace('GMT','UTC'); } catch(e) {} return {value:zone,label:`${offset} • ${zone.replaceAll('_',' ')}`}; }).sort((a,b)=>a.label.localeCompare(b.label));
+            loadBasicSettingsUI(){
+                const a=this.state.appSettings||{};
+                document.getElementById('setting-language').value=i18n.language;
+                document.getElementById('setting-theme').value=a.theme||'light';
+                document.getElementById('setting-currency').value=a.currency||'USD';
+                document.getElementById('setting-egg-weight').value=this.state.eggWeight;
+                document.getElementById('setting-low-stock').value=a.lowStock??10;
+                const timezoneSelect=document.getElementById('setting-timezone');
+                if(!timezoneSelect.options.length){
+                    const zones=Intl.supportedValuesOf?Intl.supportedValuesOf('timeZone'):['UTC','Asia/Yangon','Asia/Taipei'];
+                    zones.forEach(zone=>{let offset='UTC';try{const part=new Intl.DateTimeFormat('en-US',{timeZone:zone,timeZoneName:'longOffset'}).formatToParts(new Date()).find(p=>p.type==='timeZoneName')?.value||'GMT';offset=part.replace('GMT','UTC');}catch(e){}timezoneSelect.add(new Option(`${offset} • ${zone.replaceAll('_',' ')}`,zone));});
+                }
+                timezoneSelect.value=a.timezone||'UTC';
             },
-            initSettingsComboboxes() {
-                document.querySelectorAll('.search-combobox').forEach(box => {
-                    const input=box.querySelector('input'), toggle=box.querySelector('.search-combobox-toggle'), list=box.querySelector('.search-combobox-list'), type=box.dataset.combobox;
-                    if (box.dataset.ready) { this.renderComboboxOptions(box, '', true); return; }
-                    box.dataset.ready='true';
-                    toggle.addEventListener('click', () => { const opening=list.classList.contains('hidden'); this.closeSettingsComboboxes(box); if(opening){ this.renderComboboxOptions(box,'',true); list.classList.remove('hidden'); input.setAttribute('aria-expanded','true'); input.focus(); } });
-                    input.addEventListener('focus', () => { this.renderComboboxOptions(box,input.value,false); list.classList.remove('hidden'); input.setAttribute('aria-expanded','true'); });
-                    input.addEventListener('input', () => { this.renderComboboxOptions(box,input.value,false); list.classList.remove('hidden'); input.setAttribute('aria-expanded','true'); });
-                    input.addEventListener('keydown', e => { const options=[...list.querySelectorAll('.search-combobox-option')]; let i=options.findIndex(o=>o.classList.contains('active')); if(e.key==='ArrowDown'){e.preventDefault(); i=Math.min(i+1,options.length-1); options.forEach(o=>o.classList.remove('active')); options[i]?.classList.add('active');options[i]?.scrollIntoView({block:'nearest'});} else if(e.key==='ArrowUp'){e.preventDefault();i=Math.max(i-1,0);options.forEach(o=>o.classList.remove('active'));options[i]?.classList.add('active');options[i]?.scrollIntoView({block:'nearest'});} else if(e.key==='Enter'&&i>=0){e.preventDefault();options[i].click();} else if(e.key==='Escape'){list.classList.add('hidden');input.setAttribute('aria-expanded','false');} });
-                });
-                if (!this.comboboxOutsideBound) { document.addEventListener('pointerdown', e => { if(!e.target.closest('.search-combobox')) this.closeSettingsComboboxes(); }); this.comboboxOutsideBound=true; }
-            },
-            renderComboboxOptions(box, query='', showAll=false) {
-                const type=box.dataset.combobox, list=box.querySelector('.search-combobox-list'), input=box.querySelector('input'), q=showAll?'':query.trim().toLowerCase();
-                const options=this.getSettingsOptions(type).filter(o=>!q||o.value.toLowerCase().includes(q)||o.label.toLowerCase().includes(q));
-                list.innerHTML=options.length?options.map(o=>`<button type="button" class="search-combobox-option" role="option" data-value="${o.value}"><span class="font-medium">${o.label}</span>${o.label!==o.value?`<span class="block text-xs text-gray-500">${o.value}</span>`:''}</button>`).join(''):`<div class="search-combobox-empty">${i18n.t('No matching options.')}</div>`;
-                list.querySelectorAll('.search-combobox-option').forEach(option=>{const selectOption=(event)=>{event.preventDefault();event.stopPropagation();input.value=option.dataset.value;list.classList.add('hidden');input.setAttribute('aria-expanded','false');input.dispatchEvent(new Event('change',{bubbles:true}));input.focus();};option.addEventListener('pointerdown',selectOption);option.addEventListener('click',event=>{if(event.detail===0)selectOption(event);});});
-            },
-            closeSettingsComboboxes(except=null) { document.querySelectorAll('.search-combobox').forEach(box=>{if(box!==except){box.querySelector('.search-combobox-list')?.classList.add('hidden');box.querySelector('input')?.setAttribute('aria-expanded','false');}}); },
-            loadBasicSettingsUI(){const a=this.state.appSettings||{};const languageInput=document.getElementById('setting-language');if(document.activeElement!==languageInput)languageInput.value=i18n.language;document.getElementById('setting-theme').value=a.theme||'light';document.getElementById('setting-currency').value=a.currency||'USD';document.getElementById('setting-egg-weight').value=this.state.eggWeight;document.getElementById('setting-low-stock').value=a.lowStock??10;document.getElementById('setting-timezone').value=a.timezone||'UTC';this.initSettingsComboboxes();},
             applyTheme(){const t=this.state.appSettings?.theme||'light',dark=t==='dark'||(t==='system'&&matchMedia('(prefers-color-scheme: dark)').matches);document.documentElement.classList.toggle('dark',dark);},
-            saveBasicSettings(e){e.preventDefault();this.state.appSettings={theme:document.getElementById('setting-theme').value,timezone:document.getElementById('setting-timezone').value,currency:document.getElementById('setting-currency').value,lowStock:parseFloat(document.getElementById('setting-low-stock').value)||0};this.state.eggWeight=parseFloat(document.getElementById('setting-egg-weight').value)||this.state.eggWeight;const languageValue=document.getElementById('setting-language').value.trim();const languageMatch=this.getSettingsOptions('language').find(o=>o.value.toLowerCase()===languageValue.toLowerCase()||o.label.toLowerCase()===languageValue.toLowerCase());if(!languageMatch){this.showToast(i18n.t('Please select a valid language.'),'warning');return;}i18n.setLanguage(languageMatch.value);this.applyTheme();this.saveData();this.showToast(i18n.t('Basic settings saved successfully!'),'success');},
+            saveBasicSettings(e){e.preventDefault();this.state.appSettings={theme:document.getElementById('setting-theme').value,timezone:document.getElementById('setting-timezone').value,currency:document.getElementById('setting-currency').value,lowStock:parseFloat(document.getElementById('setting-low-stock').value)||0};this.state.eggWeight=parseFloat(document.getElementById('setting-egg-weight').value)||this.state.eggWeight;i18n.setLanguage(document.getElementById('setting-language').value);this.applyTheme();this.saveData();this.showToast(i18n.t('Basic settings saved successfully!'),'success');},
             updateSettings(e) {
                 e.preventDefault();
                 const newPrice = parseFloat(document.getElementById('setting-price').value);
