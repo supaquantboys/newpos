@@ -1,0 +1,1098 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EggPro - POS & Inventory</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        
+        /* Hide scrollbar for clean UI but allow scrolling */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        .toast-enter { transform: translateY(-100%); opacity: 0; }
+        .toast-enter-active { transform: translateY(0); opacity: 1; transition: all 0.3s ease-out; }
+        .toast-leave { transform: translateY(0); opacity: 1; }
+        .toast-leave-active { transform: translateY(-100%); opacity: 0; transition: all 0.3s ease-in; }
+
+        @media print {
+            body > *:not(#printable-receipt) { display: none !important; }
+            #printable-receipt { display: block !important; position: absolute; left: 0; top: 0; width: 100%; padding: 20px; font-family: monospace; color: black; background: white; z-index: 9999; }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800 h-screen overflow-hidden flex flex-col md:flex-row">
+
+    <!-- Sidebar / Mobile Topbar -->
+    <nav class="bg-slate-900 text-white w-full md:w-64 flex flex-col justify-between shadow-xl z-20 transition-all duration-300">
+        <div>
+            <div class="p-4 flex items-center justify-between md:justify-center border-b border-slate-700">
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-egg text-yellow-400 text-2xl"></i>
+                    <h1 class="text-xl font-bold tracking-wider">EggPro</h1>
+                </div>
+                <!-- Mobile Menu Toggle -->
+                <button id="mobile-menu-btn" class="md:hidden text-gray-300 hover:text-white">
+                    <i class="fa-solid fa-bars text-xl"></i>
+                </button>
+            </div>
+
+            <!-- Navigation Links -->
+            <ul id="nav-links" class="hidden md:flex flex-col mt-4 space-y-1 px-2">
+                <li>
+                    <button onclick="app.navigate('pos')" id="nav-pos" class="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left hover:bg-slate-800 transition-colors bg-slate-800 text-white nav-item">
+                        <i class="fa-solid fa-cash-register w-5 text-center"></i>
+                        <span class="font-medium">Point of Sale</span>
+                    </button>
+                </li>
+                <li>
+                    <button onclick="app.navigate('inventory')" id="nav-inventory" class="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left hover:bg-slate-800 transition-colors text-slate-300 nav-item">
+                        <i class="fa-solid fa-boxes-stacked w-5 text-center"></i>
+                        <span class="font-medium">Inventory (Imports)</span>
+                    </button>
+                </li>
+                <li>
+                    <button onclick="app.navigate('dashboard')" id="nav-dashboard" class="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left hover:bg-slate-800 transition-colors text-slate-300 nav-item">
+                        <i class="fa-solid fa-chart-line w-5 text-center"></i>
+                        <span class="font-medium">Dashboard</span>
+                    </button>
+                </li>
+                <li>
+                    <button onclick="app.navigate('permissions')" id="nav-permissions" class="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left hover:bg-slate-800 transition-colors text-slate-300 nav-item">
+                        <i class="fa-solid fa-user-shield w-5 text-center"></i>
+                        <span class="font-medium">Permissions</span>
+                    </button>
+                </li>
+                <li>
+                    <button onclick="app.navigate('settings')" id="nav-settings" class="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left hover:bg-slate-800 transition-colors text-slate-300 nav-item">
+                        <i class="fa-solid fa-tags w-5 text-center"></i>
+                        <span class="font-medium">Pricing & Settings</span>
+                    </button>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Role Simulator -->
+        <div class="p-4 border-t border-slate-700 hidden md:block" id="role-switcher-container">
+            <p class="text-xs text-slate-400 mb-2 uppercase tracking-wider">Simulate Role</p>
+            <select id="role-select" onchange="app.switchRole(this.value)" class="w-full bg-slate-800 text-white text-sm rounded border border-slate-600 p-2 focus:outline-none focus:border-yellow-400">
+                <option value="operator">Operator (Front-line)</option>
+                <option value="supervisor">Supervisor (Admin)</option>
+            </select>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="flex-1 flex flex-col h-full overflow-hidden relative">
+        <!-- Top Header -->
+        <header class="bg-white shadow-sm z-10 px-6 py-4 flex justify-between items-center">
+            <h2 id="page-title" class="text-2xl font-semibold text-gray-800">Point of Sale</h2>
+            <div class="flex items-center gap-4">
+                <div class="bg-blue-50 text-blue-800 px-3 py-1 rounded-full text-sm font-medium border border-blue-100 flex items-center gap-2">
+                    <i class="fa-solid fa-coins text-blue-500"></i>
+                    Today's Price: $<span id="display-daily-price">0.00</span> / egg
+                </div>
+                <div class="flex items-center gap-2 text-sm text-gray-500">
+                    <div id="user-badge" class="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 font-bold">
+                        O
+                    </div>
+                    <span id="user-role-label" class="hidden sm:inline font-medium">Operator Mode</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Page Content Area -->
+        <div class="flex-1 overflow-y-auto p-4 md:p-6 no-scrollbar relative" id="main-scroll-area">
+            
+            <!-- POS View -->
+            <section id="view-pos" class="max-w-4xl mx-auto h-full flex flex-col justify-center">
+                <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden flex flex-col md:flex-row">
+                    <!-- Checkout Form -->
+                    <div class="p-8 md:w-1/2 flex flex-col justify-center border-b md:border-b-0 md:border-r border-gray-100">
+                        <h3 class="text-xl font-semibold mb-6 text-gray-800">New Sale</h3>
+                        
+                        <div class="mb-6">
+                            <label class="block text-sm font-medium text-gray-600 mb-2">Quantity (Number of Eggs)</label>
+                            <div class="relative">
+                                <input type="number" id="pos-quantity" step="1" min="1" class="w-full text-4xl py-4 px-4 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all font-bold text-gray-800" placeholder="0">
+                            </div>
+                        </div>
+
+                        <button onclick="app.calculateTotal()" class="w-full py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-xl transition-colors mb-4">
+                            Calculate Total
+                        </button>
+                    </div>
+
+                    <!-- Summary & Action -->
+                    <div class="p-8 md:w-1/2 bg-gray-50 flex flex-col justify-between">
+                        <div>
+                            <h3 class="text-sm font-semibold uppercase tracking-wider text-gray-500 mb-4">Transaction Summary</h3>
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="text-gray-600">Price per egg</span>
+                                <span class="font-medium">$<span id="pos-unit-price">0.00</span></span>
+                            </div>
+                            <div class="flex justify-between items-center mb-4">
+                                <span class="text-gray-600">Quantity</span>
+                                <span class="font-medium"><span id="pos-summary-qty">0</span> eggs</span>
+                            </div>
+                            <div class="w-full h-px bg-gray-200 mb-4"></div>
+                            <div class="flex justify-between items-end mb-8">
+                                <span class="text-lg text-gray-800 font-semibold">Total Amount</span>
+                                <span class="text-4xl font-bold text-blue-600">$<span id="pos-total">0.00</span></span>
+                            </div>
+                        </div>
+
+                        <div class="flex flex-col gap-3">
+                            <button onclick="app.processSale()" id="btn-process-sale" class="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-lg shadow-blue-200 transition-all transform active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed">
+                                <i class="fa-solid fa-check mr-2"></i> Complete Sale
+                            </button>
+                            <button onclick="app.printLastReceipt()" id="btn-print-receipt" class="hidden w-full py-3 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-medium rounded-xl shadow-sm transition-all text-sm">
+                                <i class="fa-solid fa-print mr-2"></i> Print Last Receipt
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Stats for POS -->
+                <div class="mt-8 grid grid-cols-2 gap-4 text-center">
+                    <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+                        <p class="text-sm text-gray-500 mb-1">Current Available Stock</p>
+                        <p class="text-2xl font-bold text-gray-800" id="pos-stock-display">0.0</p>
+                    </div>
+                    <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+                        <p class="text-sm text-gray-500 mb-1">Sales Today (Eggs)</p>
+                        <p class="text-2xl font-bold text-green-600" id="pos-sales-today">0</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Inventory View -->
+            <section id="view-inventory" class="hidden">
+                <div class="flex flex-col md:flex-row gap-6">
+                    <!-- Add Batch Form -->
+                    <div class="w-full md:w-1/3">
+                        <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 sticky top-0">
+                            <h3 class="text-lg font-semibold mb-4 text-gray-800">Receive New Import</h3>
+                            <form id="form-import" onsubmit="app.processImport(event)">
+                                <div class="mb-4">
+                                    <label class="block text-sm font-medium text-gray-600 mb-1">Import Date</label>
+                                    <input type="date" id="import-date" required class="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                </div>
+                                <div class="mb-4">
+                                    <label class="block text-sm font-medium text-gray-600 mb-1">Weight (Total kg)</label>
+                                    <input type="number" id="import-qty" step="0.1" min="0.1" required class="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                </div>
+                                <div class="mb-6 supervisor-only hidden">
+                                    <label class="block text-sm font-medium text-gray-600 mb-1">Cost Price Per kg ($)</label>
+                                    <input type="number" id="import-cost" step="0.01" min="0.01" class="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="e.g., 0.15">
+                                    <p class="text-xs text-gray-400 mt-1">Only supervisors can set cost price.</p>
+                                </div>
+                                <button type="submit" class="w-full py-3 bg-slate-800 hover:bg-slate-900 text-white font-medium rounded-lg transition-colors">
+                                    Add to Inventory
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Batch History -->
+                    <div class="w-full md:w-2/3">
+                        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                            <div class="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+                                <h3 class="text-lg font-semibold text-gray-800">Inventory Batches</h3>
+                                <span class="bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-1 rounded-full">FIFO Active</span>
+                            </div>
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-left text-sm text-gray-600">
+                                    <thead class="text-xs text-gray-500 uppercase bg-white border-b border-gray-100">
+                                        <tr>
+                                            <th class="px-6 py-4">Batch ID / Date</th>
+                                            <th class="px-6 py-4">Initial (kg)</th>
+                                            <th class="px-6 py-4">Remaining (kg)</th>
+                                            <th class="px-6 py-4 supervisor-only hidden">Unit Cost</th>
+                                            <th class="px-6 py-4 supervisor-only hidden">Batch Value</th>
+                                            <th class="px-6 py-4">Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="inventory-list" class="divide-y divide-gray-100">
+                                        <!-- Rows injected by JS -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Dashboard View (Supervisor Only) -->
+            <section id="view-dashboard" class="hidden">
+                <!-- KPI Cards -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                        <div class="flex items-center gap-4">
+                            <div class="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
+                                <i class="fa-solid fa-boxes-stacked text-xl"></i>
+                            </div>
+                            <div>
+                                <p class="text-sm font-medium text-gray-500">Total Stock (kg)</p>
+                                <h4 class="text-2xl font-bold text-gray-800" id="dash-total-stock">0.0</h4>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                        <div class="flex items-center gap-4">
+                            <div class="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center text-green-600">
+                                <i class="fa-solid fa-sack-dollar text-xl"></i>
+                            </div>
+                            <div>
+                                <p class="text-sm font-medium text-gray-500">Today's Revenue</p>
+                                <h4 class="text-2xl font-bold text-gray-800">$<span id="dash-rev-day">0.00</span></h4>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                        <div class="flex items-center gap-4">
+                            <div class="w-12 h-12 rounded-full bg-purple-100 flex items-center justify-center text-purple-600">
+                                <i class="fa-solid fa-calendar-week text-xl"></i>
+                            </div>
+                            <div>
+                                <p class="text-sm font-medium text-gray-500">7-Day Revenue</p>
+                                <h4 class="text-2xl font-bold text-gray-800">$<span id="dash-rev-week">0.00</span></h4>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                        <div class="flex items-center gap-4">
+                            <div class="w-12 h-12 rounded-full bg-yellow-100 flex items-center justify-center text-yellow-600">
+                                <i class="fa-solid fa-chart-pie text-xl"></i>
+                            </div>
+                            <div>
+                                <p class="text-sm font-medium text-gray-500">Est. Gross Profit (All Time)</p>
+                                <h4 class="text-2xl font-bold text-gray-800">$<span id="dash-profit">0.00</span></h4>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Transactions -->
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                    <div class="p-6 border-b border-gray-100 bg-gray-50 flex flex-col gap-4">
+                        <div class="flex flex-col md:flex-row justify-between items-center gap-4">
+                            <h3 class="text-lg font-semibold text-gray-800">Transactions History</h3>
+                            <div class="flex flex-wrap items-center gap-2 w-full md:w-auto">
+                                <div class="relative w-full md:w-64">
+                                    <i class="fa-solid fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                                    <input type="text" id="dash-search" onkeyup="app.handleDashboardSearch(event)" placeholder="Search keyword..." class="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm bg-white shadow-sm transition-all">
+                                </div>
+                                <button onclick="app.toggleAdvancedFilters()" class="px-4 py-2 bg-white border border-gray-200 hover:bg-gray-100 text-gray-700 font-medium rounded-lg shadow-sm transition-colors text-sm flex items-center gap-2">
+                                    <i class="fa-solid fa-filter"></i> <span class="hidden sm:inline">Filters</span>
+                                </button>
+                                <button onclick="app.exportCSV()" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg shadow-sm transition-colors text-sm flex items-center gap-2">
+                                    <i class="fa-solid fa-download"></i> <span class="hidden sm:inline">Export CSV</span>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Advanced Filter Panel -->
+                        <div id="advanced-filter-panel" class="hidden grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 pt-4 border-t border-gray-200 mt-2">
+                            <div>
+                                <label class="block text-xs font-medium text-gray-500 mb-1">Date From</label>
+                                <input type="date" id="filter-date-from" onchange="app.applyFilters()" class="w-full p-2 bg-white border border-gray-200 rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-gray-500 mb-1">Date To</label>
+                                <input type="date" id="filter-date-to" onchange="app.applyFilters()" class="w-full p-2 bg-white border border-gray-200 rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-gray-500 mb-1">Operator Role</label>
+                                <select id="filter-operator" onchange="app.applyFilters()" class="w-full p-2 bg-white border border-gray-200 rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500 capitalize">
+                                    <option value="all">All Users</option>
+                                    <option value="operator">Operator</option>
+                                    <option value="supervisor">Supervisor</option>
+                                </select>
+                            </div>
+                            <div class="flex items-end">
+                                <button onclick="app.clearFilters()" class="w-full px-4 py-2 bg-red-50 text-red-600 hover:bg-red-100 border border-red-100 font-medium rounded-lg transition-colors text-sm">
+                                    Clear Filters
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-sm text-gray-600">
+                            <thead class="text-xs text-gray-500 uppercase bg-white border-b border-gray-100">
+                                <tr>
+                                    <th class="px-6 py-4 cursor-pointer hover:bg-gray-50 transition-colors" onclick="app.handleDashboardSort('timestamp')">Date & Time <i id="sort-icon-timestamp" class="fa-solid fa-sort ml-1 text-gray-400"></i></th>
+                                    <th class="px-6 py-4 cursor-pointer hover:bg-gray-50 transition-colors" onclick="app.handleDashboardSort('operator')">Operator <i id="sort-icon-operator" class="fa-solid fa-sort ml-1 text-gray-400"></i></th>
+                                    <th class="px-6 py-4 cursor-pointer hover:bg-gray-50 transition-colors" onclick="app.handleDashboardSort('qtyEggs')">Quantity (Eggs) <i id="sort-icon-qtyEggs" class="fa-solid fa-sort ml-1 text-gray-400"></i></th>
+                                    <th class="px-6 py-4 cursor-pointer hover:bg-gray-50 transition-colors" onclick="app.handleDashboardSort('unitPrice')">Sale Price <i id="sort-icon-unitPrice" class="fa-solid fa-sort ml-1 text-gray-400"></i></th>
+                                    <th class="px-6 py-4 cursor-pointer hover:bg-gray-50 transition-colors text-right" onclick="app.handleDashboardSort('total')">Total Revenue <i id="sort-icon-total" class="fa-solid fa-sort ml-1 text-gray-400"></i></th>
+                                </tr>
+                            </thead>
+                            <tbody id="transactions-list" class="divide-y divide-gray-100">
+                                <!-- Rows injected by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Permissions View (Supervisor Only) -->
+            <section id="view-permissions" class="hidden">
+                <div class="max-w-2xl mx-auto">
+                    <!-- Operator Permissions Setup -->
+                    <div class="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 mb-6">
+                        <div class="flex items-center gap-3 mb-6 border-b border-gray-100 pb-4">
+                            <i class="fa-solid fa-user-shield text-purple-500 text-xl"></i>
+                            <h3 class="text-xl font-semibold text-gray-800">Operator Access Control</h3>
+                        </div>
+                        <p class="text-gray-600 mb-6 text-sm">Select which sections front-line operators are allowed to access. Supervisors always have access to all modules.</p>
+                        
+                        <div class="space-y-4 mb-6">
+                            <label class="flex items-center gap-3 cursor-pointer p-3 border border-gray-100 rounded-lg hover:bg-gray-50 transition-colors">
+                                <input type="checkbox" id="perm-pos" class="w-5 h-5 text-purple-600 rounded border-gray-300 focus:ring-purple-500" onchange="app.updatePermissions()">
+                                <div>
+                                    <span class="block text-gray-700 font-medium">Point of Sale (POS)</span>
+                                    <span class="block text-xs text-gray-500">Allow processing of sales and viewing of daily stock.</span>
+                                </div>
+                            </label>
+                            <label class="flex items-center gap-3 cursor-pointer p-3 border border-gray-100 rounded-lg hover:bg-gray-50 transition-colors">
+                                <input type="checkbox" id="perm-inventory" class="w-5 h-5 text-purple-600 rounded border-gray-300 focus:ring-purple-500" onchange="app.updatePermissions()">
+                                <div>
+                                    <span class="block text-gray-700 font-medium">Inventory Management</span>
+                                    <span class="block text-xs text-gray-500">Allow logging of new egg imports.</span>
+                                </div>
+                            </label>
+                            <label class="flex items-center gap-3 cursor-pointer p-3 border border-gray-100 rounded-lg hover:bg-gray-50 transition-colors">
+                                <input type="checkbox" id="perm-dashboard" class="w-5 h-5 text-purple-600 rounded border-gray-300 focus:ring-purple-500" onchange="app.updatePermissions()">
+                                <div>
+                                    <span class="block text-gray-700 font-medium">Financial Dashboard</span>
+                                    <span class="block text-xs text-gray-500">Allow viewing of revenues, gross profit, and transaction history.</span>
+                                </div>
+                            </label>
+                            <label class="flex items-center gap-3 cursor-pointer p-3 border border-gray-100 rounded-lg hover:bg-gray-50 transition-colors">
+                                <input type="checkbox" id="perm-settings" class="w-5 h-5 text-purple-600 rounded border-gray-300 focus:ring-purple-500" onchange="app.updatePermissions()">
+                                <div>
+                                    <span class="block text-gray-700 font-medium">System Settings</span>
+                                    <span class="block text-xs text-gray-500">Allow changing the global daily price and egg weight settings.</span>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Settings View (Supervisor Only) -->
+            <section id="view-settings" class="hidden">
+                <div class="max-w-2xl mx-auto">
+                    <div class="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 mb-6">
+                        <div class="flex items-center gap-3 mb-6 border-b border-gray-100 pb-4">
+                            <i class="fa-solid fa-tag text-blue-500 text-xl"></i>
+                            <h3 class="text-xl font-semibold text-gray-800">Global Pricing Strategy</h3>
+                        </div>
+                        
+                        <p class="text-gray-600 mb-6 text-sm">Update the daily selling price. This price will be immediately applied to all new POS transactions. Historical transactions will remain unaffected.</p>
+
+                        <form id="form-pricing" onsubmit="app.updateSettings(event)">
+                            <div class="mb-6">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Current Selling Price (Per Egg)</label>
+                                <div class="relative">
+                                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                        <span class="text-gray-500 text-xl font-medium">$</span>
+                                    </div>
+                                    <input type="number" id="setting-price" step="0.01" min="0.01" required class="w-full pl-10 pr-4 py-4 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-2xl font-bold text-gray-800">
+                                </div>
+                            </div>
+                            <div class="mb-6">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Average Egg Weight (kg)</label>
+                                <div class="relative">
+                                    <input type="number" id="setting-egg-weight" step="0.001" min="0.01" required class="w-full px-4 py-4 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-xl font-medium text-gray-800" placeholder="e.g., 0.06 for 60g">
+                                </div>
+                                <p class="text-xs text-gray-500 mt-2">Used to convert egg quantities back to kg for inventory deduction.</p>
+                            </div>
+                            <button type="submit" class="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-md transition-colors">
+                                Update Global Settings
+                            </button>
+                        </form>
+                    </div>
+
+                    <div class="bg-red-50 p-6 rounded-2xl border border-red-100">
+                        <h3 class="text-red-800 font-semibold mb-2">System Reset</h3>
+                        <p class="text-sm text-red-600 mb-4">Clear all local storage data. This action cannot be undone.</p>
+                        <button onclick="app.hardReset()" class="px-4 py-2 bg-white text-red-600 border border-red-200 rounded hover:bg-red-600 hover:text-white transition-colors text-sm font-medium">
+                            Clear Database
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+        </div>
+    </main>
+
+    <!-- Toast Notifications Container -->
+    <div id="toast-container" class="fixed top-4 right-4 z-50 flex flex-col gap-2 w-full max-w-sm px-4 md:px-0"></div>
+
+    <!-- Printable Receipt Container (Hidden normally) -->
+    <div id="printable-receipt" class="hidden">
+        <h2 style="text-align: center; font-size: 24px; margin-bottom: 5px;">EggPro POS</h2>
+        <p style="text-align: center; margin-top: 0; border-bottom: 1px dashed #000; padding-bottom: 10px;">Purchase Receipt</p>
+        <p><strong>Date:</strong> <span id="receipt-date"></span></p>
+        <p><strong>Trx ID:</strong> <span id="receipt-id"></span></p>
+        <p><strong>Operator:</strong> <span id="receipt-operator" style="text-transform: capitalize;"></span></p>
+        <hr style="border-top: 1px dashed #000; margin: 15px 0;">
+        <div style="display: flex; justify-content: space-between; margin: 10px 0;">
+            <span>Quantity (Eggs)</span>
+            <span id="receipt-qty"></span>
+        </div>
+        <div style="display: flex; justify-content: space-between; margin: 10px 0;">
+            <span>Price / Egg</span>
+            <span id="receipt-unit-price"></span>
+        </div>
+        <hr style="border-top: 1px dashed #000; margin: 15px 0;">
+        <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 18px; margin-top: 10px;">
+            <span>TOTAL</span>
+            <span id="receipt-total"></span>
+        </div>
+        <p style="text-align: center; margin-top: 40px; font-size: 14px;">Thank you for your business!</p>
+    </div>
+
+    <script>
+        // Application State & Logic
+        const app = {
+            state: {
+                role: 'operator', // 'operator' or 'supervisor'
+                dailyPrice: 0.15,
+                eggWeight: 0.06, // 60 grams average per egg
+                inventory: [], // { id, date, totalQty, remainingQty, costPrice }
+                sales: [],     // { id, timestamp, operator, qty, unitPrice, total, costBasis }
+                permissions: { // Operator permissions config
+                    pos: true,
+                    inventory: true,
+                    dashboard: false,
+                    settings: false
+                }
+            },
+            dashboardTable: {
+                search: '',
+                sortBy: 'timestamp',
+                sortDir: 'desc',
+                filters: { show: false, dateFrom: '', dateTo: '', operator: 'all' },
+                currentData: [] // Stores the actively filtered/sorted data for export
+            },
+            currentView: 'pos',
+            lastTransaction: null,
+
+            init() {
+                this.loadData();
+                this.setupMobileMenu();
+                this.switchRole('operator'); // Default start
+                
+                // Set today's date in import form
+                document.getElementById('import-date').valueAsDate = new Date();
+                
+                // Add input listener for POS
+                document.getElementById('pos-quantity').addEventListener('input', () => this.calculateTotal());
+            },
+
+            // Data Persistence
+            loadData() {
+                const data = localStorage.getItem('eggProData');
+                if (data) {
+                    try {
+                        const parsed = JSON.parse(data);
+                        this.state = { ...this.state, ...parsed };
+                    } catch (e) {
+                        console.error("Error loading data", e);
+                    }
+                }
+                this.updateUI();
+            },
+            saveData() {
+                localStorage.setItem('eggProData', JSON.stringify(this.state));
+                this.updateUI();
+            },
+
+            // Navigation & UI Updates
+            navigate(view) {
+                if (this.state.role === 'operator') {
+                    if (view === 'permissions') {
+                        this.showToast('Access restricted to Supervisors only.', 'error');
+                        return;
+                    }
+                    if (!this.state.permissions[view]) {
+                        this.showToast('Access denied by Supervisor settings.', 'error');
+                        return;
+                    }
+                }
+
+                this.currentView = view;
+                
+                // Update active state in nav
+                document.querySelectorAll('.nav-item').forEach(el => {
+                    el.classList.remove('bg-slate-800', 'text-white');
+                    el.classList.add('text-slate-300');
+                });
+                const activeNav = document.getElementById(`nav-${view}`);
+                if(activeNav) {
+                    activeNav.classList.remove('text-slate-300');
+                    activeNav.classList.add('bg-slate-800', 'text-white');
+                }
+
+                // Hide all views
+                ['pos', 'inventory', 'dashboard', 'settings', 'permissions'].forEach(v => {
+                    document.getElementById(`view-${v}`).classList.add('hidden');
+                });
+
+                // Show target view
+                document.getElementById(`view-${view}`).classList.remove('hidden');
+                document.getElementById('mobile-menu-btn').nextElementSibling?.classList.add('hidden'); // hide mobile menu
+
+                // Update Title
+                const titles = { pos: 'Point of Sale', inventory: 'Inventory Management', dashboard: 'Financial Dashboard', settings: 'System Settings', permissions: 'Access Control' };
+                document.getElementById('page-title').innerText = titles[view];
+
+                this.updateUI();
+            },
+
+            switchRole(role) {
+                this.state.role = role;
+                const isSup = role === 'supervisor';
+                
+                // Toggle purely visual supervisor tags where needed
+                document.querySelectorAll('.supervisor-only').forEach(el => {
+                    if (isSup) el.classList.remove('hidden');
+                    else el.classList.add('hidden');
+                });
+
+                this.updateNavVisibility();
+
+                // Update header badge
+                const badge = document.getElementById('user-badge');
+                const label = document.getElementById('user-role-label');
+                if (isSup) {
+                    badge.innerText = 'S';
+                    badge.classList.replace('bg-gray-200', 'bg-yellow-200');
+                    badge.classList.replace('text-gray-600', 'text-yellow-800');
+                    label.innerText = 'Supervisor Mode';
+                } else {
+                    badge.innerText = 'O';
+                    badge.classList.replace('bg-yellow-200', 'bg-gray-200');
+                    badge.classList.replace('text-yellow-800', 'text-gray-600');
+                    label.innerText = 'Operator Mode';
+                    
+                    // Force navigation to allowed page if on restricted page
+                    if (!this.state.permissions[this.currentView]) {
+                        const allowedView = Object.keys(this.state.permissions).find(k => this.state.permissions[k]);
+                        this.navigate(allowedView || 'pos');
+                    }
+                }
+
+                // Update role select in UI (if changed programmatically)
+                document.getElementById('role-select').value = role;
+                
+                // Show role switch notification if not initial load
+                if(this.state.dailyPrice > 0) { 
+                    this.showToast(`Switched to ${role.charAt(0).toUpperCase() + role.slice(1)} role.`, 'info');
+                }
+                
+                this.updateUI();
+            },
+
+            updateNavVisibility() {
+                const isSup = this.state.role === 'supervisor';
+                const p = this.state.permissions;
+                
+                document.getElementById('nav-pos').parentElement.style.display = (isSup || p.pos) ? 'block' : 'none';
+                document.getElementById('nav-inventory').parentElement.style.display = (isSup || p.inventory) ? 'block' : 'none';
+                document.getElementById('nav-dashboard').parentElement.style.display = (isSup || p.dashboard) ? 'block' : 'none';
+                document.getElementById('nav-settings').parentElement.style.display = (isSup || p.settings) ? 'block' : 'none';
+                document.getElementById('nav-permissions').parentElement.style.display = isSup ? 'block' : 'none';
+            },
+
+            updateUI() {
+                // Global UI elements
+                document.getElementById('display-daily-price').innerText = parseFloat(this.state.dailyPrice).toFixed(2);
+                
+                // POS UI
+                const totalStock = this.getTotalStock();
+                const estimatedEggs = Math.floor(totalStock / this.state.eggWeight);
+                document.getElementById('pos-stock-display').innerText = `${totalStock.toLocaleString(undefined, {minimumFractionDigits: 1, maximumFractionDigits: 1})} kg (~${estimatedEggs} eggs)`;
+                document.getElementById('pos-unit-price').innerText = parseFloat(this.state.dailyPrice).toFixed(2);
+                
+                const todaySales = this.state.sales.filter(s => new Date(s.timestamp).toDateString() === new Date().toDateString());
+                const todayQty = todaySales.reduce((sum, s) => sum + (s.qtyEggs || 0), 0);
+                document.getElementById('pos-sales-today').innerText = todayQty.toLocaleString();
+
+                if (this.currentView === 'inventory') this.renderInventory();
+                if (this.currentView === 'dashboard') this.renderDashboard(); // Allow operators to render dashboard if given permission
+                if (this.currentView === 'settings') {
+                    document.getElementById('setting-price').value = this.state.dailyPrice;
+                    document.getElementById('setting-egg-weight').value = this.state.eggWeight;
+                }
+                if (this.currentView === 'permissions') {
+                    // Load permissions checkboxes
+                    document.getElementById('perm-pos').checked = this.state.permissions.pos;
+                    document.getElementById('perm-inventory').checked = this.state.permissions.inventory;
+                    document.getElementById('perm-dashboard').checked = this.state.permissions.dashboard;
+                    document.getElementById('perm-settings').checked = this.state.permissions.settings;
+                }
+            },
+
+            getTotalStock() {
+                return this.state.inventory.reduce((sum, batch) => sum + batch.remainingQty, 0);
+            },
+
+            calculateTotal() {
+                const qtyInput = document.getElementById('pos-quantity');
+                const qty = parseInt(qtyInput.value, 10) || 0;
+                const total = qty * this.state.dailyPrice;
+                
+                document.getElementById('pos-summary-qty').innerText = qty.toLocaleString();
+                document.getElementById('pos-total').innerText = total.toFixed(2);
+            },
+
+            processSale() {
+                const qtyInput = document.getElementById('pos-quantity');
+                const numEggs = parseInt(qtyInput.value, 10);
+
+                if (!numEggs || numEggs <= 0) {
+                    this.showToast('Please enter a valid number of eggs.', 'warning');
+                    return;
+                }
+
+                const weightToDeduct = numEggs * this.state.eggWeight;
+                const totalStock = this.getTotalStock();
+
+                if (weightToDeduct > totalStock) {
+                    this.showToast(`Insufficient stock! Only ~${Math.floor(totalStock / this.state.eggWeight)} eggs available.`, 'error');
+                    return;
+                }
+
+                // Execute FIFO Logic
+                let qtyToFulfill = weightToDeduct;
+                let totalCostBasis = 0;
+                let batchUpdates = [];
+
+                // Sort inventory by date (oldest first)
+                let sortedInventory = [...this.state.inventory].sort((a, b) => new Date(a.date) - new Date(b.date));
+
+                for (let i = 0; i < sortedInventory.length; i++) {
+                    if (qtyToFulfill === 0) break;
+                    let batch = sortedInventory[i];
+                    
+                    if (batch.remainingQty > 0) {
+                        let amountTaken = Math.min(batch.remainingQty, qtyToFulfill);
+                        batch.remainingQty -= amountTaken;
+                        qtyToFulfill -= amountTaken;
+                        totalCostBasis += (amountTaken * batch.costPrice);
+                        batchUpdates.push(batch);
+                    }
+                }
+
+                // Update main inventory array based on FIFO operations
+                batchUpdates.forEach(updatedBatch => {
+                    const index = this.state.inventory.findIndex(b => b.id === updatedBatch.id);
+                    if(index !== -1) this.state.inventory[index] = updatedBatch;
+                });
+
+                // Record Sale
+                const salePrice = this.state.dailyPrice;
+                const totalRevenue = numEggs * salePrice;
+                
+                const newSale = {
+                    id: 'TRX-' + Date.now(),
+                    timestamp: new Date().toISOString(),
+                    operator: this.state.role,
+                    qtyEggs: numEggs,
+                    weightKg: weightToDeduct,
+                    unitPrice: salePrice,
+                    total: totalRevenue,
+                    costBasis: totalCostBasis
+                };
+
+                this.state.sales.push(newSale);
+                this.lastTransaction = newSale;
+                this.saveData();
+                
+                // Reset form and show print button
+                qtyInput.value = '';
+                this.calculateTotal();
+                document.getElementById('btn-print-receipt').classList.remove('hidden');
+                
+                this.showToast(`Sale completed successfully! Amount: $${totalRevenue.toFixed(2)}`, 'success');
+            },
+
+            printLastReceipt() {
+                if (!this.lastTransaction) return;
+                const trx = this.lastTransaction;
+                
+                document.getElementById('receipt-date').innerText = new Date(trx.timestamp).toLocaleString();
+                document.getElementById('receipt-id').innerText = trx.id;
+                document.getElementById('receipt-operator').innerText = trx.operator;
+                document.getElementById('receipt-qty').innerText = trx.qtyEggs;
+                document.getElementById('receipt-unit-price').innerText = '$' + trx.unitPrice.toFixed(2);
+                document.getElementById('receipt-total').innerText = '$' + trx.total.toFixed(2);
+                
+                window.print();
+            },
+
+            processImport(e) {
+                e.preventDefault();
+                const date = document.getElementById('import-date').value;
+                const qty = parseFloat(document.getElementById('import-qty').value);
+                let cost = parseFloat(document.getElementById('import-cost').value);
+
+                // Default cost if operator inputs it (they can't see the field, so it will be NaN/empty)
+                if (isNaN(cost)) cost = 0;
+
+                if (!date || !qty || qty <= 0) {
+                    this.showToast('Invalid input for import.', 'error');
+                    return;
+                }
+
+                const newBatch = {
+                    id: 'B-' + Date.now(),
+                    date: date,
+                    totalQty: qty,
+                    remainingQty: qty,
+                    costPrice: cost
+                };
+
+                this.state.inventory.push(newBatch);
+                this.saveData();
+                
+                e.target.reset();
+                document.getElementById('import-date').valueAsDate = new Date();
+                this.showToast(`Successfully received ${qty} kg.`, 'success');
+            },
+
+            renderInventory() {
+                const tbody = document.getElementById('inventory-list');
+                tbody.innerHTML = '';
+
+                // Sort newest first for display
+                const sorted = [...this.state.inventory].sort((a, b) => new Date(b.date) - new Date(a.date));
+
+                if(sorted.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="5" class="px-6 py-8 text-center text-gray-500">No inventory batches recorded yet.</td></tr>`;
+                    return;
+                }
+
+                sorted.forEach(batch => {
+                    const isDepleted = batch.remainingQty === 0;
+                    const statusHtml = isDepleted 
+                        ? `<span class="bg-gray-100 text-gray-600 text-xs font-semibold px-2.5 py-1 rounded-full">Depleted</span>`
+                        : `<span class="bg-green-100 text-green-800 text-xs font-semibold px-2.5 py-1 rounded-full">Active</span>`;
+                    
+                    const isSup = this.state.role === 'supervisor';
+                    
+                    tbody.innerHTML += `
+                        <tr class="hover:bg-gray-50 transition-colors ${isDepleted ? 'opacity-50' : ''}">
+                            <td class="px-6 py-4">
+                                <div class="font-medium text-gray-800">${batch.id}</div>
+                                <div class="text-xs text-gray-500">${batch.date}</div>
+                            </td>
+                            <td class="px-6 py-4">${batch.totalQty.toLocaleString(undefined, {minimumFractionDigits: 1, maximumFractionDigits: 1})}</td>
+                            <td class="px-6 py-4 font-semibold ${isDepleted ? 'text-gray-500' : 'text-blue-600'}">${batch.remainingQty.toLocaleString(undefined, {minimumFractionDigits: 1, maximumFractionDigits: 1})}</td>
+                            <td class="px-6 py-4 supervisor-only ${isSup ? '' : 'hidden'}">$${batch.costPrice.toFixed(2)}</td>
+                            <td class="px-6 py-4 font-medium text-purple-600 supervisor-only ${isSup ? '' : 'hidden'}">
+                                Init: $${(batch.totalQty * batch.costPrice).toFixed(2)}<br>
+                                <span class="text-xs text-gray-500">Rem: $${(batch.remainingQty * batch.costPrice).toFixed(2)}</span>
+                            </td>
+                            <td class="px-6 py-4">${statusHtml}</td>
+                        </tr>
+                    `;
+                });
+            },
+
+            renderDashboard() {
+                const now = new Date();
+                let todayRev = 0, weekRev = 0, totalProfit = 0;
+
+                this.state.sales.forEach(sale => {
+                    const saleDate = new Date(sale.timestamp);
+                    const diffDays = Math.floor((now - saleDate) / (1000 * 60 * 60 * 24));
+                    
+                    if (diffDays === 0) todayRev += sale.total;
+                    if (diffDays <= 7) weekRev += sale.total;
+                    
+                    // Gross Profit = Total Revenue - Total Cost of Goods Sold
+                    totalProfit += (sale.total - sale.costBasis);
+                });
+
+                document.getElementById('dash-total-stock').innerText = this.getTotalStock().toLocaleString(undefined, {minimumFractionDigits: 1, maximumFractionDigits: 1});
+                document.getElementById('dash-rev-day').innerText = todayRev.toFixed(2);
+                document.getElementById('dash-rev-week').innerText = weekRev.toFixed(2);
+                document.getElementById('dash-profit').innerText = totalProfit.toFixed(2);
+
+                // Render Transactions Table
+                const tbody = document.getElementById('transactions-list');
+                tbody.innerHTML = '';
+                
+                // Filtering Logic
+                let filteredSales = this.state.sales.filter(sale => {
+                    // 1. Text Search Filter
+                    let matchesSearch = true;
+                    if (this.dashboardTable.search) {
+                        const term = this.dashboardTable.search.toLowerCase();
+                        const dateObj = new Date(sale.timestamp);
+                        const formattedDate = `${dateObj.toLocaleDateString()} ${dateObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`;
+                        
+                        matchesSearch = formattedDate.toLowerCase().includes(term) ||
+                               sale.operator.toLowerCase().includes(term) ||
+                               (sale.qtyEggs && sale.qtyEggs.toString().includes(term)) ||
+                               sale.unitPrice.toString().includes(term) ||
+                               sale.total.toFixed(2).includes(term);
+                    }
+
+                    // 2. Advanced Date Filters
+                    let matchesDateFrom = true;
+                    if (this.dashboardTable.filters.dateFrom) {
+                        const fromDate = new Date(this.dashboardTable.filters.dateFrom + 'T00:00:00');
+                        matchesDateFrom = new Date(sale.timestamp) >= fromDate;
+                    }
+
+                    let matchesDateTo = true;
+                    if (this.dashboardTable.filters.dateTo) {
+                        const toDate = new Date(this.dashboardTable.filters.dateTo + 'T23:59:59');
+                        matchesDateTo = new Date(sale.timestamp) <= toDate;
+                    }
+
+                    // 3. Advanced Operator Filter
+                    let matchesOperator = true;
+                    if (this.dashboardTable.filters.operator !== 'all') {
+                        matchesOperator = sale.operator === this.dashboardTable.filters.operator;
+                    }
+
+                    return matchesSearch && matchesDateFrom && matchesDateTo && matchesOperator;
+                });
+
+                // Sorting Logic
+                filteredSales.sort((a, b) => {
+                    let valA = a[this.dashboardTable.sortBy];
+                    let valB = b[this.dashboardTable.sortBy];
+                    
+                    if (this.dashboardTable.sortBy === 'timestamp') {
+                        valA = new Date(valA).getTime();
+                        valB = new Date(valB).getTime();
+                    }
+
+                    if (valA < valB) return this.dashboardTable.sortDir === 'asc' ? -1 : 1;
+                    if (valA > valB) return this.dashboardTable.sortDir === 'asc' ? 1 : -1;
+                    return 0;
+                });
+                
+                // Store active view data in case user wants to export it
+                this.dashboardTable.currentData = filteredSales;
+
+                // Update Sort Icons on Headers
+                ['timestamp', 'operator', 'qtyEggs', 'unitPrice', 'total'].forEach(col => {
+                    const icon = document.getElementById(`sort-icon-${col}`);
+                    if(icon) {
+                        icon.className = 'fa-solid ml-1 ' + 
+                            (this.dashboardTable.sortBy === col 
+                                ? (this.dashboardTable.sortDir === 'asc' ? 'fa-sort-up text-blue-600' : 'fa-sort-down text-blue-600') 
+                                : 'fa-sort text-gray-300');
+                    }
+                });
+
+                if(filteredSales.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="5" class="px-6 py-8 text-center text-gray-500">No transactions found matching your criteria.</td></tr>`;
+                    return;
+                }
+
+                filteredSales.forEach(sale => {
+                    const dateObj = new Date(sale.timestamp);
+                    const formattedDate = `${dateObj.toLocaleDateString()} ${dateObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`;
+                    
+                    tbody.innerHTML += `
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-6 py-4 whitespace-nowrap text-xs">${formattedDate}</td>
+                            <td class="px-6 py-4 capitalize text-xs font-medium text-gray-600">${sale.operator}</td>
+                            <td class="px-6 py-4">${sale.qtyEggs ? sale.qtyEggs.toLocaleString() : '-'}</td>
+                            <td class="px-6 py-4">$${sale.unitPrice.toFixed(2)}</td>
+                            <td class="px-6 py-4 text-right font-bold text-gray-800">$${sale.total.toFixed(2)}</td>
+                        </tr>
+                    `;
+                });
+            },
+
+            handleDashboardSearch(e) {
+                this.dashboardTable.search = e.target.value;
+                this.renderDashboard();
+            },
+
+            toggleAdvancedFilters() {
+                this.dashboardTable.filters.show = !this.dashboardTable.filters.show;
+                const panel = document.getElementById('advanced-filter-panel');
+                if (this.dashboardTable.filters.show) {
+                    panel.classList.remove('hidden');
+                } else {
+                    panel.classList.add('hidden');
+                }
+            },
+
+            applyFilters() {
+                this.dashboardTable.filters.dateFrom = document.getElementById('filter-date-from').value;
+                this.dashboardTable.filters.dateTo = document.getElementById('filter-date-to').value;
+                this.dashboardTable.filters.operator = document.getElementById('filter-operator').value;
+                this.renderDashboard();
+            },
+
+            clearFilters() {
+                document.getElementById('filter-date-from').value = '';
+                document.getElementById('filter-date-to').value = '';
+                document.getElementById('filter-operator').value = 'all';
+                document.getElementById('dash-search').value = '';
+                this.dashboardTable.search = '';
+                this.applyFilters();
+            },
+
+            exportCSV() {
+                const data = this.dashboardTable.currentData;
+                if (!data || data.length === 0) {
+                    this.showToast('No data to export based on current filters.', 'warning');
+                    return;
+                }
+
+                // Construct CSV Header
+                let csvContent = "Date,Operator,Quantity (Eggs),Unit Price,Total Revenue\n";
+                
+                // Add rows
+                data.forEach(sale => {
+                    const dateObj = new Date(sale.timestamp);
+                    const formattedDate = `"${dateObj.toLocaleDateString()} ${dateObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}"`;
+                    const operator = `"${sale.operator}"`;
+                    const qty = sale.qtyEggs || 0;
+                    const unitPrice = sale.unitPrice.toFixed(2);
+                    const total = sale.total.toFixed(2);
+                    
+                    csvContent += `${formattedDate},${operator},${qty},${unitPrice},${total}\n`;
+                });
+
+                // Create a downloadable Blob
+                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                const link = document.createElement("a");
+                const url = URL.createObjectURL(blob);
+                link.setAttribute("href", url);
+                link.setAttribute("download", `eggpro_transactions_${new Date().getTime()}.csv`);
+                link.style.visibility = 'hidden';
+                
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                this.showToast('Data exported successfully!', 'success');
+            },
+
+            handleDashboardSort(col) {
+                if (this.dashboardTable.sortBy === col) {
+                    // Toggle direction if clicking the same column
+                    this.dashboardTable.sortDir = this.dashboardTable.sortDir === 'asc' ? 'desc' : 'asc';
+                } else {
+                    // Set new column and default to descending
+                    this.dashboardTable.sortBy = col;
+                    this.dashboardTable.sortDir = 'desc';
+                }
+                this.renderDashboard();
+            },
+
+            updateSettings(e) {
+                e.preventDefault();
+                const newPrice = parseFloat(document.getElementById('setting-price').value);
+                const newWeight = parseFloat(document.getElementById('setting-egg-weight').value);
+                
+                if (newPrice > 0 && newWeight > 0) {
+                    this.state.dailyPrice = newPrice;
+                    this.state.eggWeight = newWeight;
+                    this.saveData();
+                    this.showToast(`Settings updated: Price $${newPrice.toFixed(2)}/egg, Weight ${newWeight}kg/egg`, 'success');
+                } else {
+                    this.showToast('Please enter valid settings values.', 'error');
+                }
+            },
+
+            updatePermissions() {
+                this.state.permissions = {
+                    pos: document.getElementById('perm-pos').checked,
+                    inventory: document.getElementById('perm-inventory').checked,
+                    dashboard: document.getElementById('perm-dashboard').checked,
+                    settings: document.getElementById('perm-settings').checked
+                };
+                this.saveData();
+                this.updateNavVisibility();
+                this.showToast('Operator permissions successfully updated.', 'success');
+            },
+
+            hardReset() {
+                // A custom confirmation overlay could go here, but keeping it simple for prototype
+                if(confirm("Are you absolutely sure you want to clear all data?")) {
+                    localStorage.removeItem('eggProData');
+                    location.reload();
+                }
+            },
+
+            showToast(message, type = 'info') {
+                const container = document.getElementById('toast-container');
+                const toast = document.createElement('div');
+                
+                let bgClass = 'bg-white border-l-4 border-blue-500 text-gray-800';
+                let icon = '<i class="fa-solid fa-circle-info text-blue-500"></i>';
+                
+                if (type === 'success') {
+                    bgClass = 'bg-white border-l-4 border-green-500 text-gray-800';
+                    icon = '<i class="fa-solid fa-circle-check text-green-500"></i>';
+                } else if (type === 'error') {
+                    bgClass = 'bg-white border-l-4 border-red-500 text-gray-800';
+                    icon = '<i class="fa-solid fa-circle-exclamation text-red-500"></i>';
+                } else if (type === 'warning') {
+                    bgClass = 'bg-white border-l-4 border-yellow-500 text-gray-800';
+                    icon = '<i class="fa-solid fa-triangle-exclamation text-yellow-500"></i>';
+                }
+
+                toast.className = `p-4 rounded shadow-lg flex items-start gap-3 transition-all duration-300 transform translate-y-[-100%] opacity-0 ${bgClass}`;
+                toast.innerHTML = `
+                    <div class="mt-0.5">${icon}</div>
+                    <div class="flex-1 text-sm font-medium">${message}</div>
+                    <button class="text-gray-400 hover:text-gray-600 focus:outline-none" onclick="this.parentElement.remove()">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                `;
+
+                container.appendChild(toast);
+                
+                // Animate in
+                setTimeout(() => {
+                    toast.classList.remove('translate-y-[-100%]', 'opacity-0');
+                }, 10);
+
+                // Auto remove after 4 seconds
+                setTimeout(() => {
+                    toast.classList.add('opacity-0', 'translate-x-full');
+                    setTimeout(() => {
+                        if(toast.parentElement) toast.remove();
+                    }, 300);
+                }, 4000);
+            },
+
+            setupMobileMenu() {
+                const btn = document.getElementById('mobile-menu-btn');
+                const nav = document.getElementById('nav-links');
+                
+                btn.addEventListener('click', () => {
+                    nav.classList.toggle('hidden');
+                    nav.classList.toggle('flex');
+                });
+            }
+        };
+
+        // Initialize App on DOM Load
+        document.addEventListener('DOMContentLoaded', () => {
+            app.init();
+        });
+    </script>
+</body>
+</html>
