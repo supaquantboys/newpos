@@ -5,10 +5,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>EggPro - POS & Inventory</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
         body { font-family: 'Inter', sans-serif; }
+        .chart-wrap { position: relative; min-height: 260px; height: 34vh; max-height: 380px; }
+        @media (max-width: 767px) {
+            body { min-height: 100dvh; height: auto; overflow: auto; }
+            main { min-height: 0; height: auto !important; overflow: visible !important; }
+            #main-scroll-area { overflow: visible; }
+            .chart-wrap { height: 280px; min-height: 280px; }
+            input, select, button { min-height: 44px; }
+        }
         
         /* Hide scrollbar for clean UI but allow scrolling */
         .no-scrollbar::-webkit-scrollbar { display: none; }
@@ -23,9 +32,18 @@
             body > *:not(#printable-receipt) { display: none !important; }
             #printable-receipt { display: block !important; position: absolute; left: 0; top: 0; width: 100%; padding: 20px; font-family: monospace; color: black; background: white; z-index: 9999; }
         }
+            .permission-card { display:flex; gap:.75rem; padding:1rem; border:1px solid #e5e7eb; border-radius:.75rem; cursor:pointer; } .permission-card input { width:1.25rem; height:1.25rem; } .permission-card span,.permission-card small { display:block; }
+        html.dark body { background:#0f172a; color:#e2e8f0; }
+        html.dark .bg-white { background-color:#1e293b !important; }
+        html.dark .bg-gray-50 { background-color:#0f172a !important; }
+        html.dark .text-gray-800, html.dark .text-gray-700 { color:#f1f5f9 !important; }
+        html.dark .text-gray-600, html.dark .text-gray-500 { color:#cbd5e1 !important; }
+        html.dark .border-gray-100, html.dark .border-gray-200 { border-color:#334155 !important; }
+        html.dark input, html.dark select { background:#0f172a !important; color:#f8fafc !important; border-color:#475569 !important; }
+        html.dark tr:hover { background:#334155 !important; }
     </style>
 </head>
-<body class="bg-gray-50 text-gray-800 h-screen overflow-hidden flex flex-col md:flex-row">
+<body class="bg-gray-50 text-gray-800 min-h-screen md:h-screen overflow-x-hidden md:overflow-hidden flex flex-col md:flex-row">
 
     <!-- Sidebar / Mobile Topbar -->
     <nav class="bg-slate-900 text-white w-full md:w-64 flex flex-col justify-between shadow-xl z-20 transition-all duration-300">
@@ -68,6 +86,12 @@
                     </button>
                 </li>
                 <li>
+                    <button onclick="app.navigate('pricing')" id="nav-pricing" class="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left hover:bg-slate-800 transition-colors text-slate-300 nav-item">
+                        <i class="fa-solid fa-chart-area w-5 text-center"></i>
+                        <span class="font-medium">Egg Price Tracker</span>
+                    </button>
+                </li>
+                <li>
                     <button onclick="app.navigate('settings')" id="nav-settings" class="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left hover:bg-slate-800 transition-colors text-slate-300 nav-item">
                         <i class="fa-solid fa-tags w-5 text-center"></i>
                         <span class="font-medium">Pricing & Settings</span>
@@ -89,9 +113,9 @@
     <!-- Main Content -->
     <main class="flex-1 flex flex-col h-full overflow-hidden relative">
         <!-- Top Header -->
-        <header class="bg-white shadow-sm z-10 px-6 py-4 flex justify-between items-center">
-            <h2 id="page-title" class="text-2xl font-semibold text-gray-800">Point of Sale</h2>
-            <div class="flex items-center gap-4">
+        <header class="bg-white shadow-sm z-10 px-4 sm:px-6 py-3 sm:py-4 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
+            <h2 id="page-title" class="text-xl sm:text-2xl font-semibold text-gray-800 self-start">Point of Sale</h2>
+            <div class="flex items-center justify-between sm:justify-end gap-2 sm:gap-4 w-full sm:w-auto">
                 <div class="bg-blue-50 text-blue-800 px-3 py-1 rounded-full text-sm font-medium border border-blue-100 flex items-center gap-2">
                     <i class="fa-solid fa-coins text-blue-500"></i>
                     Today's Price: $<span id="display-daily-price">0.00</span> / egg
@@ -109,10 +133,25 @@
         <div class="flex-1 overflow-y-auto p-4 md:p-6 no-scrollbar relative" id="main-scroll-area">
             
             <!-- POS View -->
-            <section id="view-pos" class="max-w-4xl mx-auto h-full flex flex-col justify-center">
+            <section id="view-pos" class="max-w-5xl mx-auto w-full flex flex-col">
+                <!-- Prominent operator KPIs -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mb-4 sm:mb-6">
+                    <div class="bg-gradient-to-br from-blue-600 to-blue-700 text-white p-5 sm:p-6 rounded-2xl shadow-lg">
+                        <div class="flex items-center justify-between gap-3">
+                            <div><p class="text-xs sm:text-sm text-blue-100 font-medium uppercase tracking-wide">Available Stock</p><p class="text-2xl sm:text-3xl font-bold mt-1" id="pos-stock-display">0.0</p></div>
+                            <i class="fa-solid fa-boxes-stacked text-3xl sm:text-4xl text-blue-200"></i>
+                        </div>
+                    </div>
+                    <div class="bg-gradient-to-br from-emerald-500 to-green-600 text-white p-5 sm:p-6 rounded-2xl shadow-lg">
+                        <div class="flex items-center justify-between gap-3">
+                            <div><p class="text-xs sm:text-sm text-green-100 font-medium uppercase tracking-wide">Today's Sales</p><p class="text-2xl sm:text-3xl font-bold mt-1"><span id="pos-sales-today">0</span> eggs</p></div>
+                            <i class="fa-solid fa-cart-shopping text-3xl sm:text-4xl text-green-200"></i>
+                        </div>
+                    </div>
+                </div>
                 <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden flex flex-col md:flex-row">
                     <!-- Checkout Form -->
-                    <div class="p-8 md:w-1/2 flex flex-col justify-center border-b md:border-b-0 md:border-r border-gray-100">
+                    <div class="p-5 sm:p-8 md:w-1/2 flex flex-col justify-center border-b md:border-b-0 md:border-r border-gray-100">
                         <h3 class="text-xl font-semibold mb-6 text-gray-800">New Sale</h3>
                         
                         <div class="mb-6">
@@ -128,7 +167,7 @@
                     </div>
 
                     <!-- Summary & Action -->
-                    <div class="p-8 md:w-1/2 bg-gray-50 flex flex-col justify-between">
+                    <div class="p-5 sm:p-8 md:w-1/2 bg-gray-50 flex flex-col justify-between">
                         <div>
                             <h3 class="text-sm font-semibold uppercase tracking-wider text-gray-500 mb-4">Transaction Summary</h3>
                             <div class="flex justify-between items-center mb-2">
@@ -157,72 +196,34 @@
                     </div>
                 </div>
 
-                <!-- Quick Stats for POS -->
-                <div class="mt-8 grid grid-cols-2 gap-4 text-center">
-                    <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-                        <p class="text-sm text-gray-500 mb-1">Current Available Stock</p>
-                        <p class="text-2xl font-bold text-gray-800" id="pos-stock-display">0.0</p>
-                    </div>
-                    <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-                        <p class="text-sm text-gray-500 mb-1">Sales Today (Eggs)</p>
-                        <p class="text-2xl font-bold text-green-600" id="pos-sales-today">0</p>
-                    </div>
-                </div>
             </section>
 
             <!-- Inventory View -->
             <section id="view-inventory" class="hidden">
-                <div class="flex flex-col md:flex-row gap-6">
-                    <!-- Add Batch Form -->
-                    <div class="w-full md:w-1/3">
-                        <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 sticky top-0">
-                            <h3 class="text-lg font-semibold mb-4 text-gray-800">Receive New Import</h3>
-                            <form id="form-import" onsubmit="app.processImport(event)">
-                                <div class="mb-4">
-                                    <label class="block text-sm font-medium text-gray-600 mb-1">Import Date</label>
-                                    <input type="date" id="import-date" required class="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                </div>
-                                <div class="mb-4">
-                                    <label class="block text-sm font-medium text-gray-600 mb-1">Weight (Total kg)</label>
-                                    <input type="number" id="import-qty" step="0.1" min="0.1" required class="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                </div>
-                                <div class="mb-6 supervisor-only hidden">
-                                    <label class="block text-sm font-medium text-gray-600 mb-1">Cost Price Per kg ($)</label>
-                                    <input type="number" id="import-cost" step="0.01" min="0.01" class="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="e.g., 0.15">
-                                    <p class="text-xs text-gray-400 mt-1">Only supervisors can set cost price.</p>
-                                </div>
-                                <button type="submit" class="w-full py-3 bg-slate-800 hover:bg-slate-900 text-white font-medium rounded-lg transition-colors">
-                                    Add to Inventory
-                                </button>
-                            </form>
-                        </div>
+                <div class="max-w-7xl mx-auto">
+                    <div class="bg-white p-5 sm:p-6 rounded-2xl shadow-sm border border-gray-100 mb-6">
+                        <div class="flex items-center gap-3 mb-4"><i class="fa-solid fa-truck-ramp-box text-blue-600 text-xl"></i><div><h3 class="text-lg font-semibold text-gray-800">Receive Today's Egg Import</h3><p class="text-sm text-gray-500">Quickly record the arrival time, weight, and purchase price.</p></div></div>
+                        <form id="form-import" onsubmit="app.processImport(event)" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 items-end">
+                            <div><label class="block text-sm font-medium text-gray-600 mb-1">Import Date</label><input type="date" id="import-date" required class="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500"></div>
+                            <div><label class="block text-sm font-medium text-gray-600 mb-1">Arrival Time</label><input type="time" id="import-time" required class="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500"></div>
+                            <div><label class="block text-sm font-medium text-gray-600 mb-1">Weight (Total kg)</label><input type="number" id="import-qty" step="0.1" min="0.1" required class="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500"></div>
+                            <div><label class="block text-sm font-medium text-gray-600 mb-1">Cost Price Per kg ($)</label><input type="number" id="import-cost" step="0.01" min="0" required class="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="e.g., 0.15"></div>
+                            <button type="submit" class="w-full p-3 bg-slate-800 hover:bg-slate-900 text-white font-semibold rounded-lg"><i class="fa-solid fa-plus mr-2"></i>Add Import</button>
+                        </form>
                     </div>
-
-                    <!-- Batch History -->
-                    <div class="w-full md:w-2/3">
-                        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                            <div class="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50">
-                                <h3 class="text-lg font-semibold text-gray-800">Inventory Batches</h3>
-                                <span class="bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-1 rounded-full">FIFO Active</span>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+                        <div class="bg-white p-5 rounded-2xl border border-gray-100"><p class="text-sm text-gray-500">Total Imported</p><p id="inventory-total-imported" class="text-2xl font-bold text-blue-600">0.0 kg</p></div>
+                        <div class="bg-white p-5 rounded-2xl border border-gray-100"><p class="text-sm text-gray-500">Available Stock</p><p id="inventory-current-stock" class="text-2xl font-bold text-green-600">0.0 kg</p></div>
+                        <div class="bg-white p-5 rounded-2xl border border-gray-100"><p class="text-sm text-gray-500">Inventory Value</p><p id="inventory-value" class="text-2xl font-bold text-purple-600">$0.00</p></div>
+                    </div>
+                    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                        <div class="p-5 sm:p-6 border-b border-gray-100 bg-gray-50 flex flex-col gap-4">
+                            <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4"><div><h3 class="text-lg font-semibold text-gray-800">Inventory Import History</h3><p class="text-sm text-gray-500">Search, filter, sort, and export your import records.</p></div>
+                                <div class="flex flex-col sm:flex-row gap-2 w-full lg:w-auto"><div class="relative flex-1 sm:w-64"><i class="fa-solid fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i><input type="search" id="inventory-search" oninput="app.handleInventorySearch(event)" placeholder="Search batch, date, or price..." class="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg text-sm"></div><button onclick="app.toggleInventoryFilters()" class="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm"><i class="fa-solid fa-filter mr-2"></i>Filters</button><button onclick="app.exportInventoryCSV()" class="px-4 py-2 bg-green-600 text-white rounded-lg text-sm"><i class="fa-solid fa-download mr-2"></i>Export CSV</button></div>
                             </div>
-                            <div class="overflow-x-auto">
-                                <table class="w-full text-left text-sm text-gray-600">
-                                    <thead class="text-xs text-gray-500 uppercase bg-white border-b border-gray-100">
-                                        <tr>
-                                            <th class="px-6 py-4">Batch ID / Date</th>
-                                            <th class="px-6 py-4">Initial (kg)</th>
-                                            <th class="px-6 py-4">Remaining (kg)</th>
-                                            <th class="px-6 py-4 supervisor-only hidden">Unit Cost</th>
-                                            <th class="px-6 py-4 supervisor-only hidden">Batch Value</th>
-                                            <th class="px-6 py-4">Status</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="inventory-list" class="divide-y divide-gray-100">
-                                        <!-- Rows injected by JS -->
-                                    </tbody>
-                                </table>
-                            </div>
+                            <div id="inventory-filter-panel" class="hidden grid grid-cols-1 sm:grid-cols-4 gap-4 pt-4 border-t border-gray-200"><div><label class="block text-xs text-gray-500 mb-1">Date From</label><input type="date" id="inventory-date-from" onchange="app.applyInventoryFilters()" class="w-full p-2 border rounded-lg"></div><div><label class="block text-xs text-gray-500 mb-1">Date To</label><input type="date" id="inventory-date-to" onchange="app.applyInventoryFilters()" class="w-full p-2 border rounded-lg"></div><div><label class="block text-xs text-gray-500 mb-1">Status</label><select id="inventory-status" onchange="app.applyInventoryFilters()" class="w-full p-2 border rounded-lg"><option value="all">All Statuses</option><option value="active">Active</option><option value="depleted">Depleted</option></select></div><div class="flex items-end"><button onclick="app.clearInventoryFilters()" class="w-full px-4 py-2 bg-red-50 text-red-600 border border-red-100 rounded-lg">Clear Filters</button></div></div>
                         </div>
+                        <div class="overflow-x-auto"><table class="w-full min-w-[850px] text-left text-sm text-gray-600"><thead class="text-xs text-gray-500 uppercase border-b"><tr><th class="px-6 py-4 cursor-pointer" onclick="app.sortInventory('date')">Date & Time <i id="inventory-sort-date" class="fa-solid fa-sort"></i></th><th class="px-6 py-4">Batch ID</th><th class="px-6 py-4 cursor-pointer" onclick="app.sortInventory('totalQty')">Imported kg <i id="inventory-sort-totalQty" class="fa-solid fa-sort"></i></th><th class="px-6 py-4 cursor-pointer" onclick="app.sortInventory('remainingQty')">Remaining kg <i id="inventory-sort-remainingQty" class="fa-solid fa-sort"></i></th><th class="px-6 py-4 cursor-pointer" onclick="app.sortInventory('costPrice')">Cost / kg <i id="inventory-sort-costPrice" class="fa-solid fa-sort"></i></th><th class="px-6 py-4">Remaining Value</th><th class="px-6 py-4">Status</th></tr></thead><tbody id="inventory-list" class="divide-y divide-gray-100"></tbody></table></div>
                     </div>
                 </div>
             </section>
@@ -340,95 +341,77 @@
                 </div>
             </section>
 
-            <!-- Permissions View (Supervisor Only) -->
-            <section id="view-permissions" class="hidden">
-                <div class="max-w-2xl mx-auto">
-                    <!-- Operator Permissions Setup -->
-                    <div class="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 mb-6">
-                        <div class="flex items-center gap-3 mb-6 border-b border-gray-100 pb-4">
-                            <i class="fa-solid fa-user-shield text-purple-500 text-xl"></i>
-                            <h3 class="text-xl font-semibold text-gray-800">Operator Access Control</h3>
+            <!-- Permissions View -->
+            <section id="view-permissions" class="hidden"><div class="max-w-4xl mx-auto"><div class="bg-white p-5 sm:p-8 rounded-2xl shadow-sm border border-gray-100"><div class="flex items-center gap-3 mb-6 border-b border-gray-100 pb-4"><i class="fa-solid fa-user-shield text-purple-500 text-xl"></i><div><h3 class="text-xl font-semibold text-gray-800">Operator Page Access</h3><p class="text-sm text-gray-500">Choose every page the operator may access.</p></div></div><div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <label class="permission-card"><input type="checkbox" id="perm-pos" onchange="app.updatePermissions()"><span><b>Point of Sale (POS)</b><small>Process sales and view live stock.</small></span></label>
+                <label class="permission-card"><input type="checkbox" id="perm-inventory" onchange="app.updatePermissions()"><span><b>Inventory Management</b><small>Add imports and use the inventory table.</small></span></label>
+                <label class="permission-card"><input type="checkbox" id="perm-dashboard" onchange="app.updatePermissions()"><span><b>Financial Dashboard</b><small>View revenue and transaction history.</small></span></label>
+                <label class="permission-card"><input type="checkbox" id="perm-pricing" onchange="app.updatePermissions()"><span><b>Egg Price Tracker</b><small>Change prices and review price history.</small></span></label>
+                <label class="permission-card"><input type="checkbox" id="perm-settings" onchange="app.updatePermissions()"><span><b>Basic Settings</b><small>Change language, appearance, and regional settings.</small></span></label>
+                <label class="permission-card"><input type="checkbox" id="perm-permissions" onchange="app.updatePermissions()"><span><b>Permissions</b><small>Manage operator page access. Grant with care.</small></span></label>
+            </div></div></div></section>
+
+            <!-- Egg Price Tracker View -->
+            <section id="view-pricing" class="hidden">
+                <div class="max-w-6xl mx-auto">
+                    <div class="bg-white p-5 sm:p-6 rounded-2xl shadow-sm border border-gray-100 mb-6">
+                        <div class="flex items-center gap-3 mb-4"><i class="fa-solid fa-tag text-blue-600 text-xl"></i><div><h3 class="text-lg font-semibold text-gray-800">Set Daily Egg Price</h3><p class="text-sm text-gray-500">Adjust a day's price and immediately review the change below.</p></div></div>
+                        <form onsubmit="app.updatePriceOnly(event)" class="grid grid-cols-1 sm:grid-cols-3 gap-4 items-end"><div><label class="block text-sm font-medium text-gray-600 mb-1">Price Effective Date</label><input type="date" id="pricing-date" required class="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg"></div><div><label class="block text-sm font-medium text-gray-600 mb-1">Selling Price (Per Egg)</label><input type="number" id="pricing-price" step="0.01" min="0.01" required class="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg"></div><button type="submit" class="w-full p-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg"><i class="fa-solid fa-floppy-disk mr-2"></i>Save Daily Price</button></form>
+                    </div>
+                    <div class="bg-white p-5 sm:p-6 rounded-2xl shadow-sm border border-gray-100 mb-6">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+                            <div><h3 class="text-lg font-semibold text-gray-800">Egg Price Trend</h3><p class="text-sm text-gray-500">Daily selling price per egg</p></div>
+                            <select id="price-chart-range" onchange="app.renderPriceTracker()" class="w-full sm:w-auto px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white">
+                                <option value="30">Last 30 records</option><option value="90">Last 90 records</option><option value="all">All records</option>
+                            </select>
                         </div>
-                        <p class="text-gray-600 mb-6 text-sm">Select which sections front-line operators are allowed to access. Supervisors always have access to all modules.</p>
-                        
-                        <div class="space-y-4 mb-6">
-                            <label class="flex items-center gap-3 cursor-pointer p-3 border border-gray-100 rounded-lg hover:bg-gray-50 transition-colors">
-                                <input type="checkbox" id="perm-pos" class="w-5 h-5 text-purple-600 rounded border-gray-300 focus:ring-purple-500" onchange="app.updatePermissions()">
-                                <div>
-                                    <span class="block text-gray-700 font-medium">Point of Sale (POS)</span>
-                                    <span class="block text-xs text-gray-500">Allow processing of sales and viewing of daily stock.</span>
+                        <div class="chart-wrap"><canvas id="price-history-chart"></canvas></div>
+                    </div>
+                    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                        <div class="p-5 sm:p-6 border-b border-gray-100 bg-gray-50 flex flex-col gap-4">
+                            <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                                <div><h3 class="text-lg font-semibold text-gray-800">Daily Egg Price History</h3><p class="text-sm text-gray-500">Search, filter, sort, or export the daily records.</p></div>
+                                <div class="flex flex-col sm:flex-row gap-2 w-full lg:w-auto">
+                                    <div class="relative flex-1 sm:w-64"><i class="fa-solid fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i><input type="search" id="price-search" oninput="app.handlePriceSearch(event)" placeholder="Search date or price..." class="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm bg-white"></div>
+                                    <button onclick="app.togglePriceFilters()" class="px-4 py-2 bg-white border border-gray-200 hover:bg-gray-100 text-gray-700 font-medium rounded-lg text-sm"><i class="fa-solid fa-filter mr-2"></i>Filters</button>
+                                    <button onclick="app.exportPriceCSV()" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg text-sm"><i class="fa-solid fa-download mr-2"></i>Export CSV</button>
                                 </div>
-                            </label>
-                            <label class="flex items-center gap-3 cursor-pointer p-3 border border-gray-100 rounded-lg hover:bg-gray-50 transition-colors">
-                                <input type="checkbox" id="perm-inventory" class="w-5 h-5 text-purple-600 rounded border-gray-300 focus:ring-purple-500" onchange="app.updatePermissions()">
-                                <div>
-                                    <span class="block text-gray-700 font-medium">Inventory Management</span>
-                                    <span class="block text-xs text-gray-500">Allow logging of new egg imports.</span>
-                                </div>
-                            </label>
-                            <label class="flex items-center gap-3 cursor-pointer p-3 border border-gray-100 rounded-lg hover:bg-gray-50 transition-colors">
-                                <input type="checkbox" id="perm-dashboard" class="w-5 h-5 text-purple-600 rounded border-gray-300 focus:ring-purple-500" onchange="app.updatePermissions()">
-                                <div>
-                                    <span class="block text-gray-700 font-medium">Financial Dashboard</span>
-                                    <span class="block text-xs text-gray-500">Allow viewing of revenues, gross profit, and transaction history.</span>
-                                </div>
-                            </label>
-                            <label class="flex items-center gap-3 cursor-pointer p-3 border border-gray-100 rounded-lg hover:bg-gray-50 transition-colors">
-                                <input type="checkbox" id="perm-settings" class="w-5 h-5 text-purple-600 rounded border-gray-300 focus:ring-purple-500" onchange="app.updatePermissions()">
-                                <div>
-                                    <span class="block text-gray-700 font-medium">System Settings</span>
-                                    <span class="block text-xs text-gray-500">Allow changing the global daily price and egg weight settings.</span>
-                                </div>
-                            </label>
+                            </div>
+                            <div id="price-filter-panel" class="hidden grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4 border-t border-gray-200">
+                                <div><label class="block text-xs font-medium text-gray-500 mb-1">Date From</label><input type="date" id="price-date-from" onchange="app.applyPriceFilters()" class="w-full p-2 bg-white border border-gray-200 rounded-lg text-sm"></div>
+                                <div><label class="block text-xs font-medium text-gray-500 mb-1">Date To</label><input type="date" id="price-date-to" onchange="app.applyPriceFilters()" class="w-full p-2 bg-white border border-gray-200 rounded-lg text-sm"></div>
+                                <div class="flex items-end"><button onclick="app.clearPriceFilters()" class="w-full px-4 py-2 bg-red-50 text-red-600 hover:bg-red-100 border border-red-100 font-medium rounded-lg text-sm">Clear Filters</button></div>
+                            </div>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full min-w-[620px] text-left text-sm text-gray-600">
+                                <thead class="text-xs text-gray-500 uppercase bg-white border-b border-gray-100"><tr>
+                                    <th class="px-6 py-4 cursor-pointer hover:bg-gray-50" onclick="app.sortPriceTable('date')">Date <i id="price-sort-date" class="fa-solid fa-sort ml-1 text-gray-300"></i></th>
+                                    <th class="px-6 py-4 cursor-pointer hover:bg-gray-50" onclick="app.sortPriceTable('price')">Price Per Egg <i id="price-sort-price" class="fa-solid fa-sort ml-1 text-gray-300"></i></th>
+                                    <th class="px-6 py-4 cursor-pointer hover:bg-gray-50" onclick="app.sortPriceTable('updatedAt')">Last Updated <i id="price-sort-updatedAt" class="fa-solid fa-sort ml-1 text-gray-300"></i></th>
+                                    <th class="px-6 py-4">Change</th>
+                                </tr></thead>
+                                <tbody id="price-history-table" class="divide-y divide-gray-100"></tbody>
+                            </table>
                         </div>
                     </div>
                 </div>
             </section>
 
-            <!-- Settings View (Supervisor Only) -->
-            <section id="view-settings" class="hidden">
-                <div class="max-w-2xl mx-auto">
-                    <div class="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 mb-6">
-                        <div class="flex items-center gap-3 mb-6 border-b border-gray-100 pb-4">
-                            <i class="fa-solid fa-tag text-blue-500 text-xl"></i>
-                            <h3 class="text-xl font-semibold text-gray-800">Global Pricing Strategy</h3>
-                        </div>
-                        
-                        <p class="text-gray-600 mb-6 text-sm">Update the daily selling price. This price will be immediately applied to all new POS transactions. Historical transactions will remain unaffected.</p>
-
-                        <form id="form-pricing" onsubmit="app.updateSettings(event)">
-                            <div class="mb-6">
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Current Selling Price (Per Egg)</label>
-                                <div class="relative">
-                                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                                        <span class="text-gray-500 text-xl font-medium">$</span>
-                                    </div>
-                                    <input type="number" id="setting-price" step="0.01" min="0.01" required class="w-full pl-10 pr-4 py-4 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-2xl font-bold text-gray-800">
-                                </div>
-                            </div>
-                            <div class="mb-6">
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Average Egg Weight (kg)</label>
-                                <div class="relative">
-                                    <input type="number" id="setting-egg-weight" step="0.001" min="0.01" required class="w-full px-4 py-4 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-xl font-medium text-gray-800" placeholder="e.g., 0.06 for 60g">
-                                </div>
-                                <p class="text-xs text-gray-500 mt-2">Used to convert egg quantities back to kg for inventory deduction.</p>
-                            </div>
-                            <button type="submit" class="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-md transition-colors">
-                                Update Global Settings
-                            </button>
-                        </form>
-                    </div>
-
-                    <div class="bg-red-50 p-6 rounded-2xl border border-red-100">
-                        <h3 class="text-red-800 font-semibold mb-2">System Reset</h3>
-                        <p class="text-sm text-red-600 mb-4">Clear all local storage data. This action cannot be undone.</p>
-                        <button onclick="app.hardReset()" class="px-4 py-2 bg-white text-red-600 border border-red-200 rounded hover:bg-red-600 hover:text-white transition-colors text-sm font-medium">
-                            Clear Database
-                        </button>
-                    </div>
-                </div>
-            </section>
-
+            <!-- Basic Settings View -->
+            <section id="view-settings" class="hidden"><div class="max-w-4xl mx-auto space-y-6">
+                <div class="bg-white p-5 sm:p-8 rounded-2xl border border-gray-100 shadow-sm"><div class="flex items-center gap-3 mb-6"><i class="fa-solid fa-sliders text-blue-500 text-xl"></i><div><h3 class="text-xl font-semibold text-gray-800">Basic Settings</h3><p class="text-sm text-gray-500">Personalize appearance, language, region, and inventory behavior.</p></div></div>
+                <form onsubmit="app.saveBasicSettings(event)" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div><label class="block text-sm font-medium mb-2">Language</label><select id="setting-language" class="w-full p-3 border rounded-xl"><option value="en">English</option><option value="zh-TW">繁體中文</option><option value="my">မြန်မာဘာသာ</option></select></div>
+                    <div><label class="block text-sm font-medium mb-2">Theme</label><select id="setting-theme" class="w-full p-3 border rounded-xl"><option value="light">Light Mode</option><option value="dark">Dark Mode</option><option value="system">Use System Theme</option></select></div>
+                    <div><label class="block text-sm font-medium mb-2">Timezone</label><select id="setting-timezone" class="w-full p-3 border rounded-xl"></select></div>
+                    <div><label class="block text-sm font-medium mb-2">Currency</label><select id="setting-currency" class="w-full p-3 border rounded-xl"><option value="USD">USD ($)</option><option value="MMK">MMK (Ks)</option><option value="TWD">TWD (NT$)</option></select></div>
+                    <div><label class="block text-sm font-medium mb-2">Average Egg Weight (kg)</label><input type="number" id="setting-egg-weight" step="0.001" min="0.01" class="w-full p-3 border rounded-xl"></div>
+                    <div><label class="block text-sm font-medium mb-2">Low Stock Alert (kg)</label><input type="number" id="setting-low-stock" step="0.1" min="0" class="w-full p-3 border rounded-xl"></div>
+                    <div class="md:col-span-2"><button class="w-full p-3 bg-blue-600 text-white font-semibold rounded-xl">Save Basic Settings</button></div>
+                </form></div>
+                <div class="bg-red-50 p-6 rounded-2xl border border-red-100"><h3 class="text-red-800 font-semibold mb-2">System Reset</h3><p class="text-sm text-red-600 mb-4">Clear all local storage data. This action cannot be undone.</p><button onclick="app.hardReset()" class="px-4 py-2 bg-white text-red-600 border border-red-200 rounded">Clear Database</button></div>
+            </div></section>
         </div>
     </main>
 
@@ -460,19 +443,79 @@
     </div>
 
     <script>
+        const i18n = {
+            language: localStorage.getItem('eggProLanguage') || 'en',
+            translations: {
+                'zh-TW': {
+                    'Point of Sale':'銷售點','Inventory (Imports)':'庫存（進貨）','Dashboard':'儀表板','Permissions':'權限','Pricing & Settings':'定價與設定','Simulate Role':'模擬角色','Operator (Front-line)':'操作員（前線）','Supervisor (Admin)':'主管（管理員）','Today\'s Price: $':'今日價格：$','/ egg':'／顆','Operator Mode':'操作員模式','Supervisor Mode':'主管模式','Available Stock':'可用庫存','Today\'s Sales':'今日銷售','eggs':'顆','New Sale':'新增銷售','Quantity (Number of Eggs)':'數量（雞蛋顆數）','Calculate Total':'計算總額','Transaction Summary':'交易摘要','Price per egg':'每顆價格','Quantity':'數量','Total Amount':'總金額','Complete Sale':'完成銷售','Print Last Receipt':'列印上一張收據','Receive New Import':'接收新進貨','Import Date':'進貨日期','Weight (Total kg)':'重量（總公斤）','Cost Price Per kg ($)':'每公斤成本（$）','Only supervisors can set cost price.':'只有主管可以設定成本價格。','Add to Inventory':'加入庫存','Inventory Batches':'庫存批次','FIFO Active':'先進先出啟用','Batch ID / Date':'批次編號／日期','Initial (kg)':'初始（公斤）','Remaining (kg)':'剩餘（公斤）','Unit Cost':'單位成本','Batch Value':'批次價值','Status':'狀態','Total Stock (kg)':'總庫存（公斤）','Today\'s Revenue':'今日營收','7-Day Revenue':'7 日營收','Est. Gross Profit (All Time)':'預估毛利（累計）','Transactions History':'交易紀錄','Filters':'篩選','Export CSV':'匯出 CSV','Date From':'起始日期','Date To':'結束日期','Operator Role':'操作員角色','All Users':'所有使用者','Operator':'操作員','Supervisor':'主管','Clear Filters':'清除篩選','Date & Time':'日期與時間','Quantity (Eggs)':'數量（顆）','Sale Price':'售價','Total Revenue':'總營收','Operator Access Control':'操作員存取控制','Select which sections front-line operators are allowed to access. Supervisors always have access to all modules.':'選擇前線操作員可存取的功能。主管可存取所有模組。','Point of Sale (POS)':'銷售點（POS）','Allow processing of sales and viewing of daily stock.':'允許處理銷售並查看每日庫存。','Inventory Management':'庫存管理','Allow logging of new egg imports.':'允許登記新的雞蛋進貨。','Financial Dashboard':'財務儀表板','Allow viewing of revenues, gross profit, and transaction history.':'允許查看營收、毛利與交易紀錄。','System Settings':'系統設定','Allow changing the global daily price and egg weight settings.':'允許變更每日全域價格與雞蛋重量設定。','Language':'語言','Choose the display language for this device.':'選擇此裝置的顯示語言。','Global Pricing Strategy':'全域定價策略','Update the daily selling price. This price will be immediately applied to all new POS transactions. Historical transactions will remain unaffected.':'更新每日售價。新價格會立即套用至所有新的 POS 交易，歷史交易不受影響。','Price Effective Date':'價格生效日期','One price record is stored per day. Saving again for the same date updates that day.':'每天儲存一筆價格紀錄。同一天再次儲存會更新該日價格。','Selling Price (Per Egg)':'售價（每顆）','Average Egg Weight (kg)':'雞蛋平均重量（公斤）','Used to convert egg quantities back to kg for inventory deduction.':'用於將雞蛋數量換算為公斤以扣除庫存。','Update Global Settings':'更新全域設定','Egg Price Trend':'雞蛋價格趨勢','Daily selling price per egg':'每日每顆售價','Last 30 records':'最近 30 筆','Last 90 records':'最近 90 筆','All records':'所有紀錄','Price History':'價格歷史','System Reset':'系統重設','Clear all local storage data. This action cannot be undone.':'清除所有本機儲存資料。此操作無法復原。','Clear Database':'清除資料庫','Purchase Receipt':'購買收據','Date:':'日期：','Trx ID:':'交易編號：','Operator:':'操作員：','Price / Egg':'每顆價格','TOTAL':'總計','Thank you for your business!':'感謝您的惠顧！','Search keyword...':'搜尋關鍵字...','e.g., 0.15':'例如 0.15','e.g., 0.06 for 60g':'例如 0.06（60 克）','No price records yet.':'尚無價格紀錄。','Price per egg':'每顆價格'
+                },
+                'my': {
+                    'Point of Sale':'အရောင်းကောင်တာ','Inventory (Imports)':'ကုန်ပစ္စည်းစာရင်း (အဝင်)','Dashboard':'ဒက်ရှ်ဘုတ်','Permissions':'ခွင့်ပြုချက်များ','Pricing & Settings':'စျေးနှုန်းနှင့် ဆက်တင်များ','Simulate Role':'အခန်းကဏ္ဍ စမ်းသပ်ရန်','Operator (Front-line)':'အော်ပရေတာ (ရှေ့တန်း)','Supervisor (Admin)':'ကြီးကြပ်သူ (စီမံခန့်ခွဲသူ)','Today\'s Price: $':'ယနေ့စျေးနှုန်း: $','/ egg':'/ လုံး','Operator Mode':'အော်ပရေတာမုဒ်','Supervisor Mode':'ကြီးကြပ်သူမုဒ်','Available Stock':'လက်ကျန်ကုန်ပစ္စည်း','Today\'s Sales':'ယနေ့ရောင်းအား','eggs':'ဥ','New Sale':'အရောင်းအသစ်','Quantity (Number of Eggs)':'အရေအတွက် (ဥအလုံးရေ)','Calculate Total':'စုစုပေါင်းတွက်ရန်','Transaction Summary':'အရောင်းအကျဉ်းချုပ်','Price per egg':'တစ်လုံးစျေး','Quantity':'အရေအတွက်','Total Amount':'စုစုပေါင်းငွေ','Complete Sale':'အရောင်းပြီးမြောက်ရန်','Print Last Receipt':'နောက်ဆုံးပြေစာ ပုံနှိပ်ရန်','Receive New Import':'ကုန်အသစ် လက်ခံရန်','Import Date':'ကုန်ဝင်ရက်','Weight (Total kg)':'အလေးချိန် (စုစုပေါင်း kg)','Cost Price Per kg ($)':'တစ် kg ကုန်ကျစရိတ် ($)','Only supervisors can set cost price.':'ကြီးကြပ်သူသာ ကုန်ကျစရိတ်ကို သတ်မှတ်နိုင်သည်။','Add to Inventory':'ကုန်စာရင်းထဲ ထည့်ရန်','Inventory Batches':'ကုန်ပစ္စည်းအသုတ်များ','FIFO Active':'FIFO အသုံးပြုနေသည်','Batch ID / Date':'အသုတ် ID / ရက်စွဲ','Initial (kg)':'အစ (kg)','Remaining (kg)':'လက်ကျန် (kg)','Unit Cost':'တစ်ယူနစ်ကုန်ကျစရိတ်','Batch Value':'အသုတ်တန်ဖိုး','Status':'အခြေအနေ','Total Stock (kg)':'စုစုပေါင်းလက်ကျန် (kg)','Today\'s Revenue':'ယနေ့ဝင်ငွေ','7-Day Revenue':'၇ ရက်ဝင်ငွေ','Est. Gross Profit (All Time)':'ခန့်မှန်းအမြတ်ကြမ်း (စုစုပေါင်း)','Transactions History':'အရောင်းမှတ်တမ်း','Filters':'စစ်ထုတ်ရန်','Export CSV':'CSV ထုတ်ရန်','Date From':'စတင်ရက်','Date To':'ပြီးဆုံးရက်','Operator Role':'အော်ပရေတာအခန်းကဏ္ဍ','All Users':'အသုံးပြုသူအားလုံး','Operator':'အော်ပရေတာ','Supervisor':'ကြီးကြပ်သူ','Clear Filters':'စစ်ထုတ်မှုရှင်းရန်','Date & Time':'ရက်စွဲနှင့်အချိန်','Quantity (Eggs)':'အရေအတွက် (ဥ)','Sale Price':'ရောင်းစျေး','Total Revenue':'စုစုပေါင်းဝင်ငွေ','Operator Access Control':'အော်ပရေတာ ဝင်ရောက်ခွင့်ထိန်းချုပ်မှု','Select which sections front-line operators are allowed to access. Supervisors always have access to all modules.':'ရှေ့တန်းအော်ပရေတာများ ဝင်ရောက်နိုင်သည့် အပိုင်းများကို ရွေးပါ။ ကြီးကြပ်သူများသည် မော်ဂျူးအားလုံးကို ဝင်ရောက်နိုင်သည်။','Point of Sale (POS)':'အရောင်းကောင်တာ (POS)','Allow processing of sales and viewing of daily stock.':'အရောင်းလုပ်ဆောင်ခြင်းနှင့် နေ့စဉ်လက်ကျန်ကြည့်ခြင်းကို ခွင့်ပြုပါ။','Inventory Management':'ကုန်ပစ္စည်းစီမံခန့်ခွဲမှု','Allow logging of new egg imports.':'ဥကုန်ဝင်အသစ်များ မှတ်တမ်းတင်ရန် ခွင့်ပြုပါ။','Financial Dashboard':'ဘဏ္ဍာရေးဒက်ရှ်ဘုတ်','Allow viewing of revenues, gross profit, and transaction history.':'ဝင်ငွေ၊ အမြတ်ကြမ်းနှင့် အရောင်းမှတ်တမ်းကြည့်ရန် ခွင့်ပြုပါ။','System Settings':'စနစ်ဆက်တင်များ','Allow changing the global daily price and egg weight settings.':'နေ့စဉ်စျေးနှုန်းနှင့် ဥအလေးချိန်ဆက်တင်များ ပြောင်းရန် ခွင့်ပြုပါ။','Language':'ဘာသာစကား','Choose the display language for this device.':'ဤစက်အတွက် ပြသမည့်ဘာသာစကားကို ရွေးပါ။','Global Pricing Strategy':'အထွေထွေစျေးနှုန်းမူဝါဒ','Update the daily selling price. This price will be immediately applied to all new POS transactions. Historical transactions will remain unaffected.':'နေ့စဉ်ရောင်းစျေးကို ပြောင်းပါ။ စျေးအသစ်သည် POS အရောင်းအသစ်များတွင် ချက်ချင်းသက်ရောက်ပြီး အရောင်းဟောင်းများ မပြောင်းပါ။','Price Effective Date':'စျေးနှုန်းသက်ရောက်သည့်ရက်','One price record is stored per day. Saving again for the same date updates that day.':'တစ်ရက်လျှင် စျေးနှုန်းမှတ်တမ်းတစ်ခု သိမ်းသည်။ တူညီသောရက်ကို ထပ်သိမ်းပါက ထိုရက်၏စျေးကို ပြင်ဆင်မည်။','Selling Price (Per Egg)':'ရောင်းစျေး (တစ်လုံး)','Average Egg Weight (kg)':'ဥပျမ်းမျှအလေးချိန် (kg)','Used to convert egg quantities back to kg for inventory deduction.':'ကုန်စာရင်းမှ နုတ်ရန် ဥအရေအတွက်ကို kg သို့ ပြန်တွက်ရာတွင် အသုံးပြုသည်။','Update Global Settings':'အထွေထွေဆက်တင်များ ပြင်ဆင်ရန်','Egg Price Trend':'ဥစျေးနှုန်းလမ်းကြောင်း','Daily selling price per egg':'တစ်လုံး၏ နေ့စဉ်ရောင်းစျေး','Last 30 records':'နောက်ဆုံးမှတ်တမ်း ၃၀','Last 90 records':'နောက်ဆုံးမှတ်တမ်း ၉၀','All records':'မှတ်တမ်းအားလုံး','Price History':'စျေးနှုန်းမှတ်တမ်း','System Reset':'စနစ်ပြန်လည်သတ်မှတ်ခြင်း','Clear all local storage data. This action cannot be undone.':'စက်တွင်းသိမ်းဆည်းထားသောဒေတာအားလုံးကို ဖျက်မည်။ ပြန်မရနိုင်ပါ။','Clear Database':'ဒေတာဘေ့စ်ရှင်းရန်','Purchase Receipt':'ဝယ်ယူမှုပြေစာ','Date:':'ရက်စွဲ:','Trx ID:':'အရောင်း ID:','Operator:':'အော်ပရေတာ:','Price / Egg':'တစ်လုံးစျေး','TOTAL':'စုစုပေါင်း','Thank you for your business!':'အားပေးမှုအတွက် ကျေးဇူးတင်ပါသည်။','Search keyword...':'သော့ချက်စာလုံးရှာရန်...','e.g., 0.15':'ဥပမာ 0.15','e.g., 0.06 for 60g':'ဥပမာ 60g အတွက် 0.06','No price records yet.':'စျေးနှုန်းမှတ်တမ်း မရှိသေးပါ။'
+                }
+            },
+            canonical(value) {
+                const clean = value.trim();
+                for (const dict of Object.values(this.translations)) {
+                    for (const [en, translated] of Object.entries(dict)) if (translated === clean) return en;
+                }
+                return clean;
+            },
+            t(value) {
+                const key = this.canonical(String(value));
+                return this.language === 'en' ? key : (this.translations[this.language]?.[key] || key);
+            },
+            translate(root = document.body) {
+                const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+                const nodes = [];
+                while (walker.nextNode()) nodes.push(walker.currentNode);
+                nodes.forEach(node => {
+                    if (['SCRIPT','STYLE'].includes(node.parentElement?.tagName)) return;
+                    const raw = node.nodeValue;
+                    const lead = raw.match(/^\s*/)?.[0] || '', tail = raw.match(/\s*$/)?.[0] || '';
+                    const translated = this.t(raw.trim());
+                    if (raw.trim() && translated !== raw.trim()) node.nodeValue = lead + translated + tail;
+                });
+                root.querySelectorAll?.('[placeholder],[title],[aria-label]').forEach(el => ['placeholder','title','aria-label'].forEach(attr => {
+                    if (el.hasAttribute(attr)) el.setAttribute(attr, this.t(el.getAttribute(attr)));
+                }));
+                document.documentElement.lang = this.language;
+                const select = document.getElementById('setting-language'); if (select) select.value = this.language;
+            },
+            setLanguage(language) {
+                this.language = ['en','zh-TW','my'].includes(language) ? language : 'en';
+                localStorage.setItem('eggProLanguage', this.language);
+                this.translate(document.body);
+                if (typeof app !== 'undefined' && app.currentView === 'pricing') app.renderPriceTracker();
+            },
+            init() {
+                this.translate(document.body);
+                let queued = false;
+                new MutationObserver(() => { if (!queued) { queued = true; requestAnimationFrame(() => { queued = false; this.translate(document.body); }); } }).observe(document.body, { childList:true, subtree:true });
+            }
+        };
+
+        Object.assign(i18n.translations['zh-TW'], {
+            'Egg Price Tracker':'雞蛋價格追蹤','Daily Egg Price History':'每日雞蛋價格紀錄','Search, filter, sort, or export the daily records.':'搜尋、篩選、排序或匯出每日紀錄。','Search date or price...':'搜尋日期或價格...','Date':'日期','Price Per Egg':'每顆價格','Last Updated':'最後更新','Change':'變動','No price records found.':'找不到價格紀錄。','Price history exported successfully!':'價格紀錄已成功匯出！','No data to export based on current filters.':'目前篩選條件下沒有可匯出的資料。'
+        });
+        Object.assign(i18n.translations['my'], {
+            'Egg Price Tracker':'ဥစျေးနှုန်းစောင့်ကြည့်မှု','Daily Egg Price History':'နေ့စဉ်ဥစျေးနှုန်းမှတ်တမ်း','Search, filter, sort, or export the daily records.':'နေ့စဉ်မှတ်တမ်းများကို ရှာဖွေ၊ စစ်ထုတ်၊ အစဉ်လိုက်စီ သို့မဟုတ် ထုတ်ယူပါ။','Search date or price...':'ရက်စွဲ သို့မဟုတ် စျေးနှုန်းရှာရန်...','Date':'ရက်စွဲ','Price Per Egg':'တစ်လုံးစျေး','Last Updated':'နောက်ဆုံးပြင်ဆင်ချိန်','Change':'ပြောင်းလဲမှု','No price records found.':'စျေးနှုန်းမှတ်တမ်း မတွေ့ပါ။','Price history exported successfully!':'စျေးနှုန်းမှတ်တမ်းကို အောင်မြင်စွာ ထုတ်ယူပြီးပါပြီ။','No data to export based on current filters.':'လက်ရှိစစ်ထုတ်မှုအရ ထုတ်ယူရန်ဒေတာမရှိပါ။'
+        });
+
+        Object.assign(i18n.translations['zh-TW'], {'Basic Settings':'基本設定','Theme':'主題','Light Mode':'淺色模式','Dark Mode':'深色模式','Use System Theme':'使用系統主題','Timezone':'時區','Currency':'貨幣','Low Stock Alert (kg)':'低庫存警示（公斤）','Save Basic Settings':'儲存基本設定','Set Daily Egg Price':'設定每日雞蛋價格','Save Daily Price':'儲存每日價格','Arrival Time':'到貨時間',"Receive Today's Egg Import":"接收今日雞蛋進貨",'Add Import':'新增進貨','Inventory Import History':'進貨歷史','Total Imported':'進貨總量','Inventory Value':'庫存價值','All Statuses':'所有狀態','Active':'有效','Depleted':'已用完','Operator Page Access':'操作員頁面存取','Daily price saved successfully!':'每日價格已成功儲存！','Basic settings saved successfully!':'基本設定已成功儲存！'});
+        Object.assign(i18n.translations['my'], {'Basic Settings':'အခြေခံဆက်တင်များ','Theme':'အပြင်အဆင်','Light Mode':'အလင်းမုဒ်','Dark Mode':'အမှောင်မုဒ်','Use System Theme':'စနစ်အပြင်အဆင်သုံးရန်','Timezone':'အချိန်ဇုန်','Currency':'ငွေကြေး','Low Stock Alert (kg)':'လက်ကျန်နည်းသတိပေးချက် (kg)','Save Basic Settings':'အခြေခံဆက်တင်များ သိမ်းရန်','Set Daily Egg Price':'နေ့စဉ်ဥစျေး သတ်မှတ်ရန်','Save Daily Price':'နေ့စဉ်စျေး သိမ်းရန်','Arrival Time':'ရောက်ရှိချိန်',"Receive Today's Egg Import":"ယနေ့ဥကုန်ဝင် လက်ခံရန်",'Add Import':'ကုန်ဝင်ထည့်ရန်','Inventory Import History':'ကုန်ဝင်မှတ်တမ်း','Total Imported':'စုစုပေါင်းကုန်ဝင်','Inventory Value':'ကုန်တန်ဖိုး','All Statuses':'အခြေအနေအားလုံး','Active':'အသုံးပြုနိုင်','Depleted':'ကုန်သွားပြီ','Operator Page Access':'အော်ပရေတာ စာမျက်နှာဝင်ခွင့်','Daily price saved successfully!':'နေ့စဉ်စျေးကို သိမ်းပြီးပါပြီ။','Basic settings saved successfully!':'အခြေခံဆက်တင်များ သိမ်းပြီးပါပြီ။'});
+
         // Application State & Logic
         const app = {
             state: {
                 role: 'operator', // 'operator' or 'supervisor'
                 dailyPrice: 0.15,
+                priceHistory: [], // { date: 'YYYY-MM-DD', price, updatedAt }
                 eggWeight: 0.06, // 60 grams average per egg
                 inventory: [], // { id, date, totalQty, remainingQty, costPrice }
+                appSettings: { theme: 'light', timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC', currency: 'USD', lowStock: 10 },
                 sales: [],     // { id, timestamp, operator, qty, unitPrice, total, costBasis }
                 permissions: { // Operator permissions config
-                    pos: true,
-                    inventory: true,
-                    dashboard: false,
-                    settings: false
+                    pos: true, inventory: true, dashboard: false, pricing: false, settings: false, permissions: false
                 }
             },
             dashboardTable: {
@@ -484,17 +527,28 @@
             },
             currentView: 'pos',
             lastTransaction: null,
+            priceChart: null,
+            inventoryTable: { search:'', sortBy:'date', sortDir:'desc', filters:{show:false,dateFrom:'',dateTo:'',status:'all'}, currentData:[] },
+            priceTable: { search: '', sortBy: 'date', sortDir: 'desc', filters: { show: false, dateFrom: '', dateTo: '' }, currentData: [] },
 
             init() {
+                i18n.init();
                 this.loadData();
+                this.ensurePriceHistory();
                 this.setupMobileMenu();
                 this.switchRole('operator'); // Default start
                 
                 // Set today's date in import form
                 document.getElementById('import-date').valueAsDate = new Date();
+                document.getElementById('import-time').value = new Date().toTimeString().slice(0,5);
+                document.getElementById('pricing-date').value = this.getLocalDateKey();
+                document.getElementById('pricing-price').value = Number(this.state.dailyPrice).toFixed(2);
+                this.applyTheme();
+                document.getElementById('setting-price-date').value = this.getLocalDateKey();
                 
                 // Add input listener for POS
                 document.getElementById('pos-quantity').addEventListener('input', () => this.calculateTotal());
+                document.getElementById('setting-price-date').addEventListener('change', (e) => { const r = this.state.priceHistory.find(i => i.date === e.target.value); document.getElementById('setting-price').value = r ? Number(r.price).toFixed(2) : Number(this.state.dailyPrice).toFixed(2); });
             },
 
             // Data Persistence
@@ -510,6 +564,19 @@
                 }
                 this.updateUI();
             },
+            getLocalDateKey(date = new Date()) {
+                const y = date.getFullYear();
+                const m = String(date.getMonth() + 1).padStart(2, '0');
+                const d = String(date.getDate()).padStart(2, '0');
+                return `${y}-${m}-${d}`;
+            },
+            ensurePriceHistory() {
+                if (!Array.isArray(this.state.priceHistory)) this.state.priceHistory = [];
+                if (this.state.priceHistory.length === 0) {
+                    this.state.priceHistory.push({ date: this.getLocalDateKey(), price: Number(this.state.dailyPrice), updatedAt: new Date().toISOString() });
+                    localStorage.setItem('eggProData', JSON.stringify(this.state));
+                }
+            },
             saveData() {
                 localStorage.setItem('eggProData', JSON.stringify(this.state));
                 this.updateUI();
@@ -518,11 +585,8 @@
             // Navigation & UI Updates
             navigate(view) {
                 if (this.state.role === 'operator') {
-                    if (view === 'permissions') {
-                        this.showToast('Access restricted to Supervisors only.', 'error');
-                        return;
-                    }
-                    if (!this.state.permissions[view]) {
+                    const permissionKey = view;
+                    if (!this.state.permissions[permissionKey]) {
                         this.showToast('Access denied by Supervisor settings.', 'error');
                         return;
                     }
@@ -542,16 +606,17 @@
                 }
 
                 // Hide all views
-                ['pos', 'inventory', 'dashboard', 'settings', 'permissions'].forEach(v => {
+                ['pos', 'inventory', 'dashboard', 'pricing', 'settings', 'permissions'].forEach(v => {
                     document.getElementById(`view-${v}`).classList.add('hidden');
                 });
 
                 // Show target view
                 document.getElementById(`view-${view}`).classList.remove('hidden');
-                document.getElementById('mobile-menu-btn').nextElementSibling?.classList.add('hidden'); // hide mobile menu
+                const mobileNav = document.getElementById('nav-links');
+                if (window.innerWidth < 768) { mobileNav.classList.add('hidden'); mobileNav.classList.remove('flex'); }
 
                 // Update Title
-                const titles = { pos: 'Point of Sale', inventory: 'Inventory Management', dashboard: 'Financial Dashboard', settings: 'System Settings', permissions: 'Access Control' };
+                const titles = { pos: 'Point of Sale', inventory: 'Inventory Management', dashboard: 'Financial Dashboard', pricing: 'Egg Price Tracker', settings: 'Basic Settings', permissions: 'Access Control' };
                 document.getElementById('page-title').innerText = titles[view];
 
                 this.updateUI();
@@ -608,8 +673,9 @@
                 document.getElementById('nav-pos').parentElement.style.display = (isSup || p.pos) ? 'block' : 'none';
                 document.getElementById('nav-inventory').parentElement.style.display = (isSup || p.inventory) ? 'block' : 'none';
                 document.getElementById('nav-dashboard').parentElement.style.display = (isSup || p.dashboard) ? 'block' : 'none';
+                document.getElementById('nav-pricing').parentElement.style.display = (isSup || p.pricing) ? 'block' : 'none';
                 document.getElementById('nav-settings').parentElement.style.display = (isSup || p.settings) ? 'block' : 'none';
-                document.getElementById('nav-permissions').parentElement.style.display = isSup ? 'block' : 'none';
+                document.getElementById('nav-permissions').parentElement.style.display = (isSup || p.permissions) ? 'block' : 'none';
             },
 
             updateUI() {
@@ -627,18 +693,10 @@
                 document.getElementById('pos-sales-today').innerText = todayQty.toLocaleString();
 
                 if (this.currentView === 'inventory') this.renderInventory();
-                if (this.currentView === 'dashboard') this.renderDashboard(); // Allow operators to render dashboard if given permission
-                if (this.currentView === 'settings') {
-                    document.getElementById('setting-price').value = this.state.dailyPrice;
-                    document.getElementById('setting-egg-weight').value = this.state.eggWeight;
-                }
-                if (this.currentView === 'permissions') {
-                    // Load permissions checkboxes
-                    document.getElementById('perm-pos').checked = this.state.permissions.pos;
-                    document.getElementById('perm-inventory').checked = this.state.permissions.inventory;
-                    document.getElementById('perm-dashboard').checked = this.state.permissions.dashboard;
-                    document.getElementById('perm-settings').checked = this.state.permissions.settings;
-                }
+                if (this.currentView === 'dashboard') this.renderDashboard();
+                if (this.currentView === 'pricing') this.renderPriceTracker(); // Allow operators to render dashboard if given permission
+                if (this.currentView === 'settings') this.loadBasicSettingsUI();
+                if (this.currentView === 'permissions') ['pos','inventory','dashboard','pricing','settings','permissions'].forEach(k => { const el=document.getElementById('perm-'+k); if(el) el.checked=!!this.state.permissions[k]; });
             },
 
             getTotalStock() {
@@ -742,6 +800,7 @@
             processImport(e) {
                 e.preventDefault();
                 const date = document.getElementById('import-date').value;
+                const time = document.getElementById('import-time').value;
                 const qty = parseFloat(document.getElementById('import-qty').value);
                 let cost = parseFloat(document.getElementById('import-cost').value);
 
@@ -756,6 +815,7 @@
                 const newBatch = {
                     id: 'B-' + Date.now(),
                     date: date,
+                    time: time,
                     totalQty: qty,
                     remainingQty: qty,
                     costPrice: cost
@@ -766,47 +826,17 @@
                 
                 e.target.reset();
                 document.getElementById('import-date').valueAsDate = new Date();
+                document.getElementById('import-time').value = new Date().toTimeString().slice(0,5);
+                document.getElementById('pricing-date').value = this.getLocalDateKey();
+                document.getElementById('pricing-price').value = Number(this.state.dailyPrice).toFixed(2);
+                this.applyTheme();
                 this.showToast(`Successfully received ${qty} kg.`, 'success');
             },
 
-            renderInventory() {
-                const tbody = document.getElementById('inventory-list');
-                tbody.innerHTML = '';
-
-                // Sort newest first for display
-                const sorted = [...this.state.inventory].sort((a, b) => new Date(b.date) - new Date(a.date));
-
-                if(sorted.length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="5" class="px-6 py-8 text-center text-gray-500">No inventory batches recorded yet.</td></tr>`;
-                    return;
-                }
-
-                sorted.forEach(batch => {
-                    const isDepleted = batch.remainingQty === 0;
-                    const statusHtml = isDepleted 
-                        ? `<span class="bg-gray-100 text-gray-600 text-xs font-semibold px-2.5 py-1 rounded-full">Depleted</span>`
-                        : `<span class="bg-green-100 text-green-800 text-xs font-semibold px-2.5 py-1 rounded-full">Active</span>`;
-                    
-                    const isSup = this.state.role === 'supervisor';
-                    
-                    tbody.innerHTML += `
-                        <tr class="hover:bg-gray-50 transition-colors ${isDepleted ? 'opacity-50' : ''}">
-                            <td class="px-6 py-4">
-                                <div class="font-medium text-gray-800">${batch.id}</div>
-                                <div class="text-xs text-gray-500">${batch.date}</div>
-                            </td>
-                            <td class="px-6 py-4">${batch.totalQty.toLocaleString(undefined, {minimumFractionDigits: 1, maximumFractionDigits: 1})}</td>
-                            <td class="px-6 py-4 font-semibold ${isDepleted ? 'text-gray-500' : 'text-blue-600'}">${batch.remainingQty.toLocaleString(undefined, {minimumFractionDigits: 1, maximumFractionDigits: 1})}</td>
-                            <td class="px-6 py-4 supervisor-only ${isSup ? '' : 'hidden'}">$${batch.costPrice.toFixed(2)}</td>
-                            <td class="px-6 py-4 font-medium text-purple-600 supervisor-only ${isSup ? '' : 'hidden'}">
-                                Init: $${(batch.totalQty * batch.costPrice).toFixed(2)}<br>
-                                <span class="text-xs text-gray-500">Rem: $${(batch.remainingQty * batch.costPrice).toFixed(2)}</span>
-                            </td>
-                            <td class="px-6 py-4">${statusHtml}</td>
-                        </tr>
-                    `;
-                });
-            },
+            getFilteredInventory() { let data=[...this.state.inventory],t=this.inventoryTable.search.toLowerCase(); data=data.filter(b=>(!t||b.id.toLowerCase().includes(t)||b.date.includes(t)||Number(b.costPrice).toFixed(2).includes(t))&&(!this.inventoryTable.filters.dateFrom||b.date>=this.inventoryTable.filters.dateFrom)&&(!this.inventoryTable.filters.dateTo||b.date<=this.inventoryTable.filters.dateTo)&&(this.inventoryTable.filters.status==='all'||(this.inventoryTable.filters.status==='depleted'?b.remainingQty<=0:b.remainingQty>0))); data.sort((a,b)=>{let x=a[this.inventoryTable.sortBy],y=b[this.inventoryTable.sortBy];let r=x<y?-1:x>y?1:0;return this.inventoryTable.sortDir==='asc'?r:-r}); return data; },
+            renderInventory() { const data=this.getFilteredInventory(),tbody=document.getElementById('inventory-list'); this.inventoryTable.currentData=data; const total=this.state.inventory.reduce((n,b)=>n+b.totalQty,0),stock=this.getTotalStock(),val=this.state.inventory.reduce((n,b)=>n+b.remainingQty*b.costPrice,0); document.getElementById('inventory-total-imported').innerText=total.toFixed(1)+' kg';document.getElementById('inventory-current-stock').innerText=stock.toFixed(1)+' kg';document.getElementById('inventory-value').innerText='$'+val.toFixed(2); tbody.innerHTML=data.length?data.map(b=>`<tr class="hover:bg-gray-50"><td class="px-6 py-4 whitespace-nowrap">${b.date} ${b.time||''}</td><td class="px-6 py-4 font-medium">${b.id}</td><td class="px-6 py-4">${b.totalQty.toFixed(1)}</td><td class="px-6 py-4 font-semibold text-blue-600">${b.remainingQty.toFixed(1)}</td><td class="px-6 py-4">$${b.costPrice.toFixed(2)}</td><td class="px-6 py-4">$${(b.remainingQty*b.costPrice).toFixed(2)}</td><td class="px-6 py-4"><span class="px-2 py-1 rounded-full text-xs ${b.remainingQty<=0?'bg-gray-100 text-gray-600':'bg-green-100 text-green-800'}">${i18n.t(b.remainingQty<=0?'Depleted':'Active')}</span></td></tr>`).join(''):`<tr><td colspan="7" class="p-10 text-center">${i18n.t('No inventory records found.')}</td></tr>`; },
+            handleInventorySearch(e){this.inventoryTable.search=e.target.value;this.renderInventory()}, toggleInventoryFilters(){this.inventoryTable.filters.show=!this.inventoryTable.filters.show;document.getElementById('inventory-filter-panel').classList.toggle('hidden',!this.inventoryTable.filters.show)}, applyInventoryFilters(){this.inventoryTable.filters.dateFrom=document.getElementById('inventory-date-from').value;this.inventoryTable.filters.dateTo=document.getElementById('inventory-date-to').value;this.inventoryTable.filters.status=document.getElementById('inventory-status').value;this.renderInventory()}, clearInventoryFilters(){['inventory-date-from','inventory-date-to','inventory-search'].forEach(id=>document.getElementById(id).value='');document.getElementById('inventory-status').value='all';this.inventoryTable.search='';this.inventoryTable.filters={show:this.inventoryTable.filters.show,dateFrom:'',dateTo:'',status:'all'};this.renderInventory()}, sortInventory(c){if(this.inventoryTable.sortBy===c)this.inventoryTable.sortDir=this.inventoryTable.sortDir==='asc'?'desc':'asc';else{this.inventoryTable.sortBy=c;this.inventoryTable.sortDir='desc'}this.renderInventory()}, exportInventoryCSV(){const d=this.inventoryTable.currentData;if(!d.length)return this.showToast(i18n.t('No data to export based on current filters.'),'warning');let csv='Date,Time,Batch ID,Imported kg,Remaining kg,Cost per kg,Remaining Value\n';d.forEach(b=>csv+=`${b.date},${b.time||''},${b.id},${b.totalQty},${b.remainingQty},${b.costPrice},${(b.remainingQty*b.costPrice).toFixed(2)}\n`);this.downloadCSV(csv,`eggpro_inventory_${Date.now()}.csv`);},
+            downloadCSV(csv,name){const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'}),a=document.createElement('a'),u=URL.createObjectURL(blob);a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(u);},
 
             renderDashboard() {
                 const now = new Date();
@@ -1000,32 +1030,84 @@
                 this.renderDashboard();
             },
 
+            getFilteredPriceData() {
+                let data = [...this.state.priceHistory];
+                const term = this.priceTable.search.trim().toLowerCase();
+                data = data.filter(item => {
+                    const formatted = new Date(item.date + 'T00:00:00').toLocaleDateString();
+                    const matchesSearch = !term || item.date.toLowerCase().includes(term) || formatted.toLowerCase().includes(term) || Number(item.price).toFixed(2).includes(term);
+                    const matchesFrom = !this.priceTable.filters.dateFrom || item.date >= this.priceTable.filters.dateFrom;
+                    const matchesTo = !this.priceTable.filters.dateTo || item.date <= this.priceTable.filters.dateTo;
+                    return matchesSearch && matchesFrom && matchesTo;
+                });
+                data.sort((a, b) => {
+                    let av = a[this.priceTable.sortBy] || '', bv = b[this.priceTable.sortBy] || '';
+                    if (this.priceTable.sortBy === 'price') { av = Number(av); bv = Number(bv); }
+                    const result = av < bv ? -1 : av > bv ? 1 : 0;
+                    return this.priceTable.sortDir === 'asc' ? result : -result;
+                });
+                return data;
+            },
+            renderPriceTracker() {
+                const tbody = document.getElementById('price-history-table');
+                const canvas = document.getElementById('price-history-chart');
+                if (!tbody || !canvas) return;
+                const data = this.getFilteredPriceData();
+                this.priceTable.currentData = data;
+                const chronological = [...this.state.priceHistory].sort((a,b) => a.date.localeCompare(b.date));
+                const previousByDate = new Map(chronological.map((item, index) => [item.date, index ? Number(chronological[index-1].price) : null]));
+                tbody.innerHTML = data.length ? data.map(item => {
+                    const previous = previousByDate.get(item.date), change = previous === null ? null : Number(item.price) - previous;
+                    const changeHtml = change === null ? '<span class="text-gray-400">-</span>' : `<span class="font-medium ${change > 0 ? 'text-red-600' : change < 0 ? 'text-green-600' : 'text-gray-500'}">${change > 0 ? '+' : ''}$${change.toFixed(2)}</span>`;
+                    return `<tr class="hover:bg-gray-50"><td class="px-6 py-4 whitespace-nowrap font-medium text-gray-800">${new Date(item.date+'T00:00:00').toLocaleDateString()}</td><td class="px-6 py-4 font-bold text-blue-600">$${Number(item.price).toFixed(2)}</td><td class="px-6 py-4 whitespace-nowrap text-xs">${item.updatedAt ? new Date(item.updatedAt).toLocaleString() : '-'}</td><td class="px-6 py-4">${changeHtml}</td></tr>`;
+                }).join('') : `<tr><td colspan="4" class="px-6 py-10 text-center text-gray-500">${i18n.t('No price records found.')}</td></tr>`;
+                ['date','price','updatedAt'].forEach(col => { const icon=document.getElementById(`price-sort-${col}`); if(icon) icon.className='fa-solid ml-1 '+(this.priceTable.sortBy===col?(this.priceTable.sortDir==='asc'?'fa-sort-up text-blue-600':'fa-sort-down text-blue-600'):'fa-sort text-gray-300'); });
+                const range = document.getElementById('price-chart-range')?.value || '30';
+                const chartData = (range === 'all' ? chronological : chronological.slice(-Number(range)));
+                if (this.priceChart) this.priceChart.destroy();
+                this.priceChart = new Chart(canvas, { type:'line', data:{ labels:chartData.map(i=>new Date(i.date+'T00:00:00').toLocaleDateString()), datasets:[{label:i18n.t('Price Per Egg'),data:chartData.map(i=>Number(i.price)),borderColor:'#2563eb',backgroundColor:'rgba(37,99,235,.12)',fill:true,tension:.3,pointRadius:4,pointHoverRadius:6}]}, options:{responsive:true,maintainAspectRatio:false,interaction:{intersect:false,mode:'index'},plugins:{legend:{display:false}},scales:{y:{beginAtZero:false,ticks:{callback:v=>'$'+Number(v).toFixed(2)}},x:{ticks:{maxRotation:0,autoSkip:true,maxTicksLimit:8}}}} });
+                i18n.translate(document.getElementById('view-pricing'));
+            },
+            handlePriceSearch(e) { this.priceTable.search = e.target.value; this.renderPriceTracker(); },
+            togglePriceFilters() { this.priceTable.filters.show = !this.priceTable.filters.show; document.getElementById('price-filter-panel').classList.toggle('hidden', !this.priceTable.filters.show); },
+            applyPriceFilters() { this.priceTable.filters.dateFrom=document.getElementById('price-date-from').value; this.priceTable.filters.dateTo=document.getElementById('price-date-to').value; this.renderPriceTracker(); },
+            clearPriceFilters() { document.getElementById('price-date-from').value=''; document.getElementById('price-date-to').value=''; document.getElementById('price-search').value=''; this.priceTable.search=''; this.priceTable.filters.dateFrom=''; this.priceTable.filters.dateTo=''; this.renderPriceTracker(); },
+            sortPriceTable(col) { if(this.priceTable.sortBy===col) this.priceTable.sortDir=this.priceTable.sortDir==='asc'?'desc':'asc'; else {this.priceTable.sortBy=col; this.priceTable.sortDir='desc';} this.renderPriceTracker(); },
+            exportPriceCSV() {
+                const data=this.priceTable.currentData;
+                if(!data.length){this.showToast(i18n.t('No data to export based on current filters.'),'warning');return;}
+                let csv='Date,Price Per Egg,Last Updated\n';
+                data.forEach(item=>{csv+=`"${item.date}",${Number(item.price).toFixed(2)},"${item.updatedAt||''}"\n`;});
+                const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'}),link=document.createElement('a'),url=URL.createObjectURL(blob);
+                link.href=url;link.download=`eggpro_price_history_${Date.now()}.csv`;document.body.appendChild(link);link.click();link.remove();URL.revokeObjectURL(url);
+                this.showToast(i18n.t('Price history exported successfully!'),'success');
+            },
+            updatePriceOnly(e) { e.preventDefault(); const date=document.getElementById('pricing-date').value,price=parseFloat(document.getElementById('pricing-price').value); if(!date||price<=0)return; const rec={date,price,updatedAt:new Date().toISOString()},idx=this.state.priceHistory.findIndex(x=>x.date===date); if(idx>=0)this.state.priceHistory[idx]=rec;else this.state.priceHistory.push(rec);this.state.priceHistory.sort((a,b)=>a.date.localeCompare(b.date));this.state.dailyPrice=Number(this.state.priceHistory.at(-1).price);this.saveData();this.renderPriceTracker();this.showToast(i18n.t('Daily price saved successfully!'),'success'); },
+            loadBasicSettingsUI(){const a=this.state.appSettings||{};document.getElementById('setting-language').value=i18n.language;document.getElementById('setting-theme').value=a.theme||'light';document.getElementById('setting-currency').value=a.currency||'USD';document.getElementById('setting-egg-weight').value=this.state.eggWeight;document.getElementById('setting-low-stock').value=a.lowStock??10;const z=document.getElementById('setting-timezone');if(!z.options.length){const zones=Intl.supportedValuesOf?Intl.supportedValuesOf('timeZone'):['UTC','Asia/Yangon','Asia/Taipei'];zones.forEach(v=>z.add(new Option(v,v)));}z.value=a.timezone||'UTC';},
+            applyTheme(){const t=this.state.appSettings?.theme||'light',dark=t==='dark'||(t==='system'&&matchMedia('(prefers-color-scheme: dark)').matches);document.documentElement.classList.toggle('dark',dark);},
+            saveBasicSettings(e){e.preventDefault();this.state.appSettings={theme:document.getElementById('setting-theme').value,timezone:document.getElementById('setting-timezone').value,currency:document.getElementById('setting-currency').value,lowStock:parseFloat(document.getElementById('setting-low-stock').value)||0};this.state.eggWeight=parseFloat(document.getElementById('setting-egg-weight').value)||this.state.eggWeight;i18n.setLanguage(document.getElementById('setting-language').value);this.applyTheme();this.saveData();this.showToast(i18n.t('Basic settings saved successfully!'),'success');},
             updateSettings(e) {
                 e.preventDefault();
                 const newPrice = parseFloat(document.getElementById('setting-price').value);
                 const newWeight = parseFloat(document.getElementById('setting-egg-weight').value);
-                
-                if (newPrice > 0 && newWeight > 0) {
-                    this.state.dailyPrice = newPrice;
+                const priceDate = document.getElementById('setting-price-date').value;
+                if (newPrice > 0 && newWeight > 0 && priceDate) {
+                    const record = { date: priceDate, price: newPrice, updatedAt: new Date().toISOString() };
+                    const existingIndex = this.state.priceHistory.findIndex(item => item.date === priceDate);
+                    if (existingIndex >= 0) this.state.priceHistory[existingIndex] = record;
+                    else this.state.priceHistory.push(record);
+                    this.state.priceHistory.sort((a, b) => a.date.localeCompare(b.date));
+                    const latest = this.state.priceHistory[this.state.priceHistory.length - 1];
+                    this.state.dailyPrice = Number(latest.price);
                     this.state.eggWeight = newWeight;
                     this.saveData();
-                    this.showToast(`Settings updated: Price $${newPrice.toFixed(2)}/egg, Weight ${newWeight}kg/egg`, 'success');
+                    this.showToast(`Price saved for ${priceDate}: $${newPrice.toFixed(2)} per egg`, 'success');
                 } else {
-                    this.showToast('Please enter valid settings values.', 'error');
+                    this.showToast('Please enter a valid date, price, and egg weight.', 'error');
                 }
             },
 
-            updatePermissions() {
-                this.state.permissions = {
-                    pos: document.getElementById('perm-pos').checked,
-                    inventory: document.getElementById('perm-inventory').checked,
-                    dashboard: document.getElementById('perm-dashboard').checked,
-                    settings: document.getElementById('perm-settings').checked
-                };
-                this.saveData();
-                this.updateNavVisibility();
-                this.showToast('Operator permissions successfully updated.', 'success');
-            },
+            updatePermissions() { this.state.permissions={}; ['pos','inventory','dashboard','pricing','settings','permissions'].forEach(k=>this.state.permissions[k]=document.getElementById('perm-'+k).checked); this.saveData();this.updateNavVisibility();this.showToast(i18n.t('Operator permissions successfully updated.'),'success'); },
 
             hardReset() {
                 // A custom confirmation overlay could go here, but keeping it simple for prototype
