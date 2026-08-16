@@ -105,6 +105,15 @@
             #form-import, #view-pricing form { display: flex !important; flex-direction: column; align-items: stretch; }
             #form-import > *, #view-pricing form > * { flex: 0 0 auto; min-width: 0; max-width: 100%; width: 100%; }
         }
+
+        .table-action-btn { width: 2.25rem; height: 2.25rem; min-height: 0; display: inline-flex; align-items: center; justify-content: center; border-radius: .65rem; transition: background-color .18s ease, color .18s ease, transform .18s ease; }
+        .table-action-btn:active { transform: scale(.94); }
+        .table-action-edit { background: var(--primary-50); color: var(--primary-500); }
+        .table-action-edit:hover { background: var(--primary-100); color: var(--primary-600); }
+        .table-action-delete { background: #f5f5f6; color: #fb7185; }
+        .table-action-delete:hover { background: #fff1f2; color: #f43f5e; }
+        html.dark .table-action-delete { background: #334155; color: #fda4af; }
+        html.dark .table-action-delete:hover { background: #4c1d2a; color: #fecdd3; }
     </style>
 </head>
 <body class="bg-gray-50 text-gray-800 min-h-screen md:h-screen overflow-x-hidden md:overflow-hidden flex flex-col md:flex-row">
@@ -116,13 +125,11 @@
                     <i class="fa-solid fa-egg text-yellow-400 text-2xl"></i>
                     <h1 class="text-xl font-bold tracking-wider">EggPro</h1>
                 </div>
-                <!-- Mobile Menu Toggle -->
                 <button id="mobile-menu-btn" class="md:hidden text-gray-300 hover:text-white">
                     <i class="fa-solid fa-bars text-xl"></i>
                 </button>
             </div>
 
-            <!-- Navigation Links -->
             <ul id="nav-links" class="hidden md:flex flex-col mt-4 space-y-1 px-2">
                 <li>
                     <button onclick="app.navigate('pos')" id="nav-pos" class="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left hover:bg-slate-800 transition-colors bg-primary-600 text-white nav-item">
@@ -154,6 +161,7 @@
                         <span class="font-medium">Egg Price Tracker</span>
                     </button>
                 </li>
+                <li><button onclick="app.navigate('audit')" id="nav-audit" class="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left hover:bg-slate-800 transition-colors text-slate-300 nav-item"><i class="fa-solid fa-clipboard-list w-5 text-center"></i><span class="font-medium">Audit Log</span></button></li>
                 <li>
                     <button onclick="app.navigate('settings')" id="nav-settings" class="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left hover:bg-slate-800 transition-colors text-slate-300 nav-item">
                         <i class="fa-solid fa-tags w-5 text-center"></i>
@@ -163,7 +171,6 @@
             </ul>
         </div>
 
-        <!-- Role Simulator -->
         <div class="p-4 border-t border-slate-700" id="role-switcher-container">
             <p class="text-xs text-slate-400 mb-2 uppercase tracking-wider">Switch Role</p>
             <select id="role-select" onchange="app.switchRole(this.value)" class="w-full bg-slate-800 text-white text-sm rounded border border-slate-600 p-2 focus:outline-none focus:border-yellow-400">
@@ -174,7 +181,6 @@
     </nav>
 
     <main class="flex-1 min-w-0 w-full flex flex-col h-full overflow-hidden relative">
-        <!-- Top Header -->
         <header class="bg-white shadow-sm z-10 px-4 sm:px-6 py-3 sm:py-4 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
             <h2 id="page-title" class="text-xl sm:text-2xl font-semibold text-gray-800 self-start">Point of Sale</h2>
             <div class="flex items-center justify-between sm:justify-end gap-2 sm:gap-4 w-full sm:w-auto">
@@ -183,9 +189,7 @@
                     Today's Price: $<span id="display-daily-price">0.00</span> / egg
                 </div>
                 <div class="flex items-center gap-2 text-sm text-gray-500">
-                    <div id="user-badge" class="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 font-bold">
-                        O
-                    </div>
+                    <div id="user-badge" class="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 font-bold">O</div>
                     <span id="user-role-label" class="hidden sm:inline font-medium">Operator Mode</span>
                 </div>
             </div>
@@ -222,7 +226,7 @@
                         </div>
 
                         <!-- Amount Received Calculator Input -->
-                        <div class="mb-6">
+                        <div id="pos-calc-section" class="mb-6">
                             <label class="block text-sm font-medium text-gray-600 mb-2">Amount Received ($)</label>
                             <div class="relative">
                                 <input type="number" id="pos-received" step="0.01" min="0" class="w-full text-2xl py-3 px-4 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all font-bold text-gray-800" placeholder="0.00">
@@ -264,7 +268,8 @@
 
             <section id="view-inventory" class="hidden">
                 <div class="max-w-7xl mx-auto">
-                    <div class="bg-white p-5 sm:p-6 rounded-2xl shadow-sm border border-gray-100 mb-6">
+                    <!-- Import Section -->
+                    <div id="inv-add-section" class="bg-white p-5 sm:p-6 rounded-2xl shadow-sm border border-gray-100 mb-6">
                         <div class="flex items-center gap-3 mb-4"><i class="fa-solid fa-truck-ramp-box text-primary-600 text-xl"></i><div><h3 class="text-lg font-semibold text-gray-800">Receive Today's Egg Import</h3><p class="text-sm text-gray-500">Quickly record the arrival time, weight, and purchase price.</p></div></div>
                         <form id="form-import" onsubmit="app.processImport(event)" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 items-end">
                             <div class="form-field"><label class="block text-sm font-medium text-gray-600 mb-1">Import Date</label><input type="date" id="import-date" required class="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500"></div>
@@ -274,80 +279,74 @@
                             <button type="submit" class="w-full p-3 bg-primary-600 hover:bg-primary-700 text-white font-semibold rounded-lg"><i class="fa-solid fa-plus mr-2"></i>Add Import</button>
                         </form>
                     </div>
-                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-                        <div class="bg-white p-5 rounded-2xl border border-gray-100"><p class="text-sm text-gray-500">Total Imported</p><p id="inventory-total-imported" class="text-2xl font-bold text-primary-600">0.0 kg</p></div>
-                        <div class="bg-white p-5 rounded-2xl border border-gray-100"><p class="text-sm text-gray-500">Available Stock</p><p id="inventory-current-stock" class="text-2xl font-bold text-green-600">0.0 kg</p></div>
-                        <div class="bg-white p-5 rounded-2xl border border-gray-100"><p class="text-sm text-gray-500">Inventory Value</p><p id="inventory-value" class="text-2xl font-bold text-purple-600">$0.00</p></div>
-                    </div>
-                    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                        <div class="p-5 sm:p-6 border-b border-gray-100 bg-gray-50 flex flex-col gap-4">
-                            <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4"><div><h3 class="text-lg font-semibold text-gray-800">Inventory Import History</h3><p class="text-sm text-gray-500">Search, filter, sort, and export your import records.</p></div>
-                                <div class="flex flex-col sm:flex-row gap-2 w-full lg:w-auto"><div class="relative flex-1 sm:w-64"><i class="fa-solid fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i><input type="search" id="inventory-search" oninput="app.handleInventorySearch(event)" placeholder="Search batch, date, or price..." class="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg text-sm"></div><button onclick="app.toggleInventoryFilters()" class="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm"><i class="fa-solid fa-filter mr-2"></i>Filters</button><button onclick="app.exportInventoryCSV()" class="px-4 py-2 bg-primary-600 text-white rounded-lg text-sm"><i class="fa-solid fa-download mr-2"></i>Export CSV</button></div>
-                            </div>
-                            <div id="inventory-filter-panel" class="hidden grid grid-cols-1 sm:grid-cols-4 gap-4 pt-4 border-t border-gray-200"><div><label class="block text-xs text-gray-500 mb-1">Date From</label><input type="date" id="inventory-date-from" onchange="app.applyInventoryFilters()" class="w-full p-2 border rounded-lg focus:ring-primary-500"></div><div><label class="block text-xs text-gray-500 mb-1">Date To</label><input type="date" id="inventory-date-to" onchange="app.applyInventoryFilters()" class="w-full p-2 border rounded-lg focus:ring-primary-500"></div><div><label class="block text-xs text-gray-500 mb-1">Status</label><select id="inventory-status" onchange="app.applyInventoryFilters()" class="w-full p-2 border rounded-lg focus:ring-primary-500"><option value="all">All Statuses</option><option value="active">Active</option><option value="depleted">Depleted</option></select></div><div class="flex items-end"><button onclick="app.clearInventoryFilters()" class="w-full px-4 py-2 bg-red-50 text-red-600 border border-red-100 rounded-lg">Clear Filters</button></div></div>
+
+                    <!-- View Section -->
+                    <div id="inv-view-section">
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+                            <div class="bg-white p-5 rounded-2xl border border-gray-100"><p class="text-sm text-gray-500">Total Imported</p><p id="inventory-total-imported" class="text-2xl font-bold text-primary-600">0.0 kg</p></div>
+                            <div class="bg-white p-5 rounded-2xl border border-gray-100"><p class="text-sm text-gray-500">Available Stock</p><p id="inventory-current-stock" class="text-2xl font-bold text-green-600">0.0 kg</p></div>
+                            <div class="bg-white p-5 rounded-2xl border border-gray-100"><p class="text-sm text-gray-500">Inventory Value</p><p id="inventory-value" class="text-2xl font-bold text-purple-600">$0.00</p></div>
                         </div>
-                        <div class="overflow-x-auto"><table class="w-full min-w-[850px] text-left text-sm text-gray-600"><thead class="text-xs text-gray-500 uppercase border-b"><tr><th class="px-6 py-4 cursor-pointer" onclick="app.sortInventory('date')">Date & Time <i id="inventory-sort-date" class="fa-solid fa-sort"></i></th><th class="px-6 py-4">Batch ID</th><th class="px-6 py-4 cursor-pointer" onclick="app.sortInventory('totalQty')">Imported kg <i id="inventory-sort-totalQty" class="fa-solid fa-sort"></i></th><th class="px-6 py-4 cursor-pointer" onclick="app.sortInventory('remainingQty')">Remaining kg <i id="inventory-sort-remainingQty" class="fa-solid fa-sort"></i></th><th class="px-6 py-4 cursor-pointer" onclick="app.sortInventory('costPrice')">Cost / kg <i id="inventory-sort-costPrice" class="fa-solid fa-sort"></i></th><th class="px-6 py-4">Remaining Value</th><th class="px-6 py-4">Status</th></tr></thead><tbody id="inventory-list" class="divide-y divide-gray-100"></tbody></table></div>
+                        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                            <div class="p-5 sm:p-6 border-b border-gray-100 bg-gray-50 flex flex-col gap-4">
+                                <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4"><div><h3 class="text-lg font-semibold text-gray-800">Inventory Import History</h3><p class="text-sm text-gray-500">Search, filter, sort, and export your import records.</p></div>
+                                    <div class="flex flex-col sm:flex-row gap-2 w-full lg:w-auto"><div class="relative flex-1 sm:w-64"><i class="fa-solid fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i><input type="search" id="inventory-search" oninput="app.handleInventorySearch(event)" placeholder="Search batch, date, or price..." class="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg text-sm"></div><button onclick="app.toggleInventoryFilters()" class="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm"><i class="fa-solid fa-filter mr-2"></i>Filters</button><button onclick="app.exportInventoryCSV()" class="px-4 py-2 bg-primary-600 text-white rounded-lg text-sm"><i class="fa-solid fa-download mr-2"></i>Export CSV</button></div>
+                                </div>
+                                <div id="inventory-filter-panel" class="hidden grid grid-cols-1 sm:grid-cols-4 gap-4 pt-4 border-t border-gray-200"><div><label class="block text-xs text-gray-500 mb-1">Date From</label><input type="date" id="inventory-date-from" onchange="app.applyInventoryFilters()" class="w-full p-2 border rounded-lg focus:ring-primary-500"></div><div><label class="block text-xs text-gray-500 mb-1">Date To</label><input type="date" id="inventory-date-to" onchange="app.applyInventoryFilters()" class="w-full p-2 border rounded-lg focus:ring-primary-500"></div><div><label class="block text-xs text-gray-500 mb-1">Status</label><select id="inventory-status" onchange="app.applyInventoryFilters()" class="w-full p-2 border rounded-lg focus:ring-primary-500"><option value="all">All Statuses</option><option value="active">Active</option><option value="depleted">Depleted</option></select></div><div class="flex items-end"><button onclick="app.clearInventoryFilters()" class="w-full px-4 py-2 bg-red-50 text-red-600 border border-red-100 rounded-lg">Clear Filters</button></div></div>
+                            </div>
+                            <div class="overflow-x-auto">
+                                <table class="w-full min-w-[850px] text-left text-sm text-gray-600">
+                                    <thead class="text-xs text-gray-500 uppercase border-b bg-white">
+                                        <tr>
+                                            <th class="px-6 py-4 cursor-pointer" onclick="app.sortInventory('date')">Date & Time <i id="inventory-sort-date" class="fa-solid fa-sort"></i></th>
+                                            <th class="px-6 py-4">Batch ID</th>
+                                            <th class="px-6 py-4 cursor-pointer" onclick="app.sortInventory('totalQty')">Imported kg <i id="inventory-sort-totalQty" class="fa-solid fa-sort"></i></th>
+                                            <th class="px-6 py-4 cursor-pointer" onclick="app.sortInventory('remainingQty')">Remaining kg <i id="inventory-sort-remainingQty" class="fa-solid fa-sort"></i></th>
+                                            <th class="px-6 py-4 cursor-pointer" onclick="app.sortInventory('costPrice')">Cost / kg <i id="inventory-sort-costPrice" class="fa-solid fa-sort"></i></th>
+                                            <th class="px-6 py-4">Status</th>
+                                            <th id="inv-th-actions" class="px-6 py-4 text-center">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="inventory-list" class="divide-y divide-gray-100"></tbody>
+                                </table>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </section>
 
             <section id="view-dashboard" class="hidden">
-                <!-- KPI Cards (Responsive Grid handles hidden elements gracefully) -->
                 <div id="kpi-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8 transition-all">
                     <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
                         <div class="flex items-center gap-4">
-                            <div class="w-12 h-12 rounded-full bg-primary-100 flex items-center justify-center text-primary-600">
-                                <i class="fa-solid fa-boxes-stacked text-xl"></i>
-                            </div>
-                            <div>
-                                <p class="text-sm font-medium text-gray-500">Total Stock (kg)</p>
-                                <h4 class="text-2xl font-bold text-gray-800" id="dash-total-stock">0.0</h4>
-                            </div>
+                            <div class="w-12 h-12 rounded-full bg-primary-100 flex items-center justify-center text-primary-600"><i class="fa-solid fa-boxes-stacked text-xl"></i></div>
+                            <div><p class="text-sm font-medium text-gray-500">Total Stock (kg)</p><h4 class="text-2xl font-bold text-gray-800" id="dash-total-stock">0.0</h4></div>
                         </div>
                     </div>
                     <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
                         <div class="flex items-center gap-4">
-                            <div class="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center text-green-600">
-                                <i class="fa-solid fa-sack-dollar text-xl"></i>
-                            </div>
-                            <div>
-                                <p class="text-sm font-medium text-gray-500">Today's Revenue</p>
-                                <h4 class="text-2xl font-bold text-gray-800">$<span id="dash-rev-day">0.00</span></h4>
-                            </div>
+                            <div class="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center text-green-600"><i class="fa-solid fa-sack-dollar text-xl"></i></div>
+                            <div><p class="text-sm font-medium text-gray-500">Today's Revenue</p><h4 class="text-2xl font-bold text-gray-800">$<span id="dash-rev-day">0.00</span></h4></div>
                         </div>
                     </div>
                     <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
                         <div class="flex items-center gap-4">
-                            <div class="w-12 h-12 rounded-full bg-purple-100 flex items-center justify-center text-purple-600">
-                                <i class="fa-solid fa-calendar-week text-xl"></i>
-                            </div>
-                            <div>
-                                <p class="text-sm font-medium text-gray-500">7-Day Revenue</p>
-                                <h4 class="text-2xl font-bold text-gray-800">$<span id="dash-rev-week">0.00</span></h4>
-                            </div>
+                            <div class="w-12 h-12 rounded-full bg-purple-100 flex items-center justify-center text-purple-600"><i class="fa-solid fa-calendar-week text-xl"></i></div>
+                            <div><p class="text-sm font-medium text-gray-500">7-Day Revenue</p><h4 class="text-2xl font-bold text-gray-800">$<span id="dash-rev-week">0.00</span></h4></div>
                         </div>
                     </div>
-                    
                     <!-- Restricted KPI -->
                     <div id="kpi-profit-card" class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 transition-all">
                         <div class="flex items-center gap-4">
-                            <div class="w-12 h-12 rounded-full bg-yellow-100 flex items-center justify-center text-yellow-600">
-                                <i class="fa-solid fa-chart-pie text-xl"></i>
-                            </div>
-                            <div>
-                                <p class="text-sm font-medium text-gray-500">Est. Gross Profit (All Time)</p>
-                                <h4 class="text-2xl font-bold text-gray-800">$<span id="dash-profit">0.00</span></h4>
-                            </div>
+                            <div class="w-12 h-12 rounded-full bg-yellow-100 flex items-center justify-center text-yellow-600"><i class="fa-solid fa-chart-pie text-xl"></i></div>
+                            <div><p class="text-sm font-medium text-gray-500">Est. Gross Profit (All Time)</p><h4 class="text-2xl font-bold text-gray-800">$<span id="dash-profit">0.00</span></h4></div>
                         </div>
                     </div>
                 </div>
 
-                <div class="bg-white p-5 sm:p-6 rounded-2xl shadow-sm border border-gray-100 mb-8">
+                <div id="dash-trend-section" class="bg-white p-5 sm:p-6 rounded-2xl shadow-sm border border-gray-100 mb-8">
                     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
-                        <div>
-                            <h3 class="text-lg font-semibold text-gray-800">Sales Trend</h3>
-                            <p class="text-sm text-gray-500">Revenue over time</p>
-                        </div>
+                        <div><h3 class="text-lg font-semibold text-gray-800">Sales Trend</h3><p class="text-sm text-gray-500">Revenue over time</p></div>
                         <div class="flex flex-col sm:flex-row items-center gap-2">
                             <div id="dash-chart-custom-dates" class="hidden items-center gap-2 w-full sm:w-auto">
                                 <input type="date" id="dash-chart-start" onchange="app.renderSalesChart()" class="w-full sm:w-auto px-2 py-2 sm:py-1 border border-gray-200 rounded-lg text-sm bg-white focus:ring-primary-500">
@@ -355,16 +354,11 @@
                                 <input type="date" id="dash-chart-end" onchange="app.renderSalesChart()" class="w-full sm:w-auto px-2 py-2 sm:py-1 border border-gray-200 rounded-lg text-sm bg-white focus:ring-primary-500">
                             </div>
                             <select id="dash-chart-range" onchange="app.toggleSalesChartCustom(this.value); app.renderSalesChart()" class="w-full sm:w-auto px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:ring-primary-500">
-                                <option value="7">Last 7 Days</option>
-                                <option value="30">Last 30 Days</option>
-                                <option value="365">Last 365 Days</option>
-                                <option value="custom">Custom Range</option>
+                                <option value="7">Last 7 Days</option><option value="30">Last 30 Days</option><option value="365">Last 365 Days</option><option value="custom">Custom Range</option>
                             </select>
                         </div>
                     </div>
-                    <div class="chart-wrap">
-                        <canvas id="sales-chart"></canvas>
-                    </div>
+                    <div class="chart-wrap"><canvas id="sales-chart"></canvas></div>
                 </div>
 
                 <!-- Recent Transactions -->
@@ -385,54 +379,35 @@
                                 </button>
                             </div>
                         </div>
-                        
-                        <!-- Advanced Filter Panel -->
                         <div id="advanced-filter-panel" class="hidden grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 pt-4 border-t border-gray-200 mt-2">
-                            <div>
-                                <label class="block text-xs font-medium text-gray-500 mb-1">Date From</label>
-                                <input type="date" id="filter-date-from" onchange="app.applyFilters()" class="w-full p-2 bg-white border border-gray-200 rounded-lg text-sm focus:ring-primary-500 focus:border-primary-500">
+                            <div><label class="block text-xs font-medium text-gray-500 mb-1">Date From</label><input type="date" id="filter-date-from" onchange="app.applyFilters()" class="w-full p-2 bg-white border border-gray-200 rounded-lg text-sm focus:ring-primary-500"></div>
+                            <div><label class="block text-xs font-medium text-gray-500 mb-1">Date To</label><input type="date" id="filter-date-to" onchange="app.applyFilters()" class="w-full p-2 bg-white border border-gray-200 rounded-lg text-sm focus:ring-primary-500"></div>
+                            <div><label class="block text-xs font-medium text-gray-500 mb-1">Operator Role</label>
+                                <select id="filter-operator" onchange="app.applyFilters()" class="w-full p-2 bg-white border border-gray-200 rounded-lg text-sm focus:ring-primary-500 capitalize"><option value="all">All Users</option><option value="operator">Operator</option><option value="supervisor">Supervisor</option></select>
                             </div>
-                            <div>
-                                <label class="block text-xs font-medium text-gray-500 mb-1">Date To</label>
-                                <input type="date" id="filter-date-to" onchange="app.applyFilters()" class="w-full p-2 bg-white border border-gray-200 rounded-lg text-sm focus:ring-primary-500 focus:border-primary-500">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-medium text-gray-500 mb-1">Operator Role</label>
-                                <select id="filter-operator" onchange="app.applyFilters()" class="w-full p-2 bg-white border border-gray-200 rounded-lg text-sm focus:ring-primary-500 focus:border-primary-500 capitalize">
-                                    <option value="all">All Users</option>
-                                    <option value="operator">Operator</option>
-                                    <option value="supervisor">Supervisor</option>
-                                </select>
-                            </div>
-                            <div class="flex items-end">
-                                <button onclick="app.clearFilters()" class="w-full px-4 py-2 bg-red-50 text-red-600 hover:bg-red-100 border border-red-100 font-medium rounded-lg transition-colors text-sm">
-                                    Clear Filters
-                                </button>
-                            </div>
+                            <div class="flex items-end"><button onclick="app.clearFilters()" class="w-full px-4 py-2 bg-red-50 text-red-600 hover:bg-red-100 border border-red-100 font-medium rounded-lg text-sm">Clear Filters</button></div>
                         </div>
                     </div>
                     <div class="overflow-x-auto">
                         <table class="w-full text-left text-sm text-gray-600">
                             <thead class="text-xs text-gray-500 uppercase bg-white border-b border-gray-100">
                                 <tr>
-                                    <th class="px-6 py-4 cursor-pointer hover:bg-gray-50 transition-colors" onclick="app.handleDashboardSort('id')">Trx ID <i id="sort-icon-id" class="fa-solid fa-sort ml-1 text-gray-400"></i></th>
-                                    <th class="px-6 py-4 cursor-pointer hover:bg-gray-50 transition-colors" onclick="app.handleDashboardSort('timestamp')">Date & Time <i id="sort-icon-timestamp" class="fa-solid fa-sort ml-1 text-gray-400"></i></th>
-                                    <th class="px-6 py-4 cursor-pointer hover:bg-gray-50 transition-colors" onclick="app.handleDashboardSort('operator')">Operator <i id="sort-icon-operator" class="fa-solid fa-sort ml-1 text-gray-400"></i></th>
-                                    <th class="px-6 py-4 cursor-pointer hover:bg-gray-50 transition-colors" onclick="app.handleDashboardSort('qtyEggs')">Quantity (Eggs) <i id="sort-icon-qtyEggs" class="fa-solid fa-sort ml-1 text-gray-400"></i></th>
-                                    <th class="px-6 py-4 cursor-pointer hover:bg-gray-50 transition-colors" onclick="app.handleDashboardSort('unitPrice')">Sale Price <i id="sort-icon-unitPrice" class="fa-solid fa-sort ml-1 text-gray-400"></i></th>
-                                    <th class="px-6 py-4 cursor-pointer hover:bg-gray-50 transition-colors text-right" onclick="app.handleDashboardSort('total')">Total Revenue <i id="sort-icon-total" class="fa-solid fa-sort ml-1 text-gray-400"></i></th>
+                                    <th class="px-6 py-4 cursor-pointer hover:bg-gray-50" onclick="app.handleDashboardSort('id')">Trx ID <i id="sort-icon-id" class="fa-solid fa-sort ml-1 text-gray-400"></i></th>
+                                    <th class="px-6 py-4 cursor-pointer hover:bg-gray-50" onclick="app.handleDashboardSort('timestamp')">Date & Time <i id="sort-icon-timestamp" class="fa-solid fa-sort ml-1 text-gray-400"></i></th>
+                                    <th class="px-6 py-4 cursor-pointer hover:bg-gray-50" onclick="app.handleDashboardSort('operator')">Operator <i id="sort-icon-operator" class="fa-solid fa-sort ml-1 text-gray-400"></i></th>
+                                    <th class="px-6 py-4 cursor-pointer hover:bg-gray-50" onclick="app.handleDashboardSort('qtyEggs')">Quantity (Eggs) <i id="sort-icon-qtyEggs" class="fa-solid fa-sort ml-1 text-gray-400"></i></th>
+                                    <th class="px-6 py-4 cursor-pointer hover:bg-gray-50" onclick="app.handleDashboardSort('unitPrice')">Sale Price <i id="sort-icon-unitPrice" class="fa-solid fa-sort ml-1 text-gray-400"></i></th>
+                                    <th class="px-6 py-4 cursor-pointer hover:bg-gray-50 text-right" onclick="app.handleDashboardSort('total')">Total Revenue <i id="sort-icon-total" class="fa-solid fa-sort ml-1 text-gray-400"></i></th>
                                 </tr>
                             </thead>
-                            <tbody id="transactions-list" class="divide-y divide-gray-100">
-                                <!-- Rows injected by JS -->
-                            </tbody>
+                            <tbody id="transactions-list" class="divide-y divide-gray-100"></tbody>
                         </table>
                     </div>
                 </div>
             </section>
 
             <section id="view-permissions" class="hidden">
-                <div class="max-w-4xl mx-auto">
+                <div class="max-w-5xl mx-auto">
                     <div class="bg-white p-5 sm:p-8 rounded-2xl shadow-sm border border-gray-100">
                         <div class="flex items-center gap-3 mb-6 border-b border-gray-100 pb-4">
                             <i class="fa-solid fa-user-shield text-primary-500 text-xl"></i>
@@ -442,24 +417,65 @@
                             </div>
                         </div>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <label class="permission-card"><input type="checkbox" id="perm-pos" onchange="app.updatePermissions()"><span><b>Point of Sale (POS)</b><small>Process sales and view live stock.</small></span></label>
-                            <label class="permission-card"><input type="checkbox" id="perm-inventory" onchange="app.updatePermissions()"><span><b>Inventory Management</b><small>Add imports and use the inventory table.</small></span></label>
                             
-                            <!-- Detailed Dashboard Permission -->
+                            <!-- POS Permissions -->
                             <div class="permission-card flex-col items-start gap-0">
                                 <label class="flex items-center gap-3 w-full cursor-pointer">
-                                    <input type="checkbox" id="perm-dashboard" onchange="app.updatePermissions()">
-                                    <span><b>Financial Dashboard</b><small>View revenue, graph, and transaction history.</small></span>
+                                    <input type="checkbox" id="perm-pos" onchange="app.updatePermissions()">
+                                    <span><b>Point of Sale (POS)</b><small>Process sales and view live stock.</small></span>
                                 </label>
-                                <div class="w-full pl-7 pt-3 mt-3 border-t border-gray-100">
+                                <div class="w-full pl-7 pt-3 mt-3 border-t border-gray-100 flex flex-col gap-2">
                                     <label class="flex items-center gap-2 cursor-pointer text-sm text-gray-700">
-                                        <input type="checkbox" id="perm-dashboard_profit" onchange="app.updatePermissions()">
-                                        <span>Show Est. Gross Profit KPI</span>
+                                        <input type="checkbox" id="perm-pos_calc" onchange="app.updatePermissions()"><span>Require Amount Received Calculator</span>
+                                    </label>
+                                    <label class="flex items-center gap-2 cursor-pointer text-sm text-gray-700">
+                                        <input type="checkbox" id="perm-pos_receipt_id" onchange="app.updatePermissions()"><span>Show Trx ID on Receipt</span>
+                                    </label>
+                                    <label class="flex items-center gap-2 cursor-pointer text-sm text-gray-700">
+                                        <input type="checkbox" id="perm-pos_receipt_op" onchange="app.updatePermissions()"><span>Show Operator Name on Receipt</span>
                                     </label>
                                 </div>
                             </div>
 
-                            <label class="permission-card"><input type="checkbox" id="perm-pricing" onchange="app.updatePermissions()"><span><b>Egg Price Tracker</b><small>Change prices and review price history.</small></span></label>
+                            <!-- Inventory Permissions -->
+                            <div class="permission-card flex-col items-start gap-0">
+                                <label class="flex items-center gap-3 w-full cursor-pointer">
+                                    <input type="checkbox" id="perm-inventory" onchange="app.updatePermissions()">
+                                    <span><b>Inventory Management</b><small>Access the inventory page.</small></span>
+                                </label>
+                                <div class="w-full pl-7 pt-3 mt-3 border-t border-gray-100 flex flex-col gap-2">
+                                    <label class="flex items-center gap-2 cursor-pointer text-sm text-gray-700"><input type="checkbox" id="perm-inv_add" onchange="app.updatePermissions()"><span>Allow Adding Imports</span></label>
+                                    <label class="flex items-center gap-2 cursor-pointer text-sm text-gray-700"><input type="checkbox" id="perm-inv_view" onchange="app.updatePermissions()"><span>Allow Viewing Inventory Data & Table</span></label>
+                                    <label class="flex items-center gap-2 cursor-pointer text-sm text-gray-700"><input type="checkbox" id="perm-inv_edit" onchange="app.updatePermissions()"><span>Allow Editing Imports</span></label>
+                                    <label class="flex items-center gap-2 cursor-pointer text-sm text-gray-700"><input type="checkbox" id="perm-inv_delete" onchange="app.updatePermissions()"><span>Allow Deleting Imports</span></label>
+                                </div>
+                            </div>
+                            
+                            <!-- Dashboard Permissions -->
+                            <div class="permission-card flex-col items-start gap-0">
+                                <label class="flex items-center gap-3 w-full cursor-pointer">
+                                    <input type="checkbox" id="perm-dashboard" onchange="app.updatePermissions()">
+                                    <span><b>Financial Dashboard</b><small>View revenue and transaction history.</small></span>
+                                </label>
+                                <div class="w-full pl-7 pt-3 mt-3 border-t border-gray-100 flex flex-col gap-2">
+                                    <label class="flex items-center gap-2 cursor-pointer text-sm text-gray-700"><input type="checkbox" id="perm-dashboard_profit" onchange="app.updatePermissions()"><span>Show Est. Gross Profit KPI</span></label>
+                                    <label class="flex items-center gap-2 cursor-pointer text-sm text-gray-700"><input type="checkbox" id="perm-dashboard_trend" onchange="app.updatePermissions()"><span>Show Sales Trend Graph</span></label>
+                                </div>
+                            </div>
+
+                            <!-- Pricing Permissions -->
+                            <div class="permission-card flex-col items-start gap-0">
+                                <label class="flex items-center gap-3 w-full cursor-pointer">
+                                    <input type="checkbox" id="perm-pricing" onchange="app.updatePermissions()">
+                                    <span><b>Egg Price Tracker</b><small>Change prices and review price history.</small></span>
+                                </label>
+                                <div class="w-full pl-7 pt-3 mt-3 border-t border-gray-100 flex flex-col gap-2">
+                                    <label class="flex items-center gap-2 cursor-pointer text-sm text-gray-700"><input type="checkbox" id="perm-pricing_add" onchange="app.updatePermissions()"><span>Allow Adding New Daily Price</span></label>
+                                    <label class="flex items-center gap-2 cursor-pointer text-sm text-gray-700"><input type="checkbox" id="perm-pricing_edit" onchange="app.updatePermissions()"><span>Allow Editing Price Records</span></label>
+                                    <label class="flex items-center gap-2 cursor-pointer text-sm text-gray-700"><input type="checkbox" id="perm-pricing_delete" onchange="app.updatePermissions()"><span>Allow Deleting Price Records</span></label>
+                                </div>
+                            </div>
+
                             <label class="permission-card"><input type="checkbox" id="perm-settings" onchange="app.updatePermissions()"><span><b>Basic Settings</b><small>Change language, appearance, and regional settings.</small></span></label>
                             <label class="permission-card"><input type="checkbox" id="perm-permissions" onchange="app.updatePermissions()"><span><b>Permissions</b><small>Manage operator page access. Grant with care.</small></span></label>
                         </div>
@@ -467,9 +483,10 @@
                 </div>
             </section>
 
+            <section id="view-audit" class="hidden"><div class="max-w-7xl mx-auto"><div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden"><div class="p-5 sm:p-6 border-b border-gray-100 bg-gray-50 flex flex-col gap-4"><div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4"><div><h3 class="text-lg font-semibold text-gray-800">Audit Log</h3><p class="text-sm text-gray-500">Readable history of permission and data changes.</p></div><div class="flex flex-col sm:flex-row gap-2 w-full lg:w-auto"><div class="relative flex-1 sm:w-72"><i class="fa-solid fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i><input type="search" id="audit-search" oninput="app.handleAuditSearch(event)" placeholder="Search audit records..." class="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg text-sm"></div><button onclick="app.toggleAuditFilters()" class="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm"><i class="fa-solid fa-filter mr-2"></i>Filters</button><button onclick="app.exportAuditCSV()" class="px-4 py-2 bg-primary-600 text-white rounded-lg text-sm"><i class="fa-solid fa-download mr-2"></i>Export CSV</button></div></div><div id="audit-filter-panel" class="hidden grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 pt-4 border-t"><div><label class="block text-xs text-gray-500 mb-1">Date From</label><input type="date" id="audit-date-from" onchange="app.applyAuditFilters()" class="w-full p-2 border rounded-lg"></div><div><label class="block text-xs text-gray-500 mb-1">Date To</label><input type="date" id="audit-date-to" onchange="app.applyAuditFilters()" class="w-full p-2 border rounded-lg"></div><div><label class="block text-xs text-gray-500 mb-1">Module</label><select id="audit-module" onchange="app.applyAuditFilters()" class="w-full p-2 border rounded-lg"><option value="all">All Modules</option><option value="permissions">Permissions</option><option value="inventory">Inventory</option><option value="pricing">Pricing</option><option value="sales">Sales</option><option value="settings">Settings</option></select></div><div><label class="block text-xs text-gray-500 mb-1">Action</label><select id="audit-action" onchange="app.applyAuditFilters()" class="w-full p-2 border rounded-lg"><option value="all">All Actions</option><option value="create">Create</option><option value="update">Update</option><option value="delete">Delete</option></select></div><div class="flex items-end"><button onclick="app.clearAuditFilters()" class="w-full px-4 py-2 bg-gray-100 rounded-lg">Clear Filters</button></div></div></div><div class="overflow-x-auto"><table class="w-full min-w-[900px] text-left text-sm text-gray-600"><thead class="text-xs uppercase border-b"><tr><th class="px-5 py-4 cursor-pointer" onclick="app.sortAudit('timestamp')">Date & Time</th><th class="px-5 py-4">Actor</th><th class="px-5 py-4">Module</th><th class="px-5 py-4">Action</th><th class="px-5 py-4">Record</th><th class="px-5 py-4">Change Summary</th></tr></thead><tbody id="audit-list" class="divide-y"></tbody></table></div></div></div></section>
             <section id="view-pricing" class="hidden">
                 <div class="max-w-6xl mx-auto">
-                    <div class="bg-white p-5 sm:p-6 rounded-2xl shadow-sm border border-gray-100 mb-6">
+                    <div id="pricing-add-section" class="bg-white p-5 sm:p-6 rounded-2xl shadow-sm border border-gray-100 mb-6">
                         <div class="flex items-center gap-3 mb-4"><i class="fa-solid fa-tag text-primary-600 text-xl"></i><div><h3 class="text-lg font-semibold text-gray-800">Set Daily Egg Price</h3><p class="text-sm text-gray-500">Adjust a day's price and immediately review the change below.</p></div></div>
                         <form onsubmit="app.updatePriceOnly(event)" class="grid grid-cols-1 sm:grid-cols-3 gap-4 items-end"><div class="form-field"><label class="block text-sm font-medium text-gray-600 mb-1">Price Effective Date</label><input type="date" id="pricing-date" required class="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-primary-500"></div><div class="form-field"><label class="block text-sm font-medium text-gray-600 mb-1">Selling Price (Per Egg)</label><input type="number" id="pricing-price" step="0.01" min="0.01" required class="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-primary-500"></div><button type="submit" class="w-full p-3 bg-primary-600 hover:bg-primary-700 text-white font-semibold rounded-lg"><i class="fa-solid fa-floppy-disk mr-2"></i>Save Daily Price</button></form>
                     </div>
@@ -510,6 +527,7 @@
                                     <th class="px-6 py-4 cursor-pointer hover:bg-gray-50" onclick="app.sortPriceTable('price')">Price Per Egg <i id="price-sort-price" class="fa-solid fa-sort ml-1 text-gray-300"></i></th>
                                     <th class="px-6 py-4 cursor-pointer hover:bg-gray-50" onclick="app.sortPriceTable('updatedAt')">Last Updated <i id="price-sort-updatedAt" class="fa-solid fa-sort ml-1 text-gray-300"></i></th>
                                     <th class="px-6 py-4">Change</th>
+                                    <th id="price-th-actions" class="px-6 py-4 text-center">Actions</th>
                                 </tr></thead>
                                 <tbody id="price-history-table" class="divide-y divide-gray-100"></tbody>
                             </table>
@@ -536,14 +554,42 @@
         </div>
     </main>
 
+    <div id="inv-edit-modal" class="hidden fixed inset-0 bg-black/60 z-[60] flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl relative">
+            <h3 class="text-xl font-bold mb-4 text-gray-800">Edit Inventory Batch</h3>
+            <form id="form-edit-inv" onsubmit="app.saveInventoryEdit(event)" class="space-y-4">
+                <div><label class="block text-sm font-medium text-gray-600 mb-1">Date</label><input type="date" id="edit-inv-date" required class="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg"></div>
+                <div><label class="block text-sm font-medium text-gray-600 mb-1">Time</label><input type="time" id="edit-inv-time" required class="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg"></div>
+                <div><label class="block text-sm font-medium text-gray-600 mb-1">Total Quantity Imported (kg)</label><input type="number" id="edit-inv-qty" step="0.1" min="0" required class="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg">
+                <p id="edit-inv-min-hint" class="text-xs text-orange-600 mt-1"></p></div>
+                <div><label class="block text-sm font-medium text-gray-600 mb-1">Cost Per kg ($)</label><input type="number" id="edit-inv-cost" step="0.01" min="0" required class="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg"></div>
+                <div class="flex gap-3 pt-2">
+                    <button type="button" onclick="app.closeEditInventoryModal()" class="flex-1 p-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-lg">Cancel</button>
+                    <button type="submit" class="flex-1 p-3 bg-primary-600 hover:bg-primary-700 text-white font-semibold rounded-lg">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="price-entry-modal" class="hidden fixed inset-0 bg-black/60 z-[60] flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl relative max-h-[90dvh] overflow-y-auto">
+            <div class="flex items-start justify-between gap-4 mb-4"><div><h3 class="text-xl font-bold text-gray-800">Egg Price Entry</h3><p id="price-modal-record" class="text-xs text-gray-500 mt-1"></p></div><button type="button" onclick="app.closePriceModal()" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark"></i></button></div>
+            <form onsubmit="app.savePriceModal(event)" class="space-y-4">
+                <div><label class="block text-sm font-medium text-gray-600 mb-1">Price Effective Date</label><input type="date" id="price-modal-date" required class="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg"></div>
+                <div><label class="block text-sm font-medium text-gray-600 mb-1">Selling Price (Per Egg)</label><input type="number" id="price-modal-price" step="0.01" min="0.01" required class="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg"></div>
+                <div><label class="block text-sm font-medium text-gray-600 mb-1">Last Updated</label><input type="text" id="price-modal-updated" readonly class="w-full p-3 bg-gray-100 border border-gray-200 rounded-lg text-gray-500"></div>
+                <div class="flex flex-col-reverse sm:flex-row gap-3 pt-2"><button id="price-modal-delete" type="button" onclick="app.deletePriceFromModal()" class="p-3 bg-gray-100 hover:bg-rose-50 text-rose-400 hover:text-rose-500 font-semibold rounded-lg"><i class="fa-regular fa-trash-can mr-2"></i>Delete</button><div class="flex-1"></div><button type="button" onclick="app.closePriceModal()" class="p-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-lg">Cancel</button><button type="submit" class="p-3 bg-primary-600 hover:bg-primary-700 text-white font-semibold rounded-lg">Save Changes</button></div>
+            </form>
+        </div>
+    </div>
     <div id="toast-container" class="fixed top-4 right-4 z-50 flex flex-col gap-2 w-full max-w-sm px-4 md:px-0"></div>
 
     <div id="printable-receipt" class="hidden">
         <h2 style="text-align: center; font-size: 24px; margin-bottom: 5px;">EggPro POS</h2>
         <p style="text-align: center; margin-top: 0; border-bottom: 1px dashed #000; padding-bottom: 10px;">Purchase Receipt</p>
         <p><strong>Date:</strong> <span id="receipt-date"></span></p>
-        <p><strong>Trx ID:</strong> <span id="receipt-id"></span></p>
-        <p><strong>Operator:</strong> <span id="receipt-operator" style="text-transform: capitalize;"></span></p>
+        <p id="receipt-id-row"><strong>Trx ID:</strong> <span id="receipt-id"></span></p>
+        <p id="receipt-operator-row"><strong>Operator:</strong> <span id="receipt-operator" style="text-transform: capitalize;"></span></p>
         <hr style="border-top: 1px dashed #000; margin: 15px 0;">
         <div style="display: flex; justify-content: space-between; margin: 10px 0;">
             <span>Quantity (Eggs)</span>
@@ -559,11 +605,11 @@
             <span id="receipt-total"></span>
         </div>
         
-        <div style="display: flex; justify-content: space-between; margin: 5px 0; font-size: 14px;">
+        <div id="receipt-received-row" style="display: flex; justify-content: space-between; margin: 5px 0; font-size: 14px;">
             <span>Amount Received</span>
             <span id="receipt-received"></span>
         </div>
-        <div style="display: flex; justify-content: space-between; margin: 5px 0; font-size: 14px;">
+        <div id="receipt-change-row" style="display: flex; justify-content: space-between; margin: 5px 0; font-size: 14px;">
             <span>Change</span>
             <span id="receipt-change"></span>
         </div>
@@ -577,14 +623,16 @@
             language: localStorage.getItem('eggProLanguage') || 'en',
             translations: {
                 'zh-TW': {
-                    'Point of Sale':'銷售點','Inventory (Imports)':'庫存（進貨）','Dashboard':'儀表板','Permissions':'權限','Pricing & Settings':'定價與設定','Simulate Role':'模擬角色','Operator (Front-line)':'操作員（前線）','Supervisor (Admin)':'主管（管理員）','Today\'s Price: $':'今日價格：$','/ egg':'／顆','Operator Mode':'操作員模式','Supervisor Mode':'主管模式','Available Stock':'可用庫存','Today\'s Sales':'今日銷售','eggs':'顆','New Sale':'新增銷售','Quantity (Number of Eggs)':'數量（雞蛋顆數）','Calculate Total':'計算總額','Transaction Summary':'交易摘要','Price per egg':'每顆價格','Quantity':'數量','Total Amount':'總金額','Complete Sale':'完成銷售','Print Last Receipt':'列印上一張收據','Receive New Import':'接收新進貨','Import Date':'進貨日期','Weight (Total kg)':'重量（總公斤）','Cost Price Per kg ($)':'每公斤成本（$）','Only supervisors can set cost price.':'只有主管可以設定成本價格。','Add to Inventory':'加入庫存','Inventory Batches':'庫存批次','FIFO Active':'先進先出啟用','Batch ID / Date':'批次編號／日期','Initial (kg)':'初始（公斤）','Remaining (kg)':'剩餘（公斤）','Unit Cost':'單位成本','Batch Value':'批次價值','Status':'狀態','Total Stock (kg)':'總庫存（公斤）','Today\'s Revenue':'今日營收','7-Day Revenue':'7 日營收','Est. Gross Profit (All Time)':'預估毛利（累計）','Transactions History':'交易紀錄','Filters':'篩選','Export CSV':'匯出 CSV','Date From':'起始日期','Date To':'結束日期','Operator Role':'操作員角色','All Users':'所有使用者','Operator':'操作員','Supervisor':'主管','Clear Filters':'清除篩選','Date & Time':'日期與時間','Quantity (Eggs)':'數量（顆）','Sale Price':'售價','Total Revenue':'總營收','Operator Access Control':'操作員存取控制','Select which sections front-line operators are allowed to access. Supervisors always have access to all modules.':'選擇前線操作員可存取的功能。主管可存取所有模組。','Point of Sale (POS)':'銷售點（POS）','Allow processing of sales and viewing of daily stock.':'允許處理銷售並查看每日庫存。','Inventory Management':'庫存管理','Allow logging of new egg imports.':'允許登記新的雞蛋進貨。','Financial Dashboard':'財務儀表板','Allow viewing of revenues, gross profit, and transaction history.':'允許查看營收、毛利與交易紀錄。','System Settings':'系統設定','Allow changing the global daily price and egg weight settings.':'允許變更每日全域價格與雞蛋重量設定。','Language':'語言','Choose the display language for this device.':'選擇此裝置的顯示語言。','Global Pricing Strategy':'全域定價策略','Update the daily selling price. This price will be immediately applied to all new POS transactions. Historical transactions will remain unaffected.':'更新每日售價。新價格會立即套用至所有新的 POS 交易，歷史交易不受影響。','Price Effective Date':'價格生效日期','One price record is stored per day. Saving again for the same date updates that day.':'每天儲存一筆價格紀錄。同一天再次儲存會更新該日價格。','Selling Price (Per Egg)':'售價（每顆）','Average Egg Weight (kg)':'雞蛋平均重量（公斤）','Used to convert egg quantities back to kg for inventory deduction.':'用於將雞蛋數量換算為公斤以扣除庫存。','Update Global Settings':'更新全域設定','Egg Price Trend':'雞蛋價格趨勢','Daily selling price per egg':'每日每顆售價','Last 30 records':'最近 30 筆','Last 90 records':'最近 90 筆','All records':'所有紀錄','Price History':'價格歷史','System Reset':'系統重設','Clear all local storage data. This action cannot be undone.':'清除所有本機儲存資料。此操作無法復原。','Clear Database':'清除資料庫','Purchase Receipt':'購買收據','Date:':'日期：','Trx ID:':'交易編號：','Operator:':'操作員：','Price / Egg':'每顆價格','TOTAL':'總計','Thank you for your business!':'感謝您的惠顧！','Search keyword...':'搜尋關鍵字...','e.g., 0.15':'例如 0.15','e.g., 0.06 for 60g':'例如 0.06（60 克）','No price records yet.':'尚無價格紀錄。','Price per egg':'每顆價格',
+                    'Point of Sale':'銷售點','Inventory (Imports)':'庫存（進貨）','Dashboard':'儀表板','Permissions':'權限','Pricing & Settings':'定價與設定','Simulate Role':'模擬角色','Operator (Front-line)':'操作員（前線）','Supervisor (Admin)':'主管（管理員）','Today\'s Price: $':'今日價格：$','/ egg':'／顆','Operator Mode':'操作員模式','Supervisor Mode':'主管模式','Available Stock':'可用庫存','Today\'s Sales':'今日銷售','eggs':'顆','New Sale':'新增銷售','Quantity (Number of Eggs)':'數量（雞蛋顆數）','Transaction Summary':'交易摘要','Price per egg':'每顆價格','Quantity':'數量','Total Amount':'總金額','Complete Sale':'完成銷售','Print Last Receipt':'列印上一張收據','Receive New Import':'接收新進貨','Import Date':'進貨日期','Weight (Total kg)':'重量（總公斤）','Cost Price Per kg ($)':'每公斤成本（$）','Add to Inventory':'加入庫存','Inventory Batches':'庫存批次','Batch ID / Date':'批次編號／日期','Initial (kg)':'初始（公斤）','Remaining (kg)':'剩餘（公斤）','Unit Cost':'單位成本','Batch Value':'批次價值','Status':'狀態','Total Stock (kg)':'總庫存（公斤）','Today\'s Revenue':'今日營收','7-Day Revenue':'7 日營收','Est. Gross Profit (All Time)':'預估毛利（累計）','Transactions History':'交易紀錄','Filters':'篩選','Export CSV':'匯出 CSV','Date From':'起始日期','Date To':'結束日期','Operator Role':'操作員角色','All Users':'所有使用者','Operator':'操作員','Supervisor':'主管','Clear Filters':'清除篩選','Date & Time':'日期與時間','Quantity (Eggs)':'數量（顆）','Sale Price':'售價','Total Revenue':'總營收','Operator Access Control':'操作員存取控制','Point of Sale (POS)':'銷售點（POS）','Inventory Management':'庫存管理','Financial Dashboard':'財務儀表板','System Settings':'系統設定','Language':'語言','Price Effective Date':'價格生效日期','Selling Price (Per Egg)':'售價（每顆）','Average Egg Weight (kg)':'雞蛋平均重量（公斤）','Egg Price Trend':'雞蛋價格趨勢','Daily selling price per egg':'每日每顆售價','Last 30 records':'最近 30 筆','Last 90 records':'最近 90 筆','All records':'所有紀錄','Price History':'價格歷史','System Reset':'系統重設','Clear Database':'清除資料庫','Purchase Receipt':'購買收據','Date:':'日期：','Trx ID:':'交易編號：','Operator:':'操作員：','Price / Egg':'每顆價格','TOTAL':'總計','Thank you for your business!':'感謝您的惠顧！','Search keyword...':'搜尋關鍵字...','e.g., 0.15':'例如 0.15','e.g., 0.06 for 60g':'例如 0.06（60 克）','No price records yet.':'尚無價格紀錄。',
                     'Amount Received ($)':'收現金額 ($)', 'Change Due':'找零', 'Short by':'金額不足', 'Disclaimer: Items are non-refundable once purchased.':'免責聲明：售出商品恕不退換。', 'Amount Received':'收現金額', 'Change':'找零',
-                    'Show Est. Gross Profit KPI':'顯示預估毛利 KPI', 'Sales Trend':'銷售趨勢', 'Revenue over time':'營收時間趨勢', 'Last 7 Days':'過去 7 天', 'Last 30 Days':'過去 30 天', 'Last 365 Days':'過去 365 天', 'Revenue':'營收', 'Custom Range':'自訂範圍', 'Custom Records':'自訂筆數', 'Records':'筆數', 'Accent Color (Theme)':'強調顏色（主題）', 'Blue':'藍色', 'Green':'綠色', 'Purple':'紫色', 'Dark Grey':'深灰色'
+                    'Show Est. Gross Profit KPI':'顯示預估毛利 KPI', 'Sales Trend':'銷售趨勢', 'Revenue over time':'營收時間趨勢', 'Last 7 Days':'過去 7 天', 'Last 30 Days':'過去 30 天', 'Last 365 Days':'過去 365 天', 'Revenue':'營收', 'Custom Range':'自訂範圍', 'Custom Records':'自訂筆數', 'Records':'筆數', 'Accent Color (Theme)':'強調顏色（主題）', 'Blue':'藍色', 'Green':'綠色', 'Purple':'紫色', 'Dark Grey':'深灰色',
+                    'Require Amount Received Calculator':'需要收現計算機', 'Show Trx ID on Receipt':'在收據顯示交易編號', 'Show Operator Name on Receipt':'在收據顯示操作員名稱', 'Allow Adding Imports':'允許新增進貨', 'Allow Viewing Inventory Data & Table':'允許查看庫存數據與表格', 'Show Sales Trend Graph':'顯示銷售趨勢圖', 'Allow Editing Imports':'允許編輯進貨', 'Allow Deleting Imports':'允許刪除進貨', 'Allow Adding New Daily Price':'允許新增每日價格', 'Allow Editing Price Records':'允許編輯價格紀錄', 'Allow Deleting Price Records':'允許刪除價格紀錄', 'Actions':'操作', 'Edit':'編輯', 'Delete':'刪除', 'Edit Inventory Batch':'編輯進貨批次', 'Cancel':'取消', 'Save Changes':'儲存變更', 'Total Quantity Imported (kg)':'進貨總重量（公斤）', 'Time':'時間'
                 },
                 'my': {
-                    'Point of Sale':'အရောင်းကောင်တာ','Inventory (Imports)':'ကုန်ပစ္စည်းစာရင်း (အဝင်)','Dashboard':'ဒက်ရှ်ဘုတ်','Permissions':'ခွင့်ပြုချက်များ','Pricing & Settings':'စျေးနှုန်းနှင့် ဆက်တင်များ','Simulate Role':'အခန်းကဏ္ဍ စမ်းသပ်ရန်','Operator (Front-line)':'အော်ပရေတာ (ရှေ့တန်း)','Supervisor (Admin)':'ကြီးကြပ်သူ (စီမံခန့်ခွဲသူ)','Today\'s Price: $':'ယနေ့စျေးနှုန်း: $','/ egg':'/ လုံး','Operator Mode':'အော်ပရေတာမုဒ်','Supervisor Mode':'ကြီးကြပ်သူမုဒ်','Available Stock':'လက်ကျန်ကုန်ပစ္စည်း','Today\'s Sales':'ယနေ့ရောင်းအား','eggs':'ဥ','New Sale':'အရောင်းအသစ်','Quantity (Number of Eggs)':'အရေအတွက် (ဥအလုံးရေ)','Calculate Total':'စုစုပေါင်းတွက်ရန်','Transaction Summary':'အရောင်းအကျဉ်းချုပ်','Price per egg':'တစ်လုံးစျေး','Quantity':'အရေအတွက်','Total Amount':'စုစုပေါင်းငွေ','Complete Sale':'အရောင်းပြီးမြောက်ရန်','Print Last Receipt':'နောက်ဆုံးပြေစာ ပုံနှိပ်ရန်','Receive New Import':'ကုန်အသစ် လက်ခံရန်','Import Date':'ကုန်ဝင်ရက်','Weight (Total kg)':'အလေးချိန် (စုစုပေါင်း kg)','Cost Price Per kg ($)':'တစ် kg ကုန်ကျစရိတ် ($)','Only supervisors can set cost price.':'ကြီးကြပ်သူသာ ကုန်ကျစရိတ်ကို သတ်မှတ်နိုင်သည်။','Add to Inventory':'ကုန်စာရင်းထဲ ထည့်ရန်','Inventory Batches':'ကုန်ပစ္စည်းအသုတ်များ','FIFO Active':'FIFO အသုံးပြုနေသည်','Batch ID / Date':'အသုတ် ID / ရက်စွဲ','Initial (kg)':'အစ (kg)','Remaining (kg)':'လက်ကျန် (kg)','Unit Cost':'တစ်ယူနစ်ကုန်ကျစရိတ်','Batch Value':'အသုတ်တန်ဖိုး','Status':'အခြေအနေ','Total Stock (kg)':'စုစုပေါင်းလက်ကျန် (kg)','Today\'s Revenue':'ယနေ့ဝင်ငွေ','7-Day Revenue':'၇ ရက်ဝင်ငွေ','Est. Gross Profit (All Time)':'ခန့်မှန်းအမြတ်ကြမ်း (စုစုပေါင်း)','Transactions History':'အရောင်းမှတ်တမ်း','Filters':'စစ်ထုတ်ရန်','Export CSV':'CSV ထုတ်ရန်','Date From':'စတင်ရက်','Date To':'ပြီးဆုံးရက်','Operator Role':'အော်ပရေတာအခန်းကဏ္ဍ','All Users':'အသုံးပြုသူအားလုံး','Operator':'အော်ပရေတာ','Supervisor':'ကြီးကြပ်သူ','Clear Filters':'စစ်ထုတ်မှုရှင်းရန်','Date & Time':'ရက်စွဲနှင့်အချိန်','Quantity (Eggs)':'အရေအတွက် (ဥ)','Sale Price':'ရောင်းစျေး','Total Revenue':'စုစုပေါင်းဝင်ငွေ','Operator Access Control':'အော်ပရေတာ ဝင်ရောက်ခွင့်ထိန်းချုပ်မှု','Select which sections front-line operators are allowed to access. Supervisors always have access to all modules.':'ရှေ့တန်းအော်ပရေတာများ ဝင်ရောက်နိုင်သည့် အပိုင်းများကို ရွေးပါ။ ကြီးကြပ်သူများသည် မော်ဂျူးအားလုံးကို ဝင်ရောက်နိုင်သည်။','Point of Sale (POS)':'အရောင်းကောင်တာ (POS)','Allow processing of sales and viewing of daily stock.':'အရောင်းလုပ်ဆောင်ခြင်းနှင့် နေ့စဉ်လက်ကျန်ကြည့်ခြင်းကို ခွင့်ပြုပါ။','Inventory Management':'ကုန်ပစ္စည်းစီမံခန့်ခွဲမှု','Allow logging of new egg imports.':'ဥကုန်ဝင်အသစ်များ မှတ်တမ်းတင်ရန် ခွင့်ပြုပါ။','Financial Dashboard':'ဘဏ္ဍာရေးဒက်ရှ်ဘုတ်','Allow viewing of revenues, gross profit, and transaction history.':'ဝင်ငွေ၊ အမြတ်ကြမ်းနှင့် အရောင်းမှတ်တမ်းကြည့်ရန် ခွင့်ပြုပါ။','System Settings':'စနစ်ဆက်တင်များ','Allow changing the global daily price and egg weight settings.':'နေ့စဉ်စျေးနှုန်းနှင့် ဥအလေးချိန်ဆက်တင်များ ပြောင်းရန် ခွင့်ပြုပါ။','Language':'ဘာသာစကား','Choose the display language for this device.':'ဤစက်အတွက် ပြသမည့်ဘာသာစကားကို ရွေးပါ။','Global Pricing Strategy':'အထွေထွေစျေးနှုန်းမူဝါဒ','Update the daily selling price. This price will be immediately applied to all new POS transactions. Historical transactions will remain unaffected.':'နေ့စဉ်ရောင်းစျေးကို ပြောင်းပါ။ စျေးအသစ်သည် POS အရောင်းအသစ်များတွင် ချက်ချင်းသက်ရောက်ပြီး အရောင်းဟောင်းများ မပြောင်းပါ။','Price Effective Date':'စျေးနှုန်းသက်ရောက်သည့်ရက်','One price record is stored per day. Saving again for the same date updates that day.':'တစ်ရက်လျှင် စျေးနှုန်းမှတ်တမ်းတစ်ခု သိမ်းသည်။ တူညီသောရက်ကို ထပ်သိမ်းပါက ထိုရက်၏စျေးကို ပြင်ဆင်မည်။','Selling Price (Per Egg)':'ရောင်းစျေး (တစ်လုံး)','Average Egg Weight (kg)':'ဥပျမ်းမျှအလေးချိန် (kg)','Used to convert egg quantities back to kg for inventory deduction.':'ကုန်စာရင်းမှ နုတ်ရန် ဥအရေအတွက်ကို kg သို့ ပြန်တွက်ရာတွင် အသုံးပြုသည်။','Update Global Settings':'အထွေထွေဆက်တင်များ ပြင်ဆင်ရန်','Egg Price Trend':'ဥစျေးနှုန်းလမ်းကြောင်း','Daily selling price per egg':'တစ်လုံး၏ နေ့စဉ်ရောင်းစျေး','Last 30 records':'နောက်ဆုံးမှတ်တမ်း ၃၀','Last 90 records':'နောက်ဆုံးမှတ်တမ်း ၉၀','All records':'မှတ်တမ်းအားလုံး','Price History':'စျေးနှုန်းမှတ်တမ်း','System Reset':'စနစ်ပြန်လည်သတ်မှတ်ခြင်း','Clear all local storage data. This action cannot be undone.':'စက်တွင်းသိမ်းဆည်းထားသောဒေတာအားလုံးကို ဖျက်မည်။ ပြန်မရနိုင်ပါ။','Clear Database':'ဒေတာဘေ့စ်ရှင်းရန်','Purchase Receipt':'ဝယ်ယူမှုပြေစာ','Date:':'ရက်စွဲ:','Trx ID:':'အရောင်း ID:','Operator:':'အော်ပရေတာ:','Price / Egg':'တစ်လုံးစျေး','TOTAL':'စုစုပေါင်း','Thank you for your business!':'အားပေးမှုအတွက် ကျေးဇူးတင်ပါသည်။','Search keyword...':'သော့ချက်စာလုံးရှာရန်...','e.g., 0.15':'ဥပမာ 0.15','e.g., 0.06 for 60g':'ဥပမာ 60g အတွက် 0.06','No price records yet.':'စျေးနှုန်းမှတ်တမ်း မရှိသေးပါ။',
+                    'Point of Sale':'အရောင်းကောင်တာ','Inventory (Imports)':'ကုန်ပစ္စည်းစာရင်း (အဝင်)','Dashboard':'ဒက်ရှ်ဘုတ်','Permissions':'ခွင့်ပြုချက်များ','Pricing & Settings':'စျေးနှုန်းနှင့် ဆက်တင်များ','Simulate Role':'အခန်းကဏ္ဍ စမ်းသပ်ရန်','Operator (Front-line)':'အော်ပရေတာ (ရှေ့တန်း)','Supervisor (Admin)':'ကြီးကြပ်သူ (စီမံခန့်ခွဲသူ)','Today\'s Price: $':'ယနေ့စျေးနှုန်း: $','/ egg':'/ လုံး','Operator Mode':'အော်ပရေတာမုဒ်','Supervisor Mode':'ကြီးကြပ်သူမုဒ်','Available Stock':'လက်ကျန်ကုန်ပစ္စည်း','Today\'s Sales':'ယနေ့ရောင်းအား','eggs':'ဥ','New Sale':'အရောင်းအသစ်','Quantity (Number of Eggs)':'အရေအတွက် (ဥအလုံးရေ)','Transaction Summary':'အရောင်းအကျဉ်းချုပ်','Price per egg':'တစ်လုံးစျေး','Quantity':'အရေအတွက်','Total Amount':'စုစုပေါင်းငွေ','Complete Sale':'အရောင်းပြီးမြောက်ရန်','Print Last Receipt':'နောက်ဆုံးပြေစာ ပုံနှိပ်ရန်','Receive New Import':'ကုန်အသစ် လက်ခံရန်','Import Date':'ကုန်ဝင်ရက်','Weight (Total kg)':'အလေးချိန် (စုစုပေါင်း kg)','Cost Price Per kg ($)':'တစ် kg ကုန်ကျစရိတ် ($)','Add to Inventory':'ကုန်စာရင်းထဲ ထည့်ရန်','Inventory Batches':'ကုန်ပစ္စည်းအသုတ်များ','Batch ID / Date':'အသုတ် ID / ရက်စွဲ','Initial (kg)':'အစ (kg)','Remaining (kg)':'လက်ကျန် (kg)','Unit Cost':'တစ်ယူနစ်ကုန်ကျစရိတ်','Batch Value':'အသုတ်တန်ဖိုး','Status':'အခြေအနေ','Total Stock (kg)':'စုစုပေါင်းလက်ကျန် (kg)','Today\'s Revenue':'ယနေ့ဝင်ငွေ','7-Day Revenue':'၇ ရက်ဝင်ငွေ','Est. Gross Profit (All Time)':'ခန့်မှန်းအမြတ်ကြမ်း (စုစုပေါင်း)','Transactions History':'အရောင်းမှတ်တမ်း','Filters':'စစ်ထုတ်ရန်','Export CSV':'CSV ထုတ်ရန်','Date From':'စတင်ရက်','Date To':'ပြီးဆုံးရက်','Operator Role':'အော်ပရေတာအခန်းကဏ္ဍ','All Users':'အသုံးပြုသူအားလုံး','Operator':'အော်ပရေတာ','Supervisor':'ကြီးကြပ်သူ','Clear Filters':'စစ်ထုတ်မှုရှင်းရန်','Date & Time':'ရက်စွဲနှင့်အချိန်','Quantity (Eggs)':'အရေအတွက် (ဥ)','Sale Price':'ရောင်းစျေး','Total Revenue':'စုစုပေါင်းဝင်ငွေ','Operator Access Control':'အော်ပရေတာ ဝင်ရောက်ခွင့်ထိန်းချုပ်မှု','Point of Sale (POS)':'အရောင်းကောင်တာ (POS)','Inventory Management':'ကုန်ပစ္စည်းစီမံခန့်ခွဲမှု','Financial Dashboard':'ဘဏ္ဍာရေးဒက်ရှ်ဘုတ်','System Settings':'စနစ်ဆက်တင်များ','Language':'ဘာသာစကား','Price Effective Date':'စျေးနှုန်းသက်ရောက်သည့်ရက်','Selling Price (Per Egg)':'ရောင်းစျေး (တစ်လုံး)','Average Egg Weight (kg)':'ဥပျမ်းမျှအလေးချိန် (kg)','Egg Price Trend':'ဥစျေးနှုန်းလမ်းကြောင်း','Daily selling price per egg':'တစ်လုံး၏ နေ့စဉ်ရောင်းစျေး','Last 30 records':'နောက်ဆုံးမှတ်တမ်း ၃၀','Last 90 records':'နောက်ဆုံးမှတ်တမ်း ၉၀','All records':'မှတ်တမ်းအားလုံး','Price History':'စျေးနှုန်းမှတ်တမ်း','System Reset':'စနစ်ပြန်လည်သတ်မှတ်ခြင်း','Clear Database':'ဒေတာဘေ့စ်ရှင်းရန်','Purchase Receipt':'ဝယ်ယူမှုပြေစာ','Date:':'ရက်စွဲ:','Trx ID:':'အရောင်း ID:','Operator:':'အော်ပရေတာ:','Price / Egg':'တစ်လုံးစျေး','TOTAL':'စုစုပေါင်း','Thank you for your business!':'အားပေးမှုအတွက် ကျေးဇူးတင်ပါသည်။','Search keyword...':'သော့ချက်စာလုံးရှာရန်...','e.g., 0.15':'ဥပမာ 0.15','e.g., 0.06 for 60g':'ဥပမာ 60g အတွက် 0.06','No price records yet.':'စျေးနှုန်းမှတ်တမ်း မရှိသေးပါ။',
                     'Amount Received ($)':'လက်ခံရငွေ ($)', 'Change Due':'ပြန်အမ်းငွေ', 'Short by':'လိုငွေ', 'Disclaimer: Items are non-refundable once purchased.':'ငြင်းဆိုချက်- ဝယ်ယူပြီးသောပစ္စည်းများကို ပြန်အမ်း၍မရပါ။', 'Amount Received':'လက်ခံရငွေ', 'Change':'ပြန်အမ်းငွေ',
-                    'Show Est. Gross Profit KPI':'အမြတ်ကြမ်း KPI ကို ပြရန်', 'Sales Trend':'အရောင်းလမ်းကြောင်း', 'Revenue over time':'အချိန်အလိုက် ဝင်ငွေ', 'Last 7 Days':'ပြီးခဲ့သော ၇ ရက်', 'Last 30 Days':'ပြီးခဲ့သော ၃၀ ရက်', 'Last 365 Days':'ပြီးခဲ့သော ၃၆၅ ရက်', 'Revenue':'ဝင်ငွေ', 'Custom Range':'ရက်စွဲသတ်မှတ်ရန်', 'Custom Records':'မှတ်တမ်းသတ်မှတ်ရန်', 'Records':'မှတ်တမ်းများ', 'Accent Color (Theme)':'အထူးပြုအရောင် (အပြင်အဆင်)', 'Blue':'အပြာရောင်', 'Green':'အစိမ်းရောင်', 'Purple':'ခရမ်းရောင်', 'Dark Grey':'မီးခိုးရင့်ရောင်'
+                    'Show Est. Gross Profit KPI':'အမြတ်ကြမ်း KPI ကို ပြရန်', 'Sales Trend':'အရောင်းလမ်းကြောင်း', 'Revenue over time':'အချိန်အလိုက် ဝင်ငွေ', 'Last 7 Days':'ပြီးခဲ့သော ၇ ရက်', 'Last 30 Days':'ပြီးခဲ့သော ၃၀ ရက်', 'Last 365 Days':'ပြီးခဲ့သော ၃၆၅ ရက်', 'Revenue':'ဝင်ငွေ', 'Custom Range':'ရက်စွဲသတ်မှတ်ရန်', 'Custom Records':'မှတ်တမ်းသတ်မှတ်ရန်', 'Records':'မှတ်တမ်းများ', 'Accent Color (Theme)':'အထူးပြုအရောင် (အပြင်အဆင်)', 'Blue':'အပြာရောင်', 'Green':'အစိမ်းရောင်', 'Purple':'ခရမ်းရောင်', 'Dark Grey':'မီးခိုးရင့်ရောင်',
+                    'Allow Editing Imports':'ကုန်ဝင်ပြင်ဆင်ခွင့်', 'Allow Deleting Imports':'ကုန်ဝင်ဖျက်ခွင့်', 'Allow Adding New Daily Price':'နေ့စဉ်စျေးအသစ်ထည့်ခွင့်', 'Allow Editing Price Records':'စျေးမှတ်တမ်းပြင်ဆင်ခွင့်', 'Allow Deleting Price Records':'စျေးမှတ်တမ်းဖျက်ခွင့်', 'Actions':'လုပ်ဆောင်ချက်များ', 'Edit':'ပြင်ဆင်ရန်', 'Delete':'ဖျက်ရန်', 'Edit Inventory Batch':'ကုန်ဝင်အသုတ် ပြင်ဆင်ရန်', 'Cancel':'ပယ်ဖျက်မည်', 'Save Changes':'ပြောင်းလဲမှု သိမ်းဆည်းရန်', 'Total Quantity Imported (kg)':'စုစုပေါင်းကုန်ဝင် (kg)', 'Time':'အချိန်'
                 }
             },
             canonical(value) {
@@ -631,20 +679,20 @@
             }
         };
 
-        // Static object assignments for i18n
-        Object.assign(i18n.translations['zh-TW'], {
-            'Egg Price Tracker':'雞蛋價格追蹤','Daily Egg Price History':'每日雞蛋價格紀錄','Search, filter, sort, or export the daily records.':'搜尋、篩選、排序或匯出每日紀錄。','Search date or price...':'搜尋日期或價格...','Date':'日期','Price Per Egg':'每顆價格','Last Updated':'最後更新','Change':'變動','No price records found.':'找不到價格紀錄。','Price history exported successfully!':'價格紀錄已成功匯出！','No data to export based on current filters.':'目前篩選條件下沒有可匯出的資料。'
-        });
-        Object.assign(i18n.translations['my'], {
-            'Egg Price Tracker':'ဥစျေးနှုန်းစောင့်ကြည့်မှု','Daily Egg Price History':'နေ့စဉ်ဥစျေးနှုန်းမှတ်တမ်း','Search, filter, sort, or export the daily records.':'နေ့စဉ်မှတ်တမ်းများကို ရှာဖွေ၊ စစ်ထုတ်၊ အစဉ်လိုက်စီ သို့မဟုတ် ထုတ်ယူပါ။','Search date or price...':'ရက်စွဲ သို့မဟုတ် စျေးနှုန်းရှာရန်...','Date':'ရက်စွဲ','Price Per Egg':'တစ်လုံးစျေး','Last Updated':'နောက်ဆုံးပြင်ဆင်ချိန်','Change':'ပြောင်းလဲမှု','No price records found.':'စျေးနှုန်းမှတ်တမ်း မတွေ့ပါ။','Price history exported successfully!':'စျေးနှုန်းမှတ်တမ်းကို အောင်မြင်စွာ ထုတ်ယူပြီးပါပြီ။','No data to export based on current filters.':'လက်ရှိစစ်ထုတ်မှုအရ ထုတ်ယူရန်ဒေတာမရှိပါ။'
-        });
+        // Translations mapping
+        Object.assign(i18n.translations['zh-TW'], { 'Egg Price Tracker':'雞蛋價格追蹤','Daily Egg Price History':'每日雞蛋價格紀錄','Search, filter, sort, or export the daily records.':'搜尋、篩選、排序或匯出每日紀錄。','Search date or price...':'搜尋日期或價格...','Date':'日期','Price Per Egg':'每顆價格','Last Updated':'最後更新','Change':'變動','No price records found.':'找不到價格紀錄。','Price history exported successfully!':'價格紀錄已成功匯出！','No data to export based on current filters.':'目前篩選條件下沒有可匯出的資料。' });
+        Object.assign(i18n.translations['my'], { 'Egg Price Tracker':'ဥစျေးနှုန်းစောင့်ကြည့်မှု','Daily Egg Price History':'နေ့စဉ်ဥစျေးနှုန်းမှတ်တမ်း','Search, filter, sort, or export the daily records.':'နေ့စဉ်မှတ်တမ်းများကို ရှာဖွေ၊ စစ်ထုတ်၊ အစဉ်လိုက်စီ သို့မဟုတ် ထုတ်ယူပါ။','Search date or price...':'ရက်စွဲ သို့မဟုတ် စျေးနှုန်းရှာရန်...','Date':'ရက်စွဲ','Price Per Egg':'တစ်လုံးစျေး','Last Updated':'နောက်ဆုံးပြင်ဆင်ချိန်','Change':'ပြောင်းလဲမှု','No price records found.':'စျေးနှုန်းမှတ်တမ်း မတွေ့ပါ။','Price history exported successfully!':'စျေးနှုန်းမှတ်တမ်းကို အောင်မြင်စွာ ထုတ်ယူပြီးပါပြီ။','No data to export based on current filters.':'လက်ရှိစစ်ထုတ်မှုအရ ထုတ်ယူရန်ဒေတာမရှိပါ။' });
         Object.assign(i18n.translations['zh-TW'], {'Basic Settings':'基本設定','System Settings':'系統設定','Dark Mode':'深色模式','Light Mode':'淺色模式','Use System Theme':'使用系統主題','Timezone':'時區','Currency':'貨幣','Low Stock Alert (kg)':'低庫存警示（公斤）','Save Basic Settings':'儲存基本設定','Set Daily Egg Price':'設定每日雞蛋價格','Save Daily Price':'儲存每日價格','Arrival Time':'到貨時間',"Receive Today's Egg Import":"接收今日雞蛋進貨",'Add Import':'新增進貨','Inventory Import History':'進貨歷史','Total Imported':'進貨總量','Inventory Value':'庫存價值','All Statuses':'所有狀態','Active':'有效','Depleted':'已用完','Operator Page Access':'操作員頁面存取','Daily price saved successfully!':'每日價格已成功儲存！','Basic settings saved successfully!':'基本設定已成功儲存！'});
         Object.assign(i18n.translations['my'], {'Basic Settings':'အခြေခံဆက်တင်များ','System Settings':'စနစ်ဆက်တင်များ','Dark Mode':'အမှောင်မုဒ်','Light Mode':'အလင်းမုဒ်','Use System Theme':'စနစ်အပြင်အဆင်သုံးရန်','Timezone':'အချိန်ဇုန်','Currency':'ငွေကြေး','Low Stock Alert (kg)':'လက်ကျန်နည်းသတိပေးချက် (kg)','Save Basic Settings':'အခြေခံဆက်တင်များ သိမ်းရန်','Set Daily Egg Price':'နေ့စဉ်ဥစျေး သတ်မှတ်ရန်','Save Daily Price':'နေ့စဉ်စျေး သိမ်းရန်','Arrival Time':'ရောက်ရှိချိန်',"Receive Today's Egg Import":"ယနေ့ဥကုန်ဝင် လက်ခံရန်",'Add Import':'ကုန်ဝင်ထည့်ရန်','Inventory Import History':'ကုန်ဝင်မှတ်တမ်း','Total Imported':'စုစုပေါင်းကုန်ဝင်','Inventory Value':'ကုန်တန်ဖိုး','All Statuses':'အခြေအနေအားလုံး','Active':'အသုံးပြုနိုင်','Depleted':'ကုန်သွားပြီ','Operator Page Access':'အော်ပရေတာ စာမျက်နှာဝင်ခွင့်','Daily price saved successfully!':'နေ့စဉ်စျေးကို သိမ်းပြီးပါပြီ။','Basic settings saved successfully!':'အခြေခံဆက်တင်များ သိမ်းပြီးပါပြီ။'});
         Object.assign(i18n.translations['zh-TW'], {"Switch Role": "切換角色", "Quickly record the arrival time, weight, and purchase price.": "快速記錄到貨時間、重量與進貨價格。", "Search, filter, sort, and export your import records.": "搜尋、篩選、排序並匯出進貨紀錄。", "Adjust a day's price and immediately review the change below.": "調整指定日期的價格，並立即在下方查看變動。", "Choose every page the operator may access.": "選擇操作員可以存取的所有頁面。", "Process sales and view live stock.": "處理銷售並查看即時庫存。", "Add imports and use the inventory table.": "新增進貨並使用庫存表格。", "View revenue and transaction history.": "查看營收與交易紀錄。", "Change prices and review price history.": "變更價格並查看價格歷史。", "Change language, appearance, and regional settings.": "變更語言、外觀與地區設定。", "Manage operator page access. Grant with care.": "管理操作員頁面權限，請審慎授予。", "Personalize appearance, language, region, and inventory behavior.": "自訂外觀、語言、地區與庫存行為。", "Search or select language": "搜尋或選擇語言", "Search or select theme": "搜尋或選擇主題", "Search timezone, city, or UTC offset": "搜尋時區、城市或 UTC 時差", "Search or select currency": "搜尋或選擇貨幣", "Imported kg": "進貨公斤數", "Remaining kg": "剩餘公斤數", "Cost / kg": "每公斤成本", "Remaining Value": "剩餘價值", "Batch ID": "批次編號", "Search batch, date, or price...": "搜尋批次、日期或價格...", "Status": "狀態", "Date & Time": "日期與時間", "No inventory records found.": "找不到庫存紀錄。", "Access Control": "存取控制", "Trx ID": "交易編號", "Choose every page and component the operator may access.": "選擇操作員可以存取的所有頁面與組件。", "View revenue, graph, and transaction history.": "查看營收、圖表與交易紀錄。"});
         Object.assign(i18n.translations['my'], {"Switch Role": "အခန်းကဏ္ဍပြောင်းရန်", "Quickly record the arrival time, weight, and purchase price.": "ရောက်ရှိချိန်၊ အလေးချိန်နှင့် ဝယ်စျေးကို လျင်မြန်စွာ မှတ်တမ်းတင်ပါ။", "Search, filter, sort, and export your import records.": "ကုန်ဝင်မှတ်တမ်းများကို ရှာဖွေ၊ စစ်ထုတ်၊ အစဉ်လိုက်စီပြီး ထုတ်ယူပါ။", "Adjust a day's price and immediately review the change below.": "သတ်မှတ်ရက်၏စျေးကို ပြင်ပြီး အောက်တွင် ပြောင်းလဲမှုကို ချက်ချင်းကြည့်ပါ။", "Choose every page the operator may access.": "အော်ပရေတာ ဝင်ရောက်နိုင်သည့် စာမျက်နှာအားလုံးကို ရွေးပါ။", "Process sales and view live stock.": "အရောင်းလုပ်ဆောင်ပြီး လက်ရှိကုန်စာရင်းကို ကြည့်ပါ။", "Add imports and use the inventory table.": "ကုန်ဝင်ထည့်ပြီး ကုန်စာရင်းဇယားကို အသုံးပြုပါ။", "View revenue and transaction history.": "ဝင်ငွေနှင့် အရောင်းမှတ်တမ်းကို ကြည့်ပါ။", "Change prices and review price history.": "စျေးနှုန်းပြောင်းပြီး စျေးမှတ်တမ်းကို ကြည့်ပါ။", "Change language, appearance, and regional settings.": "ဘာသာစကား၊ အပြင်အဆင်နှင့် ဒေသဆိုင်ရာဆက်တင်များကို ပြောင်းပါ။", "Manage operator page access. Grant with care.": "အော်ပရေတာ စာမျက်နှာဝင်ခွင့်ကို သတိထားစီမံပါ။", "Personalize appearance, language, region, and inventory behavior.": "အပြင်အဆင်၊ ဘာသာစကား၊ ဒေသနှင့် ကုန်စာရင်းလုပ်ဆောင်ပုံကို စိတ်ကြိုက်ပြင်ပါ။", "Search or select language": "ဘာသာစကား ရှာဖွေ သို့မဟုတ် ရွေးပါ", "Search or select theme": "အပြင်အဆင် ရှာဖွေ သို့မဟုတ် ရွေးပါ", "Search timezone, city, or UTC offset": "အချိန်ဇုန်၊ မြို့ သို့မဟုတ် UTC ကွာဟချက် ရှာပါ", "Search or select currency": "ငွေကြေး ရှာဖွေ သို့မဟုတ် ရွေးပါ", "Imported kg": "ကုန်ဝင် kg", "Remaining kg": "လက်ကျန် kg", "Cost / kg": "တစ် kg ကုန်ကျစရိတ်", "Remaining Value": "လက်ကျန်တန်ဖိုး", "Batch ID": "အသုတ် ID", "Search batch, date, or price...": "အသုတ်၊ ရက်စွဲ သို့မဟုတ် စျေးနှုန်းရှာရန်...", "Status": "အခြေအနေ", "Date & Time": "ရက်စွဲနှင့်အချိန်", "No inventory records found.": "ကုန်စာရင်းမှတ်တမ်း မတွေ့ပါ။", "Access Control": "ဝင်ရောက်ခွင့်ထိန်းချုပ်မှု", "Trx ID": "အရောင်း ID", "Choose every page and component the operator may access.": "အော်ပရေတာ ဝင်ရောက်နိုင်သည့် စာမျက်နှာနှင့် အစိတ်အပိုင်းအားလုံးကို ရွေးပါ။", "View revenue, graph, and transaction history.": "ဝင်ငွေ၊ ဂရပ်နှင့် အရောင်းမှတ်တမ်းကို ကြည့်ပါ။"});
-        Object.assign(i18n.translations['zh-TW'], {'Please select a valid language.':'請選擇有效的語言。','Show all options':'顯示所有選項','No matching options.':'找不到符合的選項。'});
-        Object.assign(i18n.translations['my'], {'Please select a valid language.':'မှန်ကန်သော ဘာသာစကားကို ရွေးပါ။','Show all options':'ရွေးချယ်စရာအားလုံး ပြရန်','No matching options.':'ကိုက်ညီသော ရွေးချယ်စရာ မတွေ့ပါ။'});
 
+        Object.assign(i18n.translations['zh-TW'], {'Audit Log':'稽核日誌','Readable history of permission and data changes.':'可讀的權限與資料變更歷史。','Change Summary':'變更摘要','Actor':'操作者','Module':'模組','Action':'操作','Record':'紀錄'});
+        Object.assign(i18n.translations['my'], {'Audit Log':'စစ်ဆေးမှတ်တမ်း','Readable history of permission and data changes.':'ဖတ်ရှုလွယ်သော ခွင့်ပြုချက်နှင့် ဒေတာပြောင်းလဲမှုမှတ်တမ်း။','Change Summary':'ပြောင်းလဲမှုအကျဉ်း','Actor':'လုပ်ဆောင်သူ','Module':'မော်ဂျူး','Action':'လုပ်ဆောင်ချက်','Record':'မှတ်တမ်း'});
+        Object.assign(i18n.translations['zh-TW'], {'Egg price updated':'雞蛋價格已更新','Effective date':'生效日期','Price per egg':'每顆價格','Increase':'上調','Decrease':'下調','No change':'沒有變化','Egg price entry deleted':'雞蛋價格紀錄已刪除','Egg price entry created':'雞蛋價格紀錄已建立','The record was removed from price history.':'該紀錄已從價格歷史中移除。'});
+        Object.assign(i18n.translations['my'], {'Egg price updated':'ဥစျေးနှုန်း ပြင်ဆင်ပြီး','Effective date':'သက်ရောက်သည့်ရက်','Price per egg':'တစ်လုံးစျေး','Increase':'မြင့်တက်','Decrease':'လျော့ကျ','No change':'ပြောင်းလဲမှုမရှိ','Egg price entry deleted':'ဥစျေးနှုန်းမှတ်တမ်း ဖျက်ပြီး','Egg price entry created':'ဥစျေးနှုန်းမှတ်တမ်း ဖန်တီးပြီး','The record was removed from price history.':'မှတ်တမ်းကို စျေးနှုန်းသမိုင်းမှ ဖယ်ရှားပြီးပါပြီ။'});
+        Object.assign(i18n.translations['zh-TW'], {'Egg Price Entry':'雞蛋價格紀錄','A price record already exists for this date.':'此日期已有價格紀錄。','Price record updated.':'價格紀錄已更新。'});
+        Object.assign(i18n.translations['my'], {'Egg Price Entry':'ဥစျေးနှုန်းမှတ်တမ်း','A price record already exists for this date.':'ဤရက်အတွက် စျေးနှုန်းမှတ်တမ်း ရှိပြီးသားဖြစ်သည်။','Price record updated.':'စျေးနှုန်းမှတ်တမ်း ပြင်ဆင်ပြီးပါပြီ။'});
         const app = {
             state: {
                 role: 'operator',
@@ -654,8 +702,13 @@
                 inventory: [],
                 appSettings: { theme: 'light', accentColor: 'blue', timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC', currency: 'USD', lowStock: 10 },
                 sales: [],
+                auditLogs: [],
                 permissions: { 
-                    pos: true, inventory: true, dashboard: false, dashboard_profit: false, pricing: false, settings: false, permissions: false
+                    pos: true, pos_calc: true, pos_receipt_op: true, pos_receipt_id: true,
+                    inventory: true, inv_add: true, inv_view: true, inv_edit: false, inv_delete: false,
+                    dashboard: false, dashboard_profit: false, dashboard_trend: false, 
+                    pricing: false, pricing_add: false, pricing_edit: false, pricing_delete: false, 
+                    settings: false, permissions: false
                 }
             },
             dashboardTable: { search: '', sortBy: 'timestamp', sortDir: 'desc', filters: { show: false, dateFrom: '', dateTo: '', operator: 'all' }, currentData: [] },
@@ -665,6 +718,9 @@
             salesChart: null,
             inventoryTable: { search:'', sortBy:'date', sortDir:'desc', filters:{show:false,dateFrom:'',dateTo:'',status:'all'}, currentData:[] },
             priceTable: { search: '', sortBy: 'date', sortDir: 'desc', filters: { show: false, dateFrom: '', dateTo: '' }, currentData: [] },
+            editingBatchId: null,
+            editingPriceDate: null,
+            auditTable: { search:'', sortBy:'timestamp', sortDir:'desc', filters:{show:false,dateFrom:'',dateTo:'',module:'all',action:'all'}, currentData:[] },
 
             init() {
                 i18n.init();
@@ -678,7 +734,6 @@
                 document.getElementById('pricing-date').value = this.getLocalDateKey();
                 document.getElementById('pricing-price').value = Number(this.state.dailyPrice).toFixed(2);
                 
-                // Initialize Custom Dates for Dash
                 const today = new Date();
                 const lastWeek = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
                 document.getElementById('dash-chart-end').valueAsDate = today;
@@ -686,7 +741,17 @@
 
                 this.applyTheme();
                 
-                document.getElementById('pos-quantity').addEventListener('input', () => this.calculateTotal());
+                // Add strict input cap for POS quantity
+                document.getElementById('pos-quantity').addEventListener('input', (e) => {
+                    const maxEggs = Math.floor(this.getTotalStock() / this.state.eggWeight);
+                    let val = parseInt(e.target.value);
+                    if (!isNaN(val) && val > maxEggs) {
+                        e.target.value = maxEggs;
+                        this.showToast(`Cannot exceed available stock (~${maxEggs} eggs).`, 'warning');
+                    }
+                    this.calculateTotal();
+                });
+
                 document.getElementById('pos-received').addEventListener('input', () => this.calculateTotal());
             },
 
@@ -729,9 +794,7 @@
                         return;
                     }
                 }
-
                 this.currentView = view;
-                
                 document.querySelectorAll('.nav-item').forEach(el => {
                     el.classList.remove('bg-primary-600', 'text-white', 'bg-slate-800');
                     el.classList.add('text-slate-300');
@@ -741,30 +804,21 @@
                     activeNav.classList.remove('text-slate-300', 'bg-slate-800');
                     activeNav.classList.add('bg-primary-600', 'text-white');
                 }
-
-                ['pos', 'inventory', 'dashboard', 'pricing', 'settings', 'permissions'].forEach(v => {
+                ['pos', 'inventory', 'dashboard', 'pricing', 'audit', 'settings', 'permissions'].forEach(v => {
                     document.getElementById(`view-${v}`).classList.add('hidden');
                 });
-
                 document.getElementById(`view-${view}`).classList.remove('hidden');
                 const mobileNav = document.getElementById('nav-links');
                 if (window.innerWidth < 768) { mobileNav.classList.add('hidden'); mobileNav.classList.remove('flex'); }
 
-                const titles = { pos: 'Point of Sale', inventory: 'Inventory Management', dashboard: 'Financial Dashboard', pricing: 'Egg Price Tracker', settings: 'System Settings', permissions: 'Access Control' };
+                const titles = { pos: 'Point of Sale', inventory: 'Inventory Management', dashboard: 'Financial Dashboard', pricing: 'Egg Price Tracker', audit: 'Audit Log', settings: 'System Settings', permissions: 'Access Control' };
                 document.getElementById('page-title').innerText = i18n.t(titles[view]);
-
                 this.updateUI();
             },
 
             switchRole(role) {
                 this.state.role = role;
                 const isSup = role === 'supervisor';
-                
-                document.querySelectorAll('.supervisor-only').forEach(el => {
-                    if (isSup) el.classList.remove('hidden');
-                    else el.classList.add('hidden');
-                });
-
                 this.updateNavVisibility();
 
                 const badge = document.getElementById('user-badge');
@@ -779,35 +833,33 @@
                     badge.classList.replace('bg-yellow-200', 'bg-gray-200');
                     badge.classList.replace('text-yellow-800', 'text-gray-600');
                     label.innerText = 'Operator Mode';
-                    
                     if (!this.state.permissions[this.currentView]) {
                         const pages = ['pos','inventory','dashboard','pricing','settings','permissions'];
                         const allowedView = pages.find(k => this.state.permissions[k]);
                         this.navigate(allowedView || 'pos');
                     }
                 }
-
                 document.getElementById('role-select').value = role;
-                if(this.state.dailyPrice > 0) { 
-                    this.showToast(`Switched to ${role.charAt(0).toUpperCase() + role.slice(1)} role.`, 'info');
-                }
-                
+                if(this.state.dailyPrice > 0) this.showToast(`Switched to ${role.charAt(0).toUpperCase() + role.slice(1)} role.`, 'info');
                 this.updateUI();
             },
 
             updateNavVisibility() {
                 const isSup = this.state.role === 'supervisor';
                 const p = this.state.permissions;
-                
                 document.getElementById('nav-pos').parentElement.style.display = (isSup || p.pos) ? 'block' : 'none';
                 document.getElementById('nav-inventory').parentElement.style.display = (isSup || p.inventory) ? 'block' : 'none';
                 document.getElementById('nav-dashboard').parentElement.style.display = (isSup || p.dashboard) ? 'block' : 'none';
                 document.getElementById('nav-pricing').parentElement.style.display = (isSup || p.pricing) ? 'block' : 'none';
+                document.getElementById('nav-audit').parentElement.style.display = isSup ? 'block' : 'none';
                 document.getElementById('nav-settings').parentElement.style.display = (isSup || p.settings) ? 'block' : 'none';
                 document.getElementById('nav-permissions').parentElement.style.display = (isSup || p.permissions) ? 'block' : 'none';
             },
 
             updateUI() {
+                const isSup = this.state.role === 'supervisor';
+                const p = this.state.permissions;
+
                 document.getElementById('display-daily-price').innerText = parseFloat(this.state.dailyPrice).toFixed(2);
                 
                 const totalStock = this.getTotalStock();
@@ -819,26 +871,32 @@
                 const todayQty = todaySales.reduce((sum, s) => sum + (s.qtyEggs || 0), 0);
                 document.getElementById('pos-sales-today').innerText = todayQty.toLocaleString();
 
+                document.getElementById('pos-calc-section').style.display = (isSup || p.pos_calc) ? 'block' : 'none';
+                document.getElementById('inv-add-section').style.display = (isSup || p.inv_add) ? 'block' : 'none';
+                document.getElementById('inv-view-section').style.display = (isSup || p.inv_view) ? 'block' : 'none';
+                document.getElementById('pricing-add-section').style.display = (isSup || p.pricing_add) ? 'block' : 'none';
+                
+                const dashTrend = document.getElementById('dash-trend-section');
+                if (dashTrend) dashTrend.style.display = (isSup || p.dashboard_trend) ? 'block' : 'none';
+
                 if (this.currentView === 'inventory') this.renderInventory();
                 if (this.currentView === 'dashboard') this.renderDashboard();
                 if (this.currentView === 'pricing') this.renderPriceTracker();
+                if (this.currentView === 'audit') this.renderAuditLog();
                 if (this.currentView === 'settings') this.loadBasicSettingsUI();
                 if (this.currentView === 'permissions') {
-                    ['pos','inventory','dashboard','dashboard_profit','pricing','settings','permissions'].forEach(k => { 
-                        const el = document.getElementById('perm-'+k); 
-                        if(el) el.checked = !!this.state.permissions[k]; 
-                    });
+                    const keys = ['pos', 'pos_calc', 'pos_receipt_op', 'pos_receipt_id', 'inventory', 'inv_add', 'inv_view', 'inv_edit', 'inv_delete', 'dashboard', 'dashboard_profit', 'dashboard_trend', 'pricing', 'pricing_add', 'pricing_edit', 'pricing_delete', 'settings', 'permissions'];
+                    keys.forEach(k => { const el = document.getElementById('perm-'+k); if(el) el.checked = !!this.state.permissions[k]; });
                 }
             },
 
-            getTotalStock() {
-                return this.state.inventory.reduce((sum, batch) => sum + batch.remainingQty, 0);
-            },
+            getTotalStock() { return this.state.inventory.reduce((sum, batch) => sum + batch.remainingQty, 0); },
 
             calculateTotal() {
                 const qtyInput = document.getElementById('pos-quantity');
                 const qty = parseInt(qtyInput.value, 10) || 0;
                 const total = qty * this.state.dailyPrice;
+                const weightToDeduct = qty * this.state.eggWeight;
                 
                 document.getElementById('pos-summary-qty').innerText = qty.toLocaleString();
                 document.getElementById('pos-total').innerText = total.toFixed(2);
@@ -847,6 +905,15 @@
                 const received = parseFloat(receivedInput.value) || 0;
                 const changeDueEl = document.getElementById('pos-change-due');
                 const btnComplete = document.getElementById('btn-process-sale');
+
+                const isSup = this.state.role === 'supervisor';
+                const useCalc = isSup || this.state.permissions.pos_calc;
+
+                if (!useCalc) {
+                    changeDueEl.innerHTML = '';
+                    btnComplete.disabled = (qty <= 0 || weightToDeduct > this.getTotalStock());
+                    return;
+                }
 
                 if (receivedInput.value.trim() === '') {
                     changeDueEl.innerHTML = '';
@@ -868,43 +935,30 @@
             processSale() {
                 const qtyInput = document.getElementById('pos-quantity');
                 const numEggs = parseInt(qtyInput.value, 10);
-                
+                const isSup = this.state.role === 'supervisor';
+                const useCalc = isSup || this.state.permissions.pos_calc;
                 const receivedInput = document.getElementById('pos-received');
-                const receivedAmount = parseFloat(receivedInput.value) || 0;
+                const receivedAmount = useCalc ? (parseFloat(receivedInput.value) || 0) : (numEggs * this.state.dailyPrice);
 
-                if (!numEggs || numEggs <= 0) {
-                    this.showToast('Please enter a valid number of eggs.', 'warning');
-                    return;
-                }
+                if (!numEggs || numEggs <= 0) return this.showToast('Please enter a valid number of eggs.', 'warning');
 
                 const weightToDeduct = numEggs * this.state.eggWeight;
                 const totalStock = this.getTotalStock();
 
-                if (weightToDeduct > totalStock) {
-                    this.showToast(`Insufficient stock! Only ~${Math.floor(totalStock / this.state.eggWeight)} eggs available.`, 'error');
-                    return;
-                }
+                if (weightToDeduct > totalStock) return this.showToast(`Insufficient stock! Only ~${Math.floor(totalStock / this.state.eggWeight)} eggs available.`, 'error');
                 
                 const salePrice = this.state.dailyPrice;
                 const totalRevenue = numEggs * salePrice;
                 
-                if (receivedAmount < totalRevenue) {
-                    this.showToast('Amount received is less than total.', 'error');
-                    return;
-                }
-                
+                if (useCalc && receivedAmount < totalRevenue) return this.showToast('Amount received is less than total.', 'error');
                 const changeAmount = receivedAmount - totalRevenue;
 
-                let qtyToFulfill = weightToDeduct;
-                let totalCostBasis = 0;
-                let batchUpdates = [];
-
+                let qtyToFulfill = weightToDeduct, totalCostBasis = 0, batchUpdates = [];
                 let sortedInventory = [...this.state.inventory].sort((a, b) => new Date(a.date) - new Date(b.date));
 
                 for (let i = 0; i < sortedInventory.length; i++) {
                     if (qtyToFulfill === 0) break;
                     let batch = sortedInventory[i];
-                    
                     if (batch.remainingQty > 0) {
                         let amountTaken = Math.min(batch.remainingQty, qtyToFulfill);
                         batch.remainingQty -= amountTaken;
@@ -920,16 +974,9 @@
                 });
 
                 const newSale = {
-                    id: 'TRX-' + Date.now(),
-                    timestamp: new Date().toISOString(),
-                    operator: this.state.role,
-                    qtyEggs: numEggs,
-                    weightKg: weightToDeduct,
-                    unitPrice: salePrice,
-                    total: totalRevenue,
-                    costBasis: totalCostBasis,
-                    received: receivedAmount,
-                    change: changeAmount
+                    id: 'TRX-' + Date.now(), timestamp: new Date().toISOString(), operator: this.state.role,
+                    qtyEggs: numEggs, weightKg: weightToDeduct, unitPrice: salePrice, total: totalRevenue,
+                    costBasis: totalCostBasis, received: receivedAmount, change: changeAmount
                 };
 
                 this.state.sales.push(newSale);
@@ -937,16 +984,20 @@
                 this.saveData();
                 
                 qtyInput.value = '';
-                receivedInput.value = '';
+                if (useCalc) receivedInput.value = '';
                 this.calculateTotal();
                 document.getElementById('btn-print-receipt').classList.remove('hidden');
-                
                 this.showToast(`Sale completed successfully! Amount: $${totalRevenue.toFixed(2)}`, 'success');
             },
 
             printLastReceipt() {
                 if (!this.lastTransaction) return;
-                const trx = this.lastTransaction;
+                const trx = this.lastTransaction, isSup = this.state.role === 'supervisor', p = this.state.permissions;
+                document.getElementById('receipt-id-row').style.display = (isSup || p.pos_receipt_id) ? 'block' : 'none';
+                document.getElementById('receipt-operator-row').style.display = (isSup || p.pos_receipt_op) ? 'block' : 'none';
+                const useCalc = isSup || p.pos_calc;
+                document.getElementById('receipt-received-row').style.display = useCalc ? 'flex' : 'none';
+                document.getElementById('receipt-change-row').style.display = useCalc ? 'flex' : 'none';
                 
                 document.getElementById('receipt-date').innerText = new Date(trx.timestamp).toLocaleString();
                 document.getElementById('receipt-id').innerText = trx.id;
@@ -954,121 +1005,153 @@
                 document.getElementById('receipt-qty').innerText = trx.qtyEggs;
                 document.getElementById('receipt-unit-price').innerText = '$' + trx.unitPrice.toFixed(2);
                 document.getElementById('receipt-total').innerText = '$' + trx.total.toFixed(2);
-                
                 document.getElementById('receipt-received').innerText = '$' + (trx.received ? trx.received.toFixed(2) : trx.total.toFixed(2));
                 document.getElementById('receipt-change').innerText = '$' + (trx.change ? trx.change.toFixed(2) : '0.00');
-                
                 window.print();
             },
 
             processImport(e) {
                 e.preventDefault();
-                const date = document.getElementById('import-date').value;
-                const time = document.getElementById('import-time').value;
+                const date = document.getElementById('import-date').value, time = document.getElementById('import-time').value;
                 const qty = parseFloat(document.getElementById('import-qty').value);
                 let cost = parseFloat(document.getElementById('import-cost').value);
-
                 if (isNaN(cost)) cost = 0;
 
-                if (!date || !qty || qty <= 0) {
-                    this.showToast('Invalid input for import.', 'error');
-                    return;
-                }
+                if (!date || !qty || qty <= 0) return this.showToast('Invalid input for import.', 'error');
 
-                const newBatch = {
-                    id: 'B-' + Date.now(),
-                    date: date,
-                    time: time,
-                    totalQty: qty,
-                    remainingQty: qty,
-                    costPrice: cost
-                };
-
-                this.state.inventory.push(newBatch);
+                this.state.inventory.push({ id: 'B-' + Date.now(), date, time, totalQty: qty, remainingQty: qty, costPrice: cost });
                 this.saveData();
-                
                 e.target.reset();
                 document.getElementById('import-date').valueAsDate = new Date();
                 document.getElementById('import-time').value = new Date().toTimeString().slice(0,5);
                 this.showToast(`Successfully received ${qty} kg.`, 'success');
             },
 
+            openEditInventoryModal(id) {
+                const batch = this.state.inventory.find(b => b.id === id);
+                if(!batch) return;
+                this.editingBatchId = id;
+                document.getElementById('edit-inv-date').value = batch.date;
+                document.getElementById('edit-inv-time').value = batch.time || '';
+                document.getElementById('edit-inv-qty').value = batch.totalQty;
+                document.getElementById('edit-inv-cost').value = batch.costPrice;
+                
+                const soldQty = batch.totalQty - batch.remainingQty;
+                document.getElementById('edit-inv-min-hint').innerText = soldQty > 0 ? `* Min limit: ${soldQty.toFixed(1)} kg (already sold)` : '';
+                
+                document.getElementById('inv-edit-modal').classList.remove('hidden');
+            },
+            
+            closeEditInventoryModal() {
+                this.editingBatchId = null;
+                document.getElementById('inv-edit-modal').classList.add('hidden');
+            },
+
+            saveInventoryEdit(e) {
+                e.preventDefault();
+                const batchIndex = this.state.inventory.findIndex(b => b.id === this.editingBatchId);
+                if(batchIndex === -1) return;
+                const batch = this.state.inventory[batchIndex];
+                
+                const newTotal = parseFloat(document.getElementById('edit-inv-qty').value);
+                const soldQty = batch.totalQty - batch.remainingQty;
+                
+                if (newTotal < soldQty) return this.showToast(`Cannot reduce total below sold amount (${soldQty} kg).`, 'error');
+
+                batch.date = document.getElementById('edit-inv-date').value;
+                batch.time = document.getElementById('edit-inv-time').value;
+                batch.costPrice = parseFloat(document.getElementById('edit-inv-cost').value) || 0;
+                batch.totalQty = newTotal;
+                batch.remainingQty = newTotal - soldQty;
+                
+                this.saveData();
+                this.closeEditInventoryModal();
+                this.showToast('Batch updated successfully.', 'success');
+            },
+
+            deleteInventoryBatch(id) {
+                const batch = this.state.inventory.find(b => b.id === id);
+                if(!batch) return;
+                if(batch.totalQty !== batch.remainingQty) return this.showToast('Cannot delete a batch that has been partially sold. Edit quantity instead.', 'error');
+                if(!confirm(`Delete batch ${id}?`)) return;
+                
+                this.state.inventory = this.state.inventory.filter(b => b.id !== id);
+                this.saveData();
+                this.showToast('Batch deleted successfully.', 'success');
+            },
+
             getFilteredInventory() { let data=[...this.state.inventory],t=this.inventoryTable.search.toLowerCase(); data=data.filter(b=>(!t||b.id.toLowerCase().includes(t)||b.date.includes(t)||Number(b.costPrice).toFixed(2).includes(t))&&(!this.inventoryTable.filters.dateFrom||b.date>=this.inventoryTable.filters.dateFrom)&&(!this.inventoryTable.filters.dateTo||b.date<=this.inventoryTable.filters.dateTo)&&(this.inventoryTable.filters.status==='all'||(this.inventoryTable.filters.status==='depleted'?b.remainingQty<=0:b.remainingQty>0))); data.sort((a,b)=>{let x=a[this.inventoryTable.sortBy],y=b[this.inventoryTable.sortBy];let r=x<y?-1:x>y?1:0;return this.inventoryTable.sortDir==='asc'?r:-r}); return data; },
-            renderInventory() { const data=this.getFilteredInventory(),tbody=document.getElementById('inventory-list'); this.inventoryTable.currentData=data; const total=this.state.inventory.reduce((n,b)=>n+b.totalQty,0),stock=this.getTotalStock(),val=this.state.inventory.reduce((n,b)=>n+b.remainingQty*b.costPrice,0); document.getElementById('inventory-total-imported').innerText=total.toFixed(1)+' kg';document.getElementById('inventory-current-stock').innerText=stock.toFixed(1)+' kg';document.getElementById('inventory-value').innerText='$'+val.toFixed(2); tbody.innerHTML=data.length?data.map(b=>`<tr class="hover:bg-gray-50"><td class="px-6 py-4 whitespace-nowrap">${b.date} ${b.time||''}</td><td class="px-6 py-4 font-medium">${b.id}</td><td class="px-6 py-4">${b.totalQty.toFixed(1)}</td><td class="px-6 py-4 font-semibold text-primary-600">${b.remainingQty.toFixed(1)}</td><td class="px-6 py-4">$${b.costPrice.toFixed(2)}</td><td class="px-6 py-4">$${(b.remainingQty*b.costPrice).toFixed(2)}</td><td class="px-6 py-4"><span class="px-2 py-1 rounded-full text-xs ${b.remainingQty<=0?'bg-gray-100 text-gray-600':'bg-green-100 text-green-800'}">${i18n.t(b.remainingQty<=0?'Depleted':'Active')}</span></td></tr>`).join(''):`<tr><td colspan="7" class="p-10 text-center">${i18n.t('No inventory records found.')}</td></tr>`; },
+            renderInventory() { 
+                const data=this.getFilteredInventory(),tbody=document.getElementById('inventory-list'); 
+                this.inventoryTable.currentData=data; 
+                const total=this.state.inventory.reduce((n,b)=>n+b.totalQty,0),stock=this.getTotalStock(),val=this.state.inventory.reduce((n,b)=>n+b.remainingQty*b.costPrice,0); 
+                document.getElementById('inventory-total-imported').innerText=total.toFixed(1)+' kg';document.getElementById('inventory-current-stock').innerText=stock.toFixed(1)+' kg';document.getElementById('inventory-value').innerText='$'+val.toFixed(2); 
+                
+                const isSup = this.state.role === 'supervisor';
+                const canEdit = isSup || this.state.permissions.inv_edit;
+                const canDelete = isSup || this.state.permissions.inv_delete;
+                const showActions = canEdit || canDelete;
+                
+                document.getElementById('inv-th-actions').style.display = showActions ? 'table-cell' : 'none';
+
+                tbody.innerHTML=data.length?data.map(b => {
+                    let actionsHtml = '';
+                    if (showActions) {
+                        actionsHtml = `<td class="px-6 py-4 flex gap-2 justify-center items-center h-full">`;
+                        if(canEdit) actionsHtml += `<button title="Edit" onclick="app.openEditInventoryModal('${b.id}')" class="table-action-btn table-action-edit" aria-label="Edit"><i class="fa-regular fa-pen-to-square"></i></button>`;
+                        if(canDelete) actionsHtml += `<button title="Delete" onclick="app.deleteInventoryBatch('${b.id}')" class="table-action-btn table-action-delete" aria-label="Delete"><i class="fa-regular fa-trash-can"></i></button>`;
+                        actionsHtml += `</td>`;
+                    }
+                    return `<tr class="hover:bg-gray-50"><td class="px-6 py-4 whitespace-nowrap">${b.date} ${b.time||''}</td><td class="px-6 py-4 font-medium">${b.id}</td><td class="px-6 py-4">${b.totalQty.toFixed(1)}</td><td class="px-6 py-4 font-semibold text-primary-600">${b.remainingQty.toFixed(1)}</td><td class="px-6 py-4">$${b.costPrice.toFixed(2)}</td><td class="px-6 py-4"><span class="px-2 py-1 rounded-full text-xs ${b.remainingQty<=0?'bg-gray-100 text-gray-600':'bg-green-100 text-green-800'}">${i18n.t(b.remainingQty<=0?'Depleted':'Active')}</span></td>${showActions ? actionsHtml : ''}</tr>`;
+                }).join(''):`<tr><td colspan="${showActions ? 7 : 6}" class="p-10 text-center">${i18n.t('No inventory records found.')}</td></tr>`; 
+                i18n.translate(document.getElementById('inventory-list'));
+            },
             handleInventorySearch(e){this.inventoryTable.search=e.target.value;this.renderInventory()}, toggleInventoryFilters(){this.inventoryTable.filters.show=!this.inventoryTable.filters.show;document.getElementById('inventory-filter-panel').classList.toggle('hidden',!this.inventoryTable.filters.show)}, applyInventoryFilters(){this.inventoryTable.filters.dateFrom=document.getElementById('inventory-date-from').value;this.inventoryTable.filters.dateTo=document.getElementById('inventory-date-to').value;this.inventoryTable.filters.status=document.getElementById('inventory-status').value;this.renderInventory()}, clearInventoryFilters(){['inventory-date-from','inventory-date-to','inventory-search'].forEach(id=>document.getElementById(id).value='');document.getElementById('inventory-status').value='all';this.inventoryTable.search='';this.inventoryTable.filters={show:this.inventoryTable.filters.show,dateFrom:'',dateTo:'',status:'all'};this.renderInventory()}, sortInventory(c){if(this.inventoryTable.sortBy===c)this.inventoryTable.sortDir=this.inventoryTable.sortDir==='asc'?'desc':'asc';else{this.inventoryTable.sortBy=c;this.inventoryTable.sortDir='desc'}this.renderInventory()}, exportInventoryCSV(){const d=this.inventoryTable.currentData;if(!d.length)return this.showToast(i18n.t('No data to export based on current filters.'),'warning');let csv='Date,Time,Batch ID,Imported kg,Remaining kg,Cost per kg,Remaining Value\n';d.forEach(b=>csv+=`${b.date},${b.time||''},${b.id},${b.totalQty},${b.remainingQty},${b.costPrice},${(b.remainingQty*b.costPrice).toFixed(2)}\n`);this.downloadCSV(csv,`eggpro_inventory_${Date.now()}.csv`);},
 
             renderDashboard() {
                 const now = new Date();
                 let todayRev = 0, weekRev = 0, totalProfit = 0;
-
                 this.state.sales.forEach(sale => {
                     const saleDate = new Date(sale.timestamp);
                     const diffDays = Math.floor((now - saleDate) / (1000 * 60 * 60 * 24));
-                    
                     if (diffDays === 0) todayRev += sale.total;
                     if (diffDays <= 7) weekRev += sale.total;
                     totalProfit += (sale.total - sale.costBasis);
                 });
-
                 document.getElementById('dash-total-stock').innerText = this.getTotalStock().toLocaleString(undefined, {minimumFractionDigits: 1, maximumFractionDigits: 1});
                 document.getElementById('dash-rev-day').innerText = todayRev.toFixed(2);
                 document.getElementById('dash-rev-week').innerText = weekRev.toFixed(2);
                 document.getElementById('dash-profit').innerText = totalProfit.toFixed(2);
 
                 const showProfit = this.state.role === 'supervisor' || this.state.permissions.dashboard_profit;
-                const profitCard = document.getElementById('kpi-profit-card');
-                const kpiContainer = document.getElementById('kpi-container');
-                if (showProfit) {
-                    profitCard.style.display = 'block';
-                    kpiContainer.className = "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8 transition-all";
-                } else {
-                    profitCard.style.display = 'none';
-                    kpiContainer.className = "grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 transition-all";
-                }
+                const profitCard = document.getElementById('kpi-profit-card'), kpiContainer = document.getElementById('kpi-container');
+                if (showProfit) { profitCard.style.display = 'block'; kpiContainer.className = "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8 transition-all"; } 
+                else { profitCard.style.display = 'none'; kpiContainer.className = "grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 transition-all"; }
 
                 this.renderSalesChart();
 
                 const tbody = document.getElementById('transactions-list');
                 tbody.innerHTML = '';
-                
                 let filteredSales = this.state.sales.filter(sale => {
                     let matchesSearch = true;
                     if (this.dashboardTable.search) {
                         const term = this.dashboardTable.search.toLowerCase();
                         const dateObj = new Date(sale.timestamp);
                         const formattedDate = `${dateObj.toLocaleDateString()} ${dateObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`;
-                        
-                        matchesSearch = (sale.id && sale.id.toLowerCase().includes(term)) ||
-                               formattedDate.toLowerCase().includes(term) ||
-                               sale.operator.toLowerCase().includes(term) ||
-                               (sale.qtyEggs && sale.qtyEggs.toString().includes(term)) ||
-                               sale.unitPrice.toString().includes(term) ||
-                               sale.total.toFixed(2).includes(term);
+                        matchesSearch = (sale.id && sale.id.toLowerCase().includes(term)) || formattedDate.toLowerCase().includes(term) || sale.operator.toLowerCase().includes(term) || (sale.qtyEggs && sale.qtyEggs.toString().includes(term)) || sale.unitPrice.toString().includes(term) || sale.total.toFixed(2).includes(term);
                     }
                     let matchesDateFrom = true;
-                    if (this.dashboardTable.filters.dateFrom) {
-                        const fromDate = new Date(this.dashboardTable.filters.dateFrom + 'T00:00:00');
-                        matchesDateFrom = new Date(sale.timestamp) >= fromDate;
-                    }
+                    if (this.dashboardTable.filters.dateFrom) matchesDateFrom = new Date(sale.timestamp) >= new Date(this.dashboardTable.filters.dateFrom + 'T00:00:00');
                     let matchesDateTo = true;
-                    if (this.dashboardTable.filters.dateTo) {
-                        const toDate = new Date(this.dashboardTable.filters.dateTo + 'T23:59:59');
-                        matchesDateTo = new Date(sale.timestamp) <= toDate;
-                    }
+                    if (this.dashboardTable.filters.dateTo) matchesDateTo = new Date(sale.timestamp) <= new Date(this.dashboardTable.filters.dateTo + 'T23:59:59');
                     let matchesOperator = true;
-                    if (this.dashboardTable.filters.operator !== 'all') {
-                        matchesOperator = sale.operator === this.dashboardTable.filters.operator;
-                    }
+                    if (this.dashboardTable.filters.operator !== 'all') matchesOperator = sale.operator === this.dashboardTable.filters.operator;
                     return matchesSearch && matchesDateFrom && matchesDateTo && matchesOperator;
                 });
 
                 filteredSales.sort((a, b) => {
-                    let valA = a[this.dashboardTable.sortBy];
-                    let valB = b[this.dashboardTable.sortBy];
-                    if (this.dashboardTable.sortBy === 'timestamp') {
-                        valA = new Date(valA).getTime();
-                        valB = new Date(valB).getTime();
-                    }
+                    let valA = a[this.dashboardTable.sortBy], valB = b[this.dashboardTable.sortBy];
+                    if (this.dashboardTable.sortBy === 'timestamp') { valA = new Date(valA).getTime(); valB = new Date(valB).getTime(); }
                     if (valA < valB) return this.dashboardTable.sortDir === 'asc' ? -1 : 1;
                     if (valA > valB) return this.dashboardTable.sortDir === 'asc' ? 1 : -1;
                     return 0;
@@ -1078,97 +1161,41 @@
 
                 ['id', 'timestamp', 'operator', 'qtyEggs', 'unitPrice', 'total'].forEach(col => {
                     const icon = document.getElementById(`sort-icon-${col}`);
-                    if(icon) {
-                        icon.className = 'fa-solid ml-1 ' + 
-                            (this.dashboardTable.sortBy === col 
-                                ? (this.dashboardTable.sortDir === 'asc' ? 'fa-sort-up text-primary-600' : 'fa-sort-down text-primary-600') 
-                                : 'fa-sort text-gray-300');
-                    }
+                    if(icon) icon.className = 'fa-solid ml-1 ' + (this.dashboardTable.sortBy === col ? (this.dashboardTable.sortDir === 'asc' ? 'fa-sort-up text-primary-600' : 'fa-sort-down text-primary-600') : 'fa-sort text-gray-300');
                 });
 
-                if(filteredSales.length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="6" class="px-6 py-8 text-center text-gray-500">No transactions found matching your criteria.</td></tr>`;
-                    return;
-                }
+                if(filteredSales.length === 0) { tbody.innerHTML = `<tr><td colspan="6" class="px-6 py-8 text-center text-gray-500">No transactions found matching your criteria.</td></tr>`; return; }
 
                 filteredSales.forEach(sale => {
                     const dateObj = new Date(sale.timestamp);
                     const formattedDate = `${dateObj.toLocaleDateString()} ${dateObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`;
-                    
-                    tbody.innerHTML += `
-                        <tr class="hover:bg-gray-50">
-                            <td class="px-6 py-4 whitespace-nowrap text-xs font-mono font-semibold text-slate-700">${sale.id || '-'}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-xs">${formattedDate}</td>
-                            <td class="px-6 py-4 capitalize text-xs font-medium text-gray-600">${sale.operator}</td>
-                            <td class="px-6 py-4">${sale.qtyEggs ? sale.qtyEggs.toLocaleString() : '-'}</td>
-                            <td class="px-6 py-4">$${sale.unitPrice.toFixed(2)}</td>
-                            <td class="px-6 py-4 text-right font-bold text-gray-800">$${sale.total.toFixed(2)}</td>
-                        </tr>
-                    `;
+                    tbody.innerHTML += `<tr class="hover:bg-gray-50"><td class="px-6 py-4 whitespace-nowrap text-xs font-mono font-semibold text-slate-700">${sale.id || '-'}</td><td class="px-6 py-4 whitespace-nowrap text-xs">${formattedDate}</td><td class="px-6 py-4 capitalize text-xs font-medium text-gray-600">${sale.operator}</td><td class="px-6 py-4">${sale.qtyEggs ? sale.qtyEggs.toLocaleString() : '-'}</td><td class="px-6 py-4">$${sale.unitPrice.toFixed(2)}</td><td class="px-6 py-4 text-right font-bold text-gray-800">$${sale.total.toFixed(2)}</td></tr>`;
                 });
             },
 
             toggleSalesChartCustom(val) {
                 const customDates = document.getElementById('dash-chart-custom-dates');
-                if(val === 'custom') {
-                    customDates.classList.remove('hidden');
-                    customDates.classList.add('flex');
-                } else {
-                    customDates.classList.add('hidden');
-                    customDates.classList.remove('flex');
-                }
+                if(val === 'custom') { customDates.classList.remove('hidden'); customDates.classList.add('flex'); } 
+                else { customDates.classList.add('hidden'); customDates.classList.remove('flex'); }
             },
 
             renderSalesChart() {
                 const canvas = document.getElementById('sales-chart');
                 if (!canvas) return;
-                
-                const rangeSelect = document.getElementById('dash-chart-range');
-                const rangeType = rangeSelect ? rangeSelect.value : '7';
-                
-                let grouped = {};
-                let labels = [];
-                let data = [];
+                const rangeSelect = document.getElementById('dash-chart-range'), rangeType = rangeSelect ? rangeSelect.value : '7';
+                let grouped = {}, labels = [], data = [];
 
                 if (rangeType === 'custom') {
-                    const startInput = document.getElementById('dash-chart-start').value;
-                    const endInput = document.getElementById('dash-chart-end').value;
-                    
+                    const startInput = document.getElementById('dash-chart-start').value, endInput = document.getElementById('dash-chart-end').value;
                     if(startInput && endInput) {
-                        const start = new Date(startInput + 'T00:00:00');
-                        const end = new Date(endInput + 'T23:59:59');
-                        
-                        // Prefill zero for all days in range
-                        for(let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-                            grouped[this.getLocalDateKey(d)] = 0;
-                        }
-
-                        this.state.sales.forEach(s => {
-                            const sDate = new Date(s.timestamp);
-                            if(sDate >= start && sDate <= end) {
-                                const key = this.getLocalDateKey(sDate);
-                                if(grouped[key] !== undefined) grouped[key] += s.total;
-                            }
-                        });
+                        const start = new Date(startInput + 'T00:00:00'), end = new Date(endInput + 'T23:59:59');
+                        for(let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) grouped[this.getLocalDateKey(d)] = 0;
+                        this.state.sales.forEach(s => { const sDate = new Date(s.timestamp); if(sDate >= start && sDate <= end) { const key = this.getLocalDateKey(sDate); if(grouped[key] !== undefined) grouped[key] += s.total; } });
                     }
                 } else {
-                    const rangeDays = parseInt(rangeType);
-                    const now = new Date();
-                    const cutoffDate = new Date(now.getTime() - rangeDays * 24 * 60 * 60 * 1000);
-                    
-                    if (rangeDays <= 30) {
-                        for(let i = rangeDays - 1; i >= 0; i--) {
-                            const d = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
-                            grouped[this.getLocalDateKey(d)] = 0;
-                        }
-                    } else {
-                        for(let i = 11; i >= 0; i--) {
-                            const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-                            const k = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
-                            grouped[k] = 0;
-                        }
-                    }
-
+                    const rangeDays = parseInt(rangeType), now = new Date(), cutoffDate = new Date(now.getTime() - rangeDays * 24 * 60 * 60 * 1000);
+                    if (rangeDays <= 30) { for(let i = rangeDays - 1; i >= 0; i--) { const d = new Date(now.getTime() - i * 24 * 60 * 60 * 1000); grouped[this.getLocalDateKey(d)] = 0; } } 
+                    else { for(let i = 11; i >= 0; i--) { const d = new Date(now.getFullYear(), now.getMonth() - i, 1); const k = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`; grouped[k] = 0; } }
                     this.state.sales.forEach(s => {
                         const sDate = new Date(s.timestamp);
                         if (sDate >= cutoffDate || rangeDays === 365) {
@@ -1178,48 +1205,14 @@
                     });
                 }
 
-                labels = Object.keys(grouped).map(k => {
-                    if (k.length === 7) return k; 
-                    return new Date(k + 'T00:00:00').toLocaleDateString();
-                });
+                labels = Object.keys(grouped).map(k => { if (k.length === 7) return k; return new Date(k + 'T00:00:00').toLocaleDateString(); });
                 data = Object.values(grouped);
 
-                // Fetch dynamic CSS variable for chart styling
                 const primaryColor = getComputedStyle(document.documentElement).getPropertyValue('--primary-500').trim() || '#3b82f6';
-                
-                // Use hex with opacity for fill
-                const hexToRgba = (hex, opacity) => {
-                    let c;
-                    if(/^#([A-Fa-f0-9]{3}){1,2}$/.test(hex)){
-                        c= hex.substring(1).split('');
-                        if(c.length== 3){ c= [c[0], c[0], c[1], c[1], c[2], c[2]]; }
-                        c= '0x'+c.join('');
-                        return 'rgba('+[(c>>16)&255, (c>>8)&255, c&255].join(',')+','+opacity+')';
-                    }
-                    return `rgba(37,99,235,${opacity})`;
-                };
+                const hexToRgba = (hex, opacity) => { let c; if(/^#([A-Fa-f0-9]{3}){1,2}$/.test(hex)){ c= hex.substring(1).split(''); if(c.length== 3){ c= [c[0], c[0], c[1], c[1], c[2], c[2]]; } c= '0x'+c.join(''); return 'rgba('+[(c>>16)&255, (c>>8)&255, c&255].join(',')+','+opacity+')'; } return `rgba(37,99,235,${opacity})`; };
 
                 if (this.salesChart) this.salesChart.destroy();
-                this.salesChart = new Chart(canvas, {
-                    type: 'bar',
-                    data: {
-                        labels: labels,
-                        datasets: [{
-                            label: i18n.t('Revenue'),
-                            data: data,
-                            backgroundColor: hexToRgba(primaryColor, 0.5),
-                            borderColor: primaryColor,
-                            borderWidth: 1,
-                            borderRadius: 4
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: { legend: { display: false } },
-                        scales: { y: { beginAtZero: true, ticks: { callback: v => '$' + v } } }
-                    }
-                });
+                this.salesChart = new Chart(canvas, { type: 'bar', data: { labels: labels, datasets: [{ label: i18n.t('Revenue'), data: data, backgroundColor: hexToRgba(primaryColor, 0.5), borderColor: primaryColor, borderWidth: 1, borderRadius: 4 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { callback: v => '$' + v } } } } });
             },
 
             handleDashboardSearch(e) { this.dashboardTable.search = e.target.value; this.renderDashboard(); },
@@ -1228,23 +1221,17 @@
             clearFilters() { document.getElementById('filter-date-from').value = ''; document.getElementById('filter-date-to').value = ''; document.getElementById('filter-operator').value = 'all'; document.getElementById('dash-search').value = ''; this.dashboardTable.search = ''; this.applyFilters(); },
             exportCSV() {
                 const data = this.dashboardTable.currentData;
-                if (!data || data.length === 0) { this.showToast('No data to export based on current filters.', 'warning'); return; }
+                if (!data || data.length === 0) return this.showToast('No data to export based on current filters.', 'warning');
                 let csvContent = "Transaction ID,Date,Operator,Quantity (Eggs),Unit Price,Total Revenue\n";
                 data.forEach(sale => {
-                    const trxId = `"${sale.id || ''}"`;
-                    const dateObj = new Date(sale.timestamp);
-                    const formattedDate = `"${dateObj.toLocaleDateString()} ${dateObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}"`;
+                    const trxId = `"${sale.id || ''}"`, dateObj = new Date(sale.timestamp), formattedDate = `"${dateObj.toLocaleDateString()} ${dateObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}"`;
                     csvContent += `${trxId},${formattedDate},"${sale.operator}",${sale.qtyEggs || 0},${sale.unitPrice.toFixed(2)},${sale.total.toFixed(2)}\n`;
                 });
                 this.downloadCSV(csvContent, `eggpro_transactions_${new Date().getTime()}.csv`);
                 this.showToast('Data exported successfully!', 'success');
             },
             downloadCSV(csv,name){const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'}),a=document.createElement('a'),u=URL.createObjectURL(blob);a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(u);},
-            handleDashboardSort(col) {
-                if (this.dashboardTable.sortBy === col) { this.dashboardTable.sortDir = this.dashboardTable.sortDir === 'asc' ? 'desc' : 'asc'; } 
-                else { this.dashboardTable.sortBy = col; this.dashboardTable.sortDir = 'desc'; }
-                this.renderDashboard();
-            },
+            handleDashboardSort(col) { if (this.dashboardTable.sortBy === col) { this.dashboardTable.sortDir = this.dashboardTable.sortDir === 'asc' ? 'desc' : 'asc'; } else { this.dashboardTable.sortBy = col; this.dashboardTable.sortDir = 'desc'; } this.renderDashboard(); },
 
             getFilteredPriceData() {
                 let data = [...this.state.priceHistory];
@@ -1267,49 +1254,70 @@
             
             togglePriceChartCustom(val) {
                 const customInput = document.getElementById('price-chart-custom-input');
-                if(val === 'custom') {
-                    customInput.classList.remove('hidden');
-                    customInput.classList.add('flex');
-                } else {
-                    customInput.classList.add('hidden');
-                    customInput.classList.remove('flex');
-                }
+                if(val === 'custom') { customInput.classList.remove('hidden'); customInput.classList.add('flex'); } 
+                else { customInput.classList.add('hidden'); customInput.classList.remove('flex'); }
+            },
+
+            openPriceModal(date) {
+                const item=this.state.priceHistory.find(p=>p.date===date);if(!item)return;
+                this.editingPriceDate=date;document.getElementById('price-modal-record').innerText=date;document.getElementById('price-modal-date').value=item.date;document.getElementById('price-modal-price').value=Number(item.price).toFixed(2);document.getElementById('price-modal-updated').value=item.updatedAt?new Date(item.updatedAt).toLocaleString():'-';document.getElementById('price-modal-delete').style.display=(this.state.role==='supervisor'||this.state.permissions.pricing_delete)?'block':'none';document.getElementById('price-entry-modal').classList.remove('hidden');
+            },
+            closePriceModal(){this.editingPriceDate=null;document.getElementById('price-entry-modal').classList.add('hidden');},
+            savePriceModal(e){
+                e.preventDefault();const idx=this.state.priceHistory.findIndex(p=>p.date===this.editingPriceDate);if(idx<0)return;
+                const before=JSON.parse(JSON.stringify(this.state.priceHistory[idx])),date=document.getElementById('price-modal-date').value,price=parseFloat(document.getElementById('price-modal-price').value);if(!date||price<=0)return;
+                if(this.state.priceHistory.some((p,i)=>i!==idx&&p.date===date))return this.showToast('A price record already exists for this date.','error');
+                const after={date,price,updatedAt:new Date().toISOString()};this.state.priceHistory[idx]=after;this.state.priceHistory.sort((a,b)=>a.date.localeCompare(b.date));this.state.dailyPrice=Number(this.state.priceHistory.at(-1).price);this.logAudit('pricing','update',date,before,after,'Egg price entry updated');this.saveData();this.closePriceModal();this.showToast('Price record updated.','success');
+            },
+            deletePriceFromModal(){
+                if(this.state.priceHistory.length<=1)return this.showToast('Cannot delete the last price record.','error');const item=this.state.priceHistory.find(p=>p.date===this.editingPriceDate);if(!item)return;
+                this.state.priceHistory=this.state.priceHistory.filter(p=>p.date!==item.date);this.state.dailyPrice=Number(this.state.priceHistory.at(-1).price);this.logAudit('pricing','delete',item.date,item,null,'Egg price entry deleted');this.saveData();this.closePriceModal();this.showToast('Price record deleted.','success');
             },
 
             renderPriceTracker() {
-                const tbody = document.getElementById('price-history-table');
-                const canvas = document.getElementById('price-history-chart');
+                const tbody = document.getElementById('price-history-table'), canvas = document.getElementById('price-history-chart');
                 if (!tbody || !canvas) return;
                 const data = this.getFilteredPriceData();
                 this.priceTable.currentData = data;
                 const chronological = [...this.state.priceHistory].sort((a,b) => a.date.localeCompare(b.date));
                 const previousByDate = new Map(chronological.map((item, index) => [item.date, index ? Number(chronological[index-1].price) : null]));
                 
+                const isSup = this.state.role === 'supervisor';
+                const canEdit = isSup || this.state.permissions.pricing_edit;
+                const canDelete = isSup || this.state.permissions.pricing_delete;
+                const showActions = canEdit || canDelete;
+                
+                document.getElementById('price-th-actions').style.display = showActions ? 'table-cell' : 'none';
+
                 tbody.innerHTML = data.length ? data.map(item => {
                     const previous = previousByDate.get(item.date), change = previous === null ? null : Number(item.price) - previous;
                     const changeHtml = change === null ? '<span class="text-gray-400">-</span>' : `<span class="font-medium ${change > 0 ? 'text-red-600' : change < 0 ? 'text-green-600' : 'text-gray-500'}">${change > 0 ? '+' : ''}$${change.toFixed(2)}</span>`;
-                    return `<tr class="hover:bg-gray-50"><td class="px-6 py-4 whitespace-nowrap font-medium text-gray-800">${new Date(item.date+'T00:00:00').toLocaleDateString()}</td><td class="px-6 py-4 font-bold text-primary-600">$${Number(item.price).toFixed(2)}</td><td class="px-6 py-4 whitespace-nowrap text-xs">${item.updatedAt ? new Date(item.updatedAt).toLocaleString() : '-'}</td><td class="px-6 py-4">${changeHtml}</td></tr>`;
-                }).join('') : `<tr><td colspan="4" class="px-6 py-10 text-center text-gray-500">${i18n.t('No price records found.')}</td></tr>`;
+                    
+                    let actionsHtml = '';
+                    if (showActions) {
+                        actionsHtml = `<td class="px-6 py-4 flex gap-2 justify-center items-center h-full">`;
+                        if(canEdit) actionsHtml += `<button title="Edit" onclick="app.openPriceModal('${item.date}')" class="table-action-btn table-action-edit" aria-label="Edit"><i class="fa-regular fa-pen-to-square"></i></button>`;
+                        if(canDelete) actionsHtml += `<button title="Delete" onclick="app.openPriceModal('${item.date}')" class="table-action-btn table-action-delete" aria-label="Delete"><i class="fa-regular fa-trash-can"></i></button>`;
+                        actionsHtml += `</td>`;
+                    }
+
+                    return `<tr class="hover:bg-gray-50"><td class="px-6 py-4 whitespace-nowrap font-medium text-gray-800">${new Date(item.date+'T00:00:00').toLocaleDateString()}</td><td class="px-6 py-4 font-bold text-primary-600">$${Number(item.price).toFixed(2)}</td><td class="px-6 py-4 whitespace-nowrap text-xs">${item.updatedAt ? new Date(item.updatedAt).toLocaleString() : '-'}</td><td class="px-6 py-4">${changeHtml}</td>${showActions ? actionsHtml : ''}</tr>`;
+                }).join('') : `<tr><td colspan="${showActions ? 5 : 4}" class="px-6 py-10 text-center text-gray-500">${i18n.t('No price records found.')}</td></tr>`;
                 
                 ['date','price','updatedAt'].forEach(col => { const icon=document.getElementById(`price-sort-${col}`); if(icon) icon.className='fa-solid ml-1 '+(this.priceTable.sortBy===col?(this.priceTable.sortDir==='asc'?'fa-sort-up text-primary-600':'fa-sort-down text-primary-600'):'fa-sort text-gray-300'); });
                 
                 const rangeVal = document.getElementById('price-chart-range')?.value || '30';
                 let chartData = [];
-                if (rangeVal === 'all') {
-                    chartData = chronological;
-                } else if (rangeVal === 'custom') {
-                    const numRecords = parseInt(document.getElementById('price-chart-custom-num').value) || 10;
-                    chartData = chronological.slice(-numRecords);
-                } else {
-                    chartData = chronological.slice(-Number(rangeVal));
-                }
+                if (rangeVal === 'all') chartData = chronological;
+                else if (rangeVal === 'custom') chartData = chronological.slice(-(parseInt(document.getElementById('price-chart-custom-num').value) || 10));
+                else chartData = chronological.slice(-Number(rangeVal));
 
                 const primaryColor = getComputedStyle(document.documentElement).getPropertyValue('--primary-600').trim() || '#2563eb';
                 const hexToRgba = (hex, opacity) => { let c; if(/^#([A-Fa-f0-9]{3}){1,2}$/.test(hex)){ c= hex.substring(1).split(''); if(c.length== 3){ c= [c[0], c[0], c[1], c[1], c[2], c[2]]; } c= '0x'+c.join(''); return 'rgba('+[(c>>16)&255, (c>>8)&255, c&255].join(',')+','+opacity+')'; } return `rgba(37,99,235,${opacity})`; };
 
                 if (this.priceChart) this.priceChart.destroy();
                 this.priceChart = new Chart(canvas, { type:'line', data:{ labels:chartData.map(i=>new Date(i.date+'T00:00:00').toLocaleDateString()), datasets:[{label:i18n.t('Price Per Egg'),data:chartData.map(i=>Number(i.price)),borderColor:primaryColor,backgroundColor:hexToRgba(primaryColor, 0.12),fill:true,tension:.3,pointRadius:4,pointHoverRadius:6}]}, options:{responsive:true,maintainAspectRatio:false,interaction:{intersect:false,mode:'index'},plugins:{legend:{display:false}},scales:{y:{beginAtZero:false,ticks:{callback:v=>'$'+Number(v).toFixed(2)}},x:{ticks:{maxRotation:0,autoSkip:true,maxTicksLimit:8}}}} });
-                i18n.translate(document.getElementById('view-pricing'));
+                i18n.translate(document.getElementById('price-history-table'));
             },
             handlePriceSearch(e) { this.priceTable.search = e.target.value; this.renderPriceTracker(); },
             togglePriceFilters() { this.priceTable.filters.show = !this.priceTable.filters.show; document.getElementById('price-filter-panel').classList.toggle('hidden', !this.priceTable.filters.show); },
@@ -1324,7 +1332,7 @@
                 this.downloadCSV(csv, `eggpro_price_history_${Date.now()}.csv`);
                 this.showToast(i18n.t('Price history exported successfully!'),'success');
             },
-            updatePriceOnly(e) { e.preventDefault(); const date=document.getElementById('pricing-date').value,price=parseFloat(document.getElementById('pricing-price').value); if(!date||price<=0)return; const rec={date,price,updatedAt:new Date().toISOString()},idx=this.state.priceHistory.findIndex(x=>x.date===date); if(idx>=0)this.state.priceHistory[idx]=rec;else this.state.priceHistory.push(rec);this.state.priceHistory.sort((a,b)=>a.date.localeCompare(b.date));this.state.dailyPrice=Number(this.state.priceHistory.at(-1).price);this.saveData();this.renderPriceTracker();this.showToast(i18n.t('Daily price saved successfully!'),'success'); },
+            updatePriceOnly(e) { e.preventDefault(); const date=document.getElementById('pricing-date').value,price=parseFloat(document.getElementById('pricing-price').value); if(!date||price<=0)return; const rec={date,price,updatedAt:new Date().toISOString()},idx=this.state.priceHistory.findIndex(x=>x.date===date),before=idx>=0?JSON.parse(JSON.stringify(this.state.priceHistory[idx])):null; if(idx>=0)this.state.priceHistory[idx]=rec;else this.state.priceHistory.push(rec);this.logAudit('pricing',idx>=0?'update':'create',date,before,rec,idx>=0?'Egg price entry updated':'Egg price entry created');this.state.priceHistory.sort((a,b)=>a.date.localeCompare(b.date));this.state.dailyPrice=Number(this.state.priceHistory.at(-1).price);this.saveData();this.showToast(i18n.t('Daily price saved successfully!'),'success'); },
             
             loadBasicSettingsUI(){
                 const a=this.state.appSettings||{};
@@ -1345,23 +1353,14 @@
                 const t = this.state.appSettings?.theme || 'light';
                 const dark = t === 'dark' || (t === 'system' && matchMedia('(prefers-color-scheme: dark)').matches);
                 document.documentElement.classList.toggle('dark', dark);
-                
                 const accent = this.state.appSettings?.accentColor || 'blue';
                 document.documentElement.setAttribute('data-theme', accent);
-
-                // Update charts if they exist to apply new colors
                 if(this.currentView === 'dashboard') this.renderSalesChart();
                 if(this.currentView === 'pricing') this.renderPriceTracker();
             },
             saveBasicSettings(e){
                 e.preventDefault();
-                this.state.appSettings = {
-                    theme: document.getElementById('setting-theme').value,
-                    accentColor: document.getElementById('setting-color').value,
-                    timezone: document.getElementById('setting-timezone').value,
-                    currency: document.getElementById('setting-currency').value,
-                    lowStock: parseFloat(document.getElementById('setting-low-stock').value)||0
-                };
+                this.state.appSettings = { theme: document.getElementById('setting-theme').value, accentColor: document.getElementById('setting-color').value, timezone: document.getElementById('setting-timezone').value, currency: document.getElementById('setting-currency').value, lowStock: parseFloat(document.getElementById('setting-low-stock').value)||0 };
                 this.state.eggWeight=parseFloat(document.getElementById('setting-egg-weight').value)||this.state.eggWeight;
                 i18n.setLanguage(document.getElementById('setting-language').value);
                 this.applyTheme();
@@ -1369,12 +1368,36 @@
                 this.showToast(i18n.t('Basic settings saved successfully!'),'success');
             },
 
-            updatePermissions() { 
-                this.state.permissions={}; 
-                ['pos','inventory','dashboard','dashboard_profit','pricing','settings','permissions'].forEach(k => {
-                    const el = document.getElementById('perm-'+k);
-                    if (el) this.state.permissions[k] = el.checked;
-                }); 
+            permissionLabels: {pos:'Point of Sale page',pos_calc:'Amount received calculator',pos_receipt_op:'Operator name on receipt',pos_receipt_id:'Transaction ID on receipt',inventory:'Inventory page',inv_add:'Add inventory imports',inv_view:'View inventory records',inv_edit:'Edit inventory records',inv_delete:'Delete inventory records',dashboard:'Financial dashboard',dashboard_profit:'Gross profit KPI',dashboard_trend:'Sales trend graph',pricing:'Egg Price Tracker page',pricing_add:'Add daily prices',pricing_edit:'Edit price records',pricing_delete:'Delete price records',settings:'System Settings page',permissions:'Permission management page'},
+            defaultPermissions(){return {pos:true,pos_calc:true,pos_receipt_op:true,pos_receipt_id:true,inventory:true,inv_add:true,inv_view:true,inv_edit:false,inv_delete:false,dashboard:false,dashboard_profit:false,dashboard_trend:false,pricing:false,pricing_add:false,pricing_edit:false,pricing_delete:false,settings:false,permissions:false};},
+            logAudit(module,action,recordId,before,after,summary,changes=[]){if(!Array.isArray(this.state.auditLogs))this.state.auditLogs=[];this.state.auditLogs.push({id:'AUD-'+Date.now(),timestamp:new Date().toISOString(),actor:this.state.role,module,action,recordId,summary,changes,before,after});},
+            buildPermissionChanges(before,after){return Object.keys(this.permissionLabels).filter(k=>Boolean(before[k])!==Boolean(after[k])).map(k=>({key:k,label:this.permissionLabels[k],from:Boolean(before[k]),to:Boolean(after[k])}));},
+            getFilteredAudit(){let d=[...(this.state.auditLogs||[])],q=this.auditTable.search.toLowerCase();d=d.filter(x=>(!q||[x.actor,x.module,x.action,x.recordId,x.summary,JSON.stringify(x.changes)].join(' ').toLowerCase().includes(q))&&(!this.auditTable.filters.dateFrom||x.timestamp>=this.auditTable.filters.dateFrom+'T00:00:00')&&(!this.auditTable.filters.dateTo||x.timestamp<=this.auditTable.filters.dateTo+'T23:59:59')&&(this.auditTable.filters.module==='all'||x.module===this.auditTable.filters.module)&&(this.auditTable.filters.action==='all'||x.action===this.auditTable.filters.action));d.sort((a,b)=>{let x=a[this.auditTable.sortBy]||'',y=b[this.auditTable.sortBy]||'',r=x<y?-1:x>y?1:0;return this.auditTable.sortDir==='asc'?r:-r});return d;},
+            renderPermissionAudit(log){const changes=(log.changes&&log.changes.length)?log.changes:this.buildPermissionChanges({...this.defaultPermissions(),...(log.before||{})},{...this.defaultPermissions(),...(log.after||{})});if(!changes.length)return '<span class="text-gray-500">Permission settings saved with no effective changes.</span>';return `<div class="space-y-2"><div class="text-xs text-gray-500">${changes.length} permission${changes.length===1?'':'s'} changed</div>${changes.map(c=>`<div class="flex flex-wrap items-center gap-2"><span class="font-medium text-gray-700">${c.label}</span><span class="px-2 py-0.5 rounded-full text-xs ${c.from?'bg-emerald-50 text-emerald-700':'bg-gray-100 text-gray-500'}">${c.from?'Allowed':'Blocked'}</span><i class="fa-solid fa-arrow-right text-gray-300 text-xs"></i><span class="px-2 py-0.5 rounded-full text-xs ${c.to?'bg-emerald-50 text-emerald-700':'bg-gray-100 text-gray-500'}">${c.to?'Allowed':'Blocked'}</span></div>`).join('')}<details class="text-xs text-gray-500"><summary class="cursor-pointer">View complete permission snapshot</summary><div class="grid grid-cols-1 sm:grid-cols-2 gap-1 mt-2">${Object.keys(this.permissionLabels).map(k=>`<div class="flex justify-between gap-3 bg-gray-50 p-2 rounded"><span>${this.permissionLabels[k]}</span><b class="${log.after?.[k]?'text-emerald-600':'text-gray-400'}">${log.after?.[k]?'Allowed':'Blocked'}</b></div>`).join('')}</div></details></div>`;},
+            formatAuditDate(value){if(!value)return '-';const d=new Date(value);return Number.isNaN(d.getTime())?String(value):d.toLocaleString();},
+            renderPricingAudit(log){
+                const before=log.before||null,after=log.after||null;
+                if(log.action==='update'&&before&&after){
+                    const changes=[];
+                    if(before.date!==after.date)changes.push({label:'Effective date',from:before.date||'-',to:after.date||'-'});
+                    if(Number(before.price)!==Number(after.price))changes.push({label:'Price per egg',from:`$${Number(before.price).toFixed(2)}`,to:`$${Number(after.price).toFixed(2)}`,price:true});
+                    const delta=Number(after.price)-Number(before.price),direction=delta>0?'Increase':delta<0?'Decrease':'No change';
+                    return `<div class="space-y-3"><div class="flex flex-wrap items-center gap-2"><span class="font-semibold text-gray-800">Egg price updated</span>${delta!==0?`<span class="px-2 py-1 rounded-full text-xs ${delta>0?'bg-rose-50 text-rose-600':'bg-emerald-50 text-emerald-600'}">${direction} ${delta>0?'+':''}$${delta.toFixed(2)}</span>`:''}</div>${changes.length?changes.map(c=>`<div class="flex flex-wrap items-center gap-2"><span class="font-medium text-gray-700 min-w-[110px]">${c.label}</span><span class="px-2 py-1 rounded-lg bg-gray-100 text-gray-600">${c.from}</span><i class="fa-solid fa-arrow-right text-gray-300 text-xs"></i><span class="px-2 py-1 rounded-lg ${c.price?'bg-primary-50 text-primary-700':'bg-gray-100 text-gray-700'} font-medium">${c.to}</span></div>`).join(''):'<div class="text-gray-500">No business fields changed.</div>'}<div class="text-xs text-gray-500">Updated ${this.formatAuditDate(after.updatedAt)}</div></div>`;
+                }
+                if(log.action==='delete'&&before){return `<div class="space-y-2"><div class="font-semibold text-gray-800">Egg price entry deleted</div><div class="flex flex-wrap gap-2"><span class="px-2 py-1 rounded-lg bg-gray-100 text-gray-700">Date: ${before.date||'-'}</span><span class="px-2 py-1 rounded-lg bg-rose-50 text-rose-600">Price: $${Number(before.price).toFixed(2)}</span></div><div class="text-xs text-gray-500">The record was removed from price history.</div></div>`;}
+                if(log.action==='create'&&after){return `<div class="space-y-2"><div class="font-semibold text-gray-800">Egg price entry created</div><div class="flex flex-wrap gap-2"><span class="px-2 py-1 rounded-lg bg-gray-100 text-gray-700">Date: ${after.date||'-'}</span><span class="px-2 py-1 rounded-lg bg-emerald-50 text-emerald-600">Price: $${Number(after.price).toFixed(2)}</span></div></div>`;}
+                return `<div>${log.summary||'Pricing record changed'}</div>`;
+            },
+            renderAuditDetails(log){if(log.module==='permissions')return this.renderPermissionAudit(log);if(log.module==='pricing')return this.renderPricingAudit(log);return `<div>${log.summary||'-'}</div><details class="text-xs text-gray-500 mt-1"><summary class="cursor-pointer">View data trace</summary><pre class="whitespace-pre-wrap bg-gray-50 p-2 rounded mt-2">Before: ${JSON.stringify(log.before,null,2)}\nAfter: ${JSON.stringify(log.after,null,2)}</pre></details>`;},
+            renderAuditLog(){const b=document.getElementById('audit-list');if(!b)return;const d=this.getFilteredAudit();this.auditTable.currentData=d;b.innerHTML=d.length?d.map(x=>`<tr class="hover:bg-gray-50 align-top"><td class="px-5 py-4 whitespace-nowrap text-xs">${new Date(x.timestamp).toLocaleString()}</td><td class="px-5 py-4 capitalize">${x.actor}</td><td class="px-5 py-4 capitalize">${x.module}</td><td class="px-5 py-4"><span class="px-2 py-1 rounded-full text-xs ${x.action==='delete'?'bg-rose-50 text-rose-500':x.action==='update'?'bg-amber-50 text-amber-600':'bg-emerald-50 text-emerald-600'}">${x.action}</span></td><td class="px-5 py-4 font-mono text-xs">${x.recordId}</td><td class="px-5 py-4 min-w-[360px]">${this.renderAuditDetails(x)}</td></tr>`).join(''):'<tr><td colspan="6" class="p-10 text-center text-gray-500">No audit records found.</td></tr>';},
+            handleAuditSearch(e){this.auditTable.search=e.target.value;this.renderAuditLog();},toggleAuditFilters(){this.auditTable.filters.show=!this.auditTable.filters.show;document.getElementById('audit-filter-panel').classList.toggle('hidden',!this.auditTable.filters.show);},applyAuditFilters(){this.auditTable.filters.dateFrom=document.getElementById('audit-date-from').value;this.auditTable.filters.dateTo=document.getElementById('audit-date-to').value;this.auditTable.filters.module=document.getElementById('audit-module').value;this.auditTable.filters.action=document.getElementById('audit-action').value;this.renderAuditLog();},clearAuditFilters(){['audit-date-from','audit-date-to','audit-search'].forEach(id=>document.getElementById(id).value='');document.getElementById('audit-module').value='all';document.getElementById('audit-action').value='all';this.auditTable.search='';this.auditTable.filters={show:this.auditTable.filters.show,dateFrom:'',dateTo:'',module:'all',action:'all'};this.renderAuditLog();},sortAudit(c){if(this.auditTable.sortBy===c)this.auditTable.sortDir=this.auditTable.sortDir==='asc'?'desc':'asc';else{this.auditTable.sortBy=c;this.auditTable.sortDir='desc'}this.renderAuditLog();},exportAuditCSV(){const d=this.auditTable.currentData;if(!d.length)return this.showToast('No data to export based on current filters.','warning');let csv='Timestamp,Actor,Module,Action,Record,Summary,Changes\n';d.forEach(x=>csv+=`"${x.timestamp}","${x.actor}","${x.module}","${x.action}","${x.recordId}","${String(x.summary||'').replaceAll('"','""')}","${JSON.stringify(x.changes||[]).replaceAll('"','""')}"\n`);this.downloadCSV(csv,`eggpro_audit_${Date.now()}.csv`);},
+            updatePermissions() {
+                const before={...this.defaultPermissions(),...(this.state.permissions||{})};
+                const keys = ['pos', 'pos_calc', 'pos_receipt_op', 'pos_receipt_id', 'inventory', 'inv_add', 'inv_view', 'inv_edit', 'inv_delete', 'dashboard', 'dashboard_profit', 'dashboard_trend', 'pricing', 'pricing_add', 'pricing_edit', 'pricing_delete', 'settings', 'permissions'];
+                const after={}; keys.forEach(k=>{const el=document.getElementById('perm-'+k);if(el)after[k]=el.checked;});
+                this.state.permissions=after;
+                const changes=this.buildPermissionChanges(before,after);
+                if(changes.length)this.logAudit('permissions','update','Operator access',before,{...after},`${changes.length} permission${changes.length===1?'':'s'} changed`,changes); 
                 this.saveData();
                 this.updateNavVisibility();
                 this.showToast(i18n.t('Operator permissions successfully updated.'),'success'); 
@@ -1390,46 +1413,21 @@
             showToast(message, type = 'info') {
                 const container = document.getElementById('toast-container');
                 const toast = document.createElement('div');
-                
-                let bgClass = 'bg-white border-l-4 border-primary-500 text-gray-800';
-                let icon = '<i class="fa-solid fa-circle-info text-primary-500"></i>';
-                
-                if (type === 'success') {
-                    bgClass = 'bg-white border-l-4 border-green-500 text-gray-800';
-                    icon = '<i class="fa-solid fa-circle-check text-green-500"></i>';
-                } else if (type === 'error') {
-                    bgClass = 'bg-white border-l-4 border-red-500 text-gray-800';
-                    icon = '<i class="fa-solid fa-circle-exclamation text-red-500"></i>';
-                } else if (type === 'warning') {
-                    bgClass = 'bg-white border-l-4 border-yellow-500 text-gray-800';
-                    icon = '<i class="fa-solid fa-triangle-exclamation text-yellow-500"></i>';
-                }
+                let bgClass = 'bg-white border-l-4 border-primary-500 text-gray-800', icon = '<i class="fa-solid fa-circle-info text-primary-500"></i>';
+                if (type === 'success') { bgClass = 'bg-white border-l-4 border-green-500 text-gray-800'; icon = '<i class="fa-solid fa-circle-check text-green-500"></i>'; } 
+                else if (type === 'error') { bgClass = 'bg-white border-l-4 border-red-500 text-gray-800'; icon = '<i class="fa-solid fa-circle-exclamation text-red-500"></i>'; } 
+                else if (type === 'warning') { bgClass = 'bg-white border-l-4 border-yellow-500 text-gray-800'; icon = '<i class="fa-solid fa-triangle-exclamation text-yellow-500"></i>'; }
 
                 toast.className = `p-4 rounded shadow-lg flex items-start gap-3 transition-all duration-300 transform translate-y-[-100%] opacity-0 ${bgClass}`;
-                toast.innerHTML = `
-                    <div class="mt-0.5">${icon}</div>
-                    <div class="flex-1 text-sm font-medium">${message}</div>
-                    <button class="text-gray-400 hover:text-gray-600 focus:outline-none" onclick="this.parentElement.remove()">
-                        <i class="fa-solid fa-xmark"></i>
-                    </button>
-                `;
-
+                toast.innerHTML = `<div class="mt-0.5">${icon}</div><div class="flex-1 text-sm font-medium">${message}</div><button class="text-gray-400 hover:text-gray-600 focus:outline-none" onclick="this.parentElement.remove()"><i class="fa-solid fa-xmark"></i></button>`;
                 container.appendChild(toast);
                 setTimeout(() => { toast.classList.remove('translate-y-[-100%]', 'opacity-0'); }, 10);
-                setTimeout(() => {
-                    toast.classList.add('opacity-0', 'translate-x-full');
-                    setTimeout(() => { if(toast.parentElement) toast.remove(); }, 300);
-                }, 4000);
+                setTimeout(() => { toast.classList.add('opacity-0', 'translate-x-full'); setTimeout(() => { if(toast.parentElement) toast.remove(); }, 300); }, 4000);
             },
 
             setupMobileMenu() {
-                const btn = document.getElementById('mobile-menu-btn');
-                const nav = document.getElementById('nav-links');
-                btn.addEventListener('click', () => {
-                    nav.classList.toggle('hidden');
-                    nav.classList.toggle('flex');
-                    document.getElementById('role-switcher-container').classList.toggle('hidden', nav.classList.contains('hidden'));
-                });
+                const btn = document.getElementById('mobile-menu-btn'), nav = document.getElementById('nav-links');
+                btn.addEventListener('click', () => { nav.classList.toggle('hidden'); nav.classList.toggle('flex'); document.getElementById('role-switcher-container').classList.toggle('hidden', nav.classList.contains('hidden')); });
             }
         };
 
