@@ -158,7 +158,7 @@
                 <li>
                     <button onclick="app.navigate('pricing')" id="nav-pricing" class="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left hover:bg-slate-800 transition-colors text-slate-300 nav-item">
                         <i class="fa-solid fa-chart-area w-5 text-center"></i>
-                        <span class="font-medium">Egg Price Tracker</span>
+                    <span class="font-medium">Egg Pricing</span>
                     </button>
                 </li>
                 <li><button onclick="app.navigate('audit')" id="nav-audit" class="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left hover:bg-slate-800 transition-colors text-slate-300 nav-item"><i class="fa-solid fa-clipboard-list w-5 text-center"></i><span class="font-medium">Audit Log</span></button></li>
@@ -186,7 +186,7 @@
             <div class="flex items-center justify-between sm:justify-end gap-2 sm:gap-4 w-full sm:w-auto">
                 <div class="bg-primary-50 text-primary-700 px-3 py-1 rounded-full text-sm font-medium border border-primary-100 flex items-center gap-2">
                     <i class="fa-solid fa-coins text-primary-500"></i>
-                    Today's Price: $<span id="display-daily-price">0.00</span> / egg
+                    Selected Price: $<span id="display-daily-price">0.00</span> / <span id="display-price-unit">egg</span>
                 </div>
                 <div class="flex items-center gap-2 text-sm text-gray-500">
                     <div id="user-badge" class="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 font-bold">O</div>
@@ -219,10 +219,24 @@
                         <h3 class="text-xl font-semibold mb-6 text-gray-800">New Sale</h3>
                         
                         <div class="mb-4">
-                            <label class="block text-sm font-medium text-gray-600 mb-2">Quantity (Number of Eggs)</label>
+                            <label class="block text-sm font-medium text-gray-600 mb-2">Egg Type</label>
+                            <select id="pos-egg-type" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 font-semibold text-gray-800"></select>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-600 mb-2">Sale Option</label>
+                            <select id="pos-sale-mode" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 font-semibold text-gray-800">
+                                <option value="retail">Retail (single eggs)</option>
+                                <option value="batch">Batch (30 eggs)</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-4">
+                            <label id="pos-quantity-label" class="block text-sm font-medium text-gray-600 mb-2">Quantity (Number of Eggs)</label>
                             <div class="relative">
                                 <input type="number" id="pos-quantity" step="1" min="1" class="w-full text-4xl py-4 px-4 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all font-bold text-gray-800" placeholder="0">
                             </div>
+                            <p id="pos-quantity-help" class="text-xs text-gray-500 mt-2">Enter the number of individual eggs.</p>
                         </div>
 
                         <!-- Amount Received Calculator Input -->
@@ -240,12 +254,24 @@
                         <div>
                             <h3 class="text-sm font-semibold uppercase tracking-wider text-gray-500 mb-4">Transaction Summary</h3>
                             <div class="flex justify-between items-center mb-2">
-                                <span class="text-gray-600">Price per egg</span>
+                                <span class="text-gray-600">Egg type</span>
+                                <span id="pos-summary-type" class="font-medium text-right">-</span>
+                            </div>
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="text-gray-600">Sale option</span>
+                                <span id="pos-summary-mode" class="font-medium">Retail</span>
+                            </div>
+                            <div class="flex justify-between items-center mb-2">
+                                <span id="pos-unit-price-label" class="text-gray-600">Price per egg</span>
                                 <span class="font-medium">$<span id="pos-unit-price">0.00</span></span>
                             </div>
+                            <div class="flex justify-between items-center mb-2">
+                                <span id="pos-summary-qty-label" class="text-gray-600">Retail quantity</span>
+                                <span id="pos-summary-qty" class="font-medium">0 eggs</span>
+                            </div>
                             <div class="flex justify-between items-center mb-4">
-                                <span class="text-gray-600">Quantity</span>
-                                <span class="font-medium"><span id="pos-summary-qty">0</span> eggs</span>
+                                <span class="text-gray-600">Total eggs</span>
+                                <span class="font-medium"><span id="pos-summary-eggs">0</span> eggs</span>
                             </div>
                             <div class="w-full h-px bg-gray-200 mb-4"></div>
                             <div class="flex justify-between items-end mb-8">
@@ -389,12 +415,14 @@
                         </div>
                     </div>
                     <div class="overflow-x-auto">
-                        <table class="w-full text-left text-sm text-gray-600">
+                        <table class="w-full min-w-[980px] text-left text-sm text-gray-600">
                             <thead class="text-xs text-gray-500 uppercase bg-white border-b border-gray-100">
                                 <tr>
                                     <th class="px-6 py-4 cursor-pointer hover:bg-gray-50" onclick="app.handleDashboardSort('id')">Trx ID <i id="sort-icon-id" class="fa-solid fa-sort ml-1 text-gray-400"></i></th>
                                     <th class="px-6 py-4 cursor-pointer hover:bg-gray-50" onclick="app.handleDashboardSort('timestamp')">Date & Time <i id="sort-icon-timestamp" class="fa-solid fa-sort ml-1 text-gray-400"></i></th>
                                     <th class="px-6 py-4 cursor-pointer hover:bg-gray-50" onclick="app.handleDashboardSort('operator')">Operator <i id="sort-icon-operator" class="fa-solid fa-sort ml-1 text-gray-400"></i></th>
+                                    <th class="px-6 py-4">Egg Type</th>
+                                    <th class="px-6 py-4">Sale Option</th>
                                     <th class="px-6 py-4 cursor-pointer hover:bg-gray-50" onclick="app.handleDashboardSort('qtyEggs')">Quantity (Eggs) <i id="sort-icon-qtyEggs" class="fa-solid fa-sort ml-1 text-gray-400"></i></th>
                                     <th class="px-6 py-4 cursor-pointer hover:bg-gray-50" onclick="app.handleDashboardSort('unitPrice')">Sale Price <i id="sort-icon-unitPrice" class="fa-solid fa-sort ml-1 text-gray-400"></i></th>
                                     <th class="px-6 py-4 cursor-pointer hover:bg-gray-50 text-right" onclick="app.handleDashboardSort('total')">Total Revenue <i id="sort-icon-total" class="fa-solid fa-sort ml-1 text-gray-400"></i></th>
@@ -467,7 +495,7 @@
                             <div class="permission-card flex-col items-start gap-0">
                                 <label class="flex items-center gap-3 w-full cursor-pointer">
                                     <input type="checkbox" id="perm-pricing" onchange="app.updatePermissions()">
-                                    <span><b>Egg Price Tracker</b><small>Change prices and review price history.</small></span>
+                                    <span><b>Egg Pricing</b><small>Review pricing; Supervisor manages the seven egg types.</small></span>
                                 </label>
                                 <div class="w-full pl-7 pt-3 mt-3 border-t border-gray-100 flex flex-col gap-2">
                                     <label class="flex items-center gap-2 cursor-pointer text-sm text-gray-700"><input type="checkbox" id="perm-pricing_add" onchange="app.updatePermissions()"><span>Allow Adding New Daily Price</span></label>
@@ -486,8 +514,25 @@
             <section id="view-audit" class="hidden"><div class="max-w-7xl mx-auto"><div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden"><div class="p-5 sm:p-6 border-b border-gray-100 bg-gray-50 flex flex-col gap-4"><div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4"><div><h3 class="text-lg font-semibold text-gray-800">Audit Log</h3><p class="text-sm text-gray-500">Readable history of permission and data changes.</p></div><div class="flex flex-col sm:flex-row gap-2 w-full lg:w-auto"><div class="relative flex-1 sm:w-72"><i class="fa-solid fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i><input type="search" id="audit-search" oninput="app.handleAuditSearch(event)" placeholder="Search audit records..." class="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg text-sm"></div><button onclick="app.toggleAuditFilters()" class="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm"><i class="fa-solid fa-filter mr-2"></i>Filters</button><button onclick="app.exportAuditCSV()" class="px-4 py-2 bg-primary-600 text-white rounded-lg text-sm"><i class="fa-solid fa-download mr-2"></i>Export CSV</button></div></div><div id="audit-filter-panel" class="hidden grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 pt-4 border-t"><div><label class="block text-xs text-gray-500 mb-1">Date From</label><input type="date" id="audit-date-from" onchange="app.applyAuditFilters()" class="w-full p-2 border rounded-lg"></div><div><label class="block text-xs text-gray-500 mb-1">Date To</label><input type="date" id="audit-date-to" onchange="app.applyAuditFilters()" class="w-full p-2 border rounded-lg"></div><div><label class="block text-xs text-gray-500 mb-1">Module</label><select id="audit-module" onchange="app.applyAuditFilters()" class="w-full p-2 border rounded-lg"><option value="all">All Modules</option><option value="permissions">Permissions</option><option value="inventory">Inventory</option><option value="pricing">Pricing</option><option value="sales">Sales</option><option value="settings">Settings</option></select></div><div><label class="block text-xs text-gray-500 mb-1">Action</label><select id="audit-action" onchange="app.applyAuditFilters()" class="w-full p-2 border rounded-lg"><option value="all">All Actions</option><option value="create">Create</option><option value="update">Update</option><option value="delete">Delete</option></select></div><div class="flex items-end"><button onclick="app.clearAuditFilters()" class="w-full px-4 py-2 bg-gray-100 rounded-lg">Clear Filters</button></div></div></div><div class="overflow-x-auto"><table class="w-full min-w-[900px] text-left text-sm text-gray-600"><thead class="text-xs uppercase border-b"><tr><th class="px-5 py-4 cursor-pointer" onclick="app.sortAudit('timestamp')">Date & Time</th><th class="px-5 py-4">Actor</th><th class="px-5 py-4">Module</th><th class="px-5 py-4">Action</th><th class="px-5 py-4">Record</th><th class="px-5 py-4">Change Summary</th></tr></thead><tbody id="audit-list" class="divide-y"></tbody></table></div></div></div></section>
             <section id="view-pricing" class="hidden">
                 <div class="max-w-6xl mx-auto">
+                    <div id="egg-type-pricing-section" class="bg-white p-5 sm:p-6 rounded-2xl shadow-sm border border-gray-100 mb-6">
+                        <div class="flex items-start gap-3 mb-5"><i class="fa-solid fa-egg text-yellow-500 text-xl mt-1"></i><div><h3 class="text-lg font-semibold text-gray-800">Seven Egg Type Prices</h3><p class="text-sm text-gray-500">Name each egg size and set separate retail and 30-egg batch prices. Supervisor access only.</p></div></div>
+                        <form onsubmit="app.saveEggTypePricing(event)">
+                            <div class="overflow-x-auto border border-gray-200 rounded-xl">
+                                <div class="min-w-[720px]">
+                                    <div class="grid grid-cols-[70px_1fr_180px_190px] gap-3 px-4 py-3 bg-gray-50 border-b border-gray-200 text-xs uppercase tracking-wide text-gray-500 font-semibold">
+                                        <span>Slot</span><span>Egg type / size</span><span>Retail price / egg</span><span>Batch price / 30 eggs</span>
+                                    </div>
+                                    <div id="egg-type-pricing-list" class="divide-y divide-gray-100"></div>
+                                </div>
+                            </div>
+                            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mt-4">
+                                <p class="text-xs text-gray-500">All seven names must be unique. Prices are saved together.</p>
+                                <button type="submit" class="w-full sm:w-auto px-6 py-3 bg-primary-600 hover:bg-primary-700 text-white font-semibold rounded-lg"><i class="fa-solid fa-floppy-disk mr-2"></i>Save Seven Prices</button>
+                            </div>
+                        </form>
+                    </div>
                     <div id="pricing-add-section" class="bg-white p-5 sm:p-6 rounded-2xl shadow-sm border border-gray-100 mb-6">
-                        <div class="flex items-center gap-3 mb-4"><i class="fa-solid fa-tag text-primary-600 text-xl"></i><div><h3 class="text-lg font-semibold text-gray-800">Set Daily Egg Price</h3><p class="text-sm text-gray-500">Adjust a day's price and immediately review the change below.</p></div></div>
+                        <div class="flex items-center gap-3 mb-4"><i class="fa-solid fa-tag text-primary-600 text-xl"></i><div><h3 class="text-lg font-semibold text-gray-800">Legacy Daily Reference Price</h3><p class="text-sm text-gray-500">Kept for existing price history. POS sales use the seven egg-type prices above.</p></div></div>
                         <form onsubmit="app.updatePriceOnly(event)" class="grid grid-cols-1 sm:grid-cols-3 gap-4 items-end"><div class="form-field"><label class="block text-sm font-medium text-gray-600 mb-1">Price Effective Date</label><input type="date" id="pricing-date" required class="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-primary-500"></div><div class="form-field"><label class="block text-sm font-medium text-gray-600 mb-1">Selling Price (Per Egg)</label><input type="number" id="pricing-price" step="0.01" min="0.01" required class="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-primary-500"></div><button type="submit" class="w-full p-3 bg-primary-600 hover:bg-primary-700 text-white font-semibold rounded-lg"><i class="fa-solid fa-floppy-disk mr-2"></i>Save Daily Price</button></form>
                     </div>
                     <div class="bg-white p-5 sm:p-6 rounded-2xl shadow-sm border border-gray-100 mb-6">
@@ -593,13 +638,19 @@
         <p><strong>Date:</strong> <span id="receipt-date"></span></p>
         <p id="receipt-id-row"><strong>Trx ID:</strong> <span id="receipt-id"></span></p>
         <p id="receipt-operator-row"><strong>Operator:</strong> <span id="receipt-operator" style="text-transform: capitalize;"></span></p>
+        <p><strong>Egg Type:</strong> <span id="receipt-egg-type"></span></p>
+        <p><strong>Sale Option:</strong> <span id="receipt-sale-mode"></span></p>
         <hr style="border-top: 1px dashed #000; margin: 15px 0;">
         <div style="display: flex; justify-content: space-between; margin: 10px 0;">
-            <span>Quantity (Eggs)</span>
+            <span>Sale Quantity</span>
+            <span id="receipt-sale-qty"></span>
+        </div>
+        <div style="display: flex; justify-content: space-between; margin: 10px 0;">
+            <span>Total Eggs</span>
             <span id="receipt-qty"></span>
         </div>
         <div style="display: flex; justify-content: space-between; margin: 10px 0;">
-            <span>Price / Egg</span>
+            <span id="receipt-price-label">Price / Egg</span>
             <span id="receipt-unit-price"></span>
         </div>
         <hr style="border-top: 1px dashed #000; margin: 15px 0;">
@@ -701,6 +752,10 @@
                 role: 'operator',
                 dailyPrice: 0.15,
                 priceHistory: [],
+                batchSize: 30,
+                eggTypes: [],
+                selectedEggTypeId: 'size-1',
+                saleMode: 'retail',
                 eggWeight: 0.06,
                 inventory: [],
                 appSettings: { theme: 'light', accentColor: 'blue', timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC', currency: 'USD', lowStock: 10 },
@@ -725,9 +780,21 @@
             editingPriceDate: null,
             auditTable: { search:'', sortBy:'timestamp', sortDir:'desc', filters:{show:false,dateFrom:'',dateTo:'',module:'all',action:'all'}, currentData:[] },
 
+            defaultEggTypes(seedPrice = 0.15) {
+                const retailPrice = Number(seedPrice) > 0 ? Number(seedPrice) : 0.15;
+                const names = ['Peewee', 'Small', 'Medium', 'Large', 'Extra Large', 'Jumbo', 'Super Jumbo'];
+                return names.map((name, index) => ({
+                    id: `size-${index + 1}`,
+                    name,
+                    retailPrice,
+                    batchPrice: Number((retailPrice * 30).toFixed(2))
+                }));
+            },
+
             init() {
                 i18n.init();
                 this.loadData();
+                this.ensureEggTypes();
                 this.ensurePriceHistory();
                 this.setupMobileMenu();
                 this.switchRole('operator');
@@ -736,6 +803,8 @@
                 document.getElementById('import-time').value = new Date().toTimeString().slice(0,5);
                 document.getElementById('pricing-date').value = this.getLocalDateKey();
                 document.getElementById('pricing-price').value = Number(this.state.dailyPrice).toFixed(2);
+                this.renderEggTypeOptions();
+                this.renderEggTypePricing();
                 
                 const today = new Date();
                 const lastWeek = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
@@ -747,14 +816,25 @@
                 // Add strict input cap for POS quantity
                 document.getElementById('pos-quantity').addEventListener('input', (e) => {
                     const maxEggs = Math.floor(this.getTotalStock() / this.state.eggWeight);
+                    const eggsPerSaleUnit = this.state.saleMode === 'batch' ? this.state.batchSize : 1;
+                    const maxSaleUnits = Math.floor(maxEggs / eggsPerSaleUnit);
                     let val = parseInt(e.target.value);
-                    if (!isNaN(val) && val > maxEggs) {
-                        e.target.value = maxEggs;
+                    if (!isNaN(val) && val > maxSaleUnits) {
+                        e.target.value = maxSaleUnits;
                         this.showToast(`Cannot exceed available stock (~${maxEggs} eggs).`, 'warning');
                     }
                     this.calculateTotal();
                 });
 
+                document.getElementById('pos-egg-type').addEventListener('change', (e) => {
+                    this.state.selectedEggTypeId = e.target.value;
+                    this.calculateTotal();
+                });
+                document.getElementById('pos-sale-mode').addEventListener('change', (e) => {
+                    this.state.saleMode = e.target.value === 'batch' ? 'batch' : 'retail';
+                    document.getElementById('pos-quantity').value = '';
+                    this.calculateTotal();
+                });
                 document.getElementById('pos-received').addEventListener('input', () => this.calculateTotal());
             },
 
@@ -770,7 +850,6 @@
                         console.error("Error loading data", e);
                     }
                 }
-                this.updateUI();
             },
             getLocalDateKey(date = new Date()) {
                 const y = date.getFullYear();
@@ -784,6 +863,25 @@
                     this.state.priceHistory.push({ date: this.getLocalDateKey(), price: Number(this.state.dailyPrice), updatedAt: new Date().toISOString() });
                     localStorage.setItem('eggProData', JSON.stringify(this.state));
                 }
+            },
+            ensureEggTypes() {
+                const defaults = this.defaultEggTypes(this.state.dailyPrice);
+                const existing = Array.isArray(this.state.eggTypes) ? this.state.eggTypes : [];
+                this.state.batchSize = 30;
+                this.state.eggTypes = defaults.map((fallback, index) => {
+                    const saved = existing[index] || {};
+                    const retailPrice = Number(saved.retailPrice) > 0 ? Number(saved.retailPrice) : fallback.retailPrice;
+                    const batchPrice = Number(saved.batchPrice) > 0 ? Number(saved.batchPrice) : Number((retailPrice * 30).toFixed(2));
+                    return {
+                        id: fallback.id,
+                        name: String(saved.name || fallback.name).trim() || fallback.name,
+                        retailPrice,
+                        batchPrice
+                    };
+                });
+                if (!this.state.eggTypes.some(type => type.id === this.state.selectedEggTypeId)) this.state.selectedEggTypeId = this.state.eggTypes[0].id;
+                if (!['retail', 'batch'].includes(this.state.saleMode)) this.state.saleMode = 'retail';
+                localStorage.setItem('eggProData', JSON.stringify(this.state));
             },
             saveData() {
                 localStorage.setItem('eggProData', JSON.stringify(this.state));
@@ -814,7 +912,7 @@
                 const mobileNav = document.getElementById('nav-links');
                 if (window.innerWidth < 768) { mobileNav.classList.add('hidden'); mobileNav.classList.remove('flex'); }
 
-                const titles = { pos: 'Point of Sale', inventory: 'Inventory Management', dashboard: 'Financial Dashboard', pricing: 'Egg Price Tracker', audit: 'Audit Log', settings: 'System Settings', permissions: 'Access Control' };
+                const titles = { pos: 'Point of Sale', inventory: 'Inventory Management', dashboard: 'Financial Dashboard', pricing: 'Egg Pricing', audit: 'Audit Log', settings: 'System Settings', permissions: 'Access Control' };
                 document.getElementById('page-title').innerText = i18n.t(titles[view]);
                 this.updateUI();
             },
@@ -859,16 +957,80 @@
                 document.getElementById('nav-permissions').parentElement.style.display = (isSup || p.permissions) ? 'block' : 'none';
             },
 
+            getSelectedEggType() {
+                return this.state.eggTypes.find(type => type.id === this.state.selectedEggTypeId) || this.state.eggTypes[0] || this.defaultEggTypes(this.state.dailyPrice)[0];
+            },
+
+            renderEggTypeOptions() {
+                const select = document.getElementById('pos-egg-type');
+                if (!select || !Array.isArray(this.state.eggTypes) || !this.state.eggTypes.length) return;
+                const current = this.state.eggTypes.some(type => type.id === this.state.selectedEggTypeId) ? this.state.selectedEggTypeId : this.state.eggTypes[0].id;
+                this.state.selectedEggTypeId = current;
+                select.replaceChildren(...this.state.eggTypes.map(type => new Option(type.name, type.id)));
+                select.value = current;
+                document.getElementById('pos-sale-mode').value = this.state.saleMode;
+            },
+
+            escapeHtml(value) {
+                return String(value).replace(/[&<>'"]/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[char]));
+            },
+
+            renderEggTypePricing() {
+                const list = document.getElementById('egg-type-pricing-list');
+                if (!list || !Array.isArray(this.state.eggTypes)) return;
+                list.innerHTML = this.state.eggTypes.map((type, index) => `
+                    <div class="grid grid-cols-[70px_1fr_180px_190px] gap-3 px-4 py-3 items-center">
+                        <span class="font-semibold text-gray-500">${index + 1}</span>
+                        <input id="egg-name-${type.id}" type="text" maxlength="40" required value="${this.escapeHtml(type.name)}" class="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500">
+                        <input id="egg-retail-${type.id}" type="number" min="0.01" step="0.01" required value="${Number(type.retailPrice).toFixed(2)}" class="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500">
+                        <input id="egg-batch-${type.id}" type="number" min="0.01" step="0.01" required value="${Number(type.batchPrice).toFixed(2)}" class="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500">
+                    </div>`).join('');
+            },
+
+            saveEggTypePricing(event) {
+                event.preventDefault();
+                if (this.state.role !== 'supervisor') return this.showToast('Only Supervisor can update egg type prices.', 'error');
+                const updated = this.state.eggTypes.map(type => ({
+                    id: type.id,
+                    name: document.getElementById(`egg-name-${type.id}`).value.trim(),
+                    retailPrice: Number(document.getElementById(`egg-retail-${type.id}`).value),
+                    batchPrice: Number(document.getElementById(`egg-batch-${type.id}`).value)
+                }));
+                const normalizedNames = updated.map(type => type.name.toLocaleLowerCase());
+                if (updated.some(type => !type.name)) return this.showToast('Every egg type needs a name.', 'warning');
+                if (new Set(normalizedNames).size !== updated.length) return this.showToast('Egg type names must be unique.', 'warning');
+                if (updated.some(type => !(type.retailPrice > 0) || !(type.batchPrice > 0))) return this.showToast('Every retail and batch price must be greater than zero.', 'warning');
+                const before = JSON.parse(JSON.stringify(this.state.eggTypes));
+                this.state.eggTypes = updated;
+                this.logAudit('pricing', 'update', 'egg-type-pricing', before, JSON.parse(JSON.stringify(updated)), 'Seven egg type prices updated');
+                this.saveData();
+                this.renderEggTypePricing();
+                this.calculateTotal();
+                this.showToast('Seven egg type prices saved successfully!', 'success');
+            },
+
+            getSaleDetails() {
+                const eggType = this.getSelectedEggType();
+                const saleMode = this.state.saleMode === 'batch' ? 'batch' : 'retail';
+                const saleQuantity = parseInt(document.getElementById('pos-quantity')?.value, 10) || 0;
+                const eggsPerSaleUnit = saleMode === 'batch' ? this.state.batchSize : 1;
+                const qtyEggs = saleQuantity * eggsPerSaleUnit;
+                const appliedPrice = saleMode === 'batch' ? Number(eggType.batchPrice) : Number(eggType.retailPrice);
+                return { eggType, saleMode, saleQuantity, eggsPerSaleUnit, qtyEggs, appliedPrice, total: saleQuantity * appliedPrice };
+            },
+
             updateUI() {
                 const isSup = this.state.role === 'supervisor';
                 const p = this.state.permissions;
-
-                document.getElementById('display-daily-price').innerText = parseFloat(this.state.dailyPrice).toFixed(2);
+                this.renderEggTypeOptions();
+                const selection = this.getSaleDetails();
+                document.getElementById('display-daily-price').innerText = selection.appliedPrice.toFixed(2);
+                document.getElementById('display-price-unit').innerText = selection.saleMode === 'batch' ? 'batch' : 'egg';
                 
                 const totalStock = this.getTotalStock();
                 const estimatedEggs = Math.floor(totalStock / this.state.eggWeight);
                 document.getElementById('pos-stock-display').innerText = `${totalStock.toLocaleString(undefined, {minimumFractionDigits: 1, maximumFractionDigits: 1})} kg (~${estimatedEggs} eggs)`;
-                document.getElementById('pos-unit-price').innerText = parseFloat(this.state.dailyPrice).toFixed(2);
+                document.getElementById('pos-unit-price').innerText = selection.appliedPrice.toFixed(2);
                 
                 const todaySales = this.state.sales.filter(s => new Date(s.timestamp).toDateString() === new Date().toDateString());
                 const todayQty = todaySales.reduce((sum, s) => sum + (s.qtyEggs || 0), 0);
@@ -878,31 +1040,42 @@
                 document.getElementById('inv-add-section').style.display = (isSup || p.inv_add) ? 'block' : 'none';
                 document.getElementById('inv-view-section').style.display = (isSup || p.inv_view) ? 'block' : 'none';
                 document.getElementById('pricing-add-section').style.display = (isSup || p.pricing_add) ? 'block' : 'none';
+                document.getElementById('egg-type-pricing-section').style.display = isSup ? 'block' : 'none';
                 
                 const dashTrend = document.getElementById('dash-trend-section');
                 if (dashTrend) dashTrend.style.display = (isSup || p.dashboard_trend) ? 'block' : 'none';
 
                 if (this.currentView === 'inventory') this.renderInventory();
                 if (this.currentView === 'dashboard') this.renderDashboard();
-                if (this.currentView === 'pricing') this.renderPriceTracker();
+                if (this.currentView === 'pricing') { this.renderEggTypePricing(); this.renderPriceTracker(); }
                 if (this.currentView === 'audit') this.renderAuditLog();
                 if (this.currentView === 'settings') this.loadBasicSettingsUI();
                 if (this.currentView === 'permissions') {
                     const keys = ['pos', 'pos_calc', 'pos_receipt_op', 'pos_receipt_id', 'inventory', 'inv_add', 'inv_view', 'inv_edit', 'inv_delete', 'dashboard', 'dashboard_profit', 'dashboard_trend', 'pricing', 'pricing_add', 'pricing_edit', 'pricing_delete', 'settings', 'permissions'];
                     keys.forEach(k => { const el = document.getElementById('perm-'+k); if(el) el.checked = !!this.state.permissions[k]; });
                 }
+                this.calculateTotal();
             },
 
             getTotalStock() { return this.state.inventory.reduce((sum, batch) => sum + batch.remainingQty, 0); },
 
             calculateTotal() {
-                const qtyInput = document.getElementById('pos-quantity');
-                const qty = parseInt(qtyInput.value, 10) || 0;
-                const total = qty * this.state.dailyPrice;
-                const weightToDeduct = qty * this.state.eggWeight;
-                
-                document.getElementById('pos-summary-qty').innerText = qty.toLocaleString();
-                document.getElementById('pos-total').innerText = total.toFixed(2);
+                const details = this.getSaleDetails();
+                const isBatch = details.saleMode === 'batch';
+                const weightToDeduct = details.qtyEggs * this.state.eggWeight;
+
+                document.getElementById('pos-summary-type').innerText = details.eggType.name;
+                document.getElementById('pos-summary-mode').innerText = isBatch ? `Batch (${this.state.batchSize} eggs)` : 'Retail';
+                document.getElementById('pos-unit-price-label').innerText = isBatch ? `Price per batch (${this.state.batchSize})` : 'Price per egg';
+                document.getElementById('pos-unit-price').innerText = details.appliedPrice.toFixed(2);
+                document.getElementById('pos-summary-qty-label').innerText = isBatch ? 'Batch quantity' : 'Retail quantity';
+                document.getElementById('pos-summary-qty').innerText = isBatch ? `${details.saleQuantity.toLocaleString()} batch${details.saleQuantity === 1 ? '' : 'es'}` : `${details.saleQuantity.toLocaleString()} egg${details.saleQuantity === 1 ? '' : 's'}`;
+                document.getElementById('pos-summary-eggs').innerText = details.qtyEggs.toLocaleString();
+                document.getElementById('pos-total').innerText = details.total.toFixed(2);
+                document.getElementById('pos-quantity-label').innerText = isBatch ? 'Quantity (Number of Batches)' : 'Quantity (Number of Eggs)';
+                document.getElementById('pos-quantity-help').innerText = isBatch ? `Each batch contains ${this.state.batchSize} eggs.` : 'Enter the number of individual eggs.';
+                document.getElementById('display-daily-price').innerText = details.appliedPrice.toFixed(2);
+                document.getElementById('display-price-unit').innerText = isBatch ? 'batch' : 'egg';
 
                 const receivedInput = document.getElementById('pos-received');
                 const received = parseFloat(receivedInput.value) || 0;
@@ -914,7 +1087,7 @@
 
                 if (!useCalc) {
                     changeDueEl.innerHTML = '';
-                    btnComplete.disabled = (qty <= 0 || weightToDeduct > this.getTotalStock());
+                    btnComplete.disabled = (details.saleQuantity <= 0 || weightToDeduct > this.getTotalStock());
                     return;
                 }
 
@@ -924,12 +1097,12 @@
                     return;
                 }
 
-                if (received >= total && qty > 0) {
-                    const change = received - total;
+                if (received >= details.total && details.saleQuantity > 0) {
+                    const change = received - details.total;
                     changeDueEl.innerHTML = `<span class="text-green-600 font-bold">${i18n.t('Change Due')}: $${change.toFixed(2)}</span>`;
                     btnComplete.disabled = false;
                 } else {
-                    const short = total - received;
+                    const short = details.total - received;
                     changeDueEl.innerHTML = `<span class="text-red-500 font-bold">${i18n.t('Short by')}: $${short.toFixed(2)}</span>`;
                     btnComplete.disabled = true;
                 }
@@ -937,21 +1110,22 @@
 
             processSale() {
                 const qtyInput = document.getElementById('pos-quantity');
-                const numEggs = parseInt(qtyInput.value, 10);
+                const details = this.getSaleDetails();
+                const numEggs = details.qtyEggs;
                 const isSup = this.state.role === 'supervisor';
                 const useCalc = isSup || this.state.permissions.pos_calc;
                 const receivedInput = document.getElementById('pos-received');
-                const receivedAmount = useCalc ? (parseFloat(receivedInput.value) || 0) : (numEggs * this.state.dailyPrice);
+                const receivedAmount = useCalc ? (parseFloat(receivedInput.value) || 0) : details.total;
 
-                if (!numEggs || numEggs <= 0) return this.showToast('Please enter a valid number of eggs.', 'warning');
+                if (!details.saleQuantity || details.saleQuantity <= 0) return this.showToast(`Please enter a valid number of ${details.saleMode === 'batch' ? 'batches' : 'eggs'}.`, 'warning');
 
                 const weightToDeduct = numEggs * this.state.eggWeight;
                 const totalStock = this.getTotalStock();
 
                 if (weightToDeduct > totalStock) return this.showToast(`Insufficient stock! Only ~${Math.floor(totalStock / this.state.eggWeight)} eggs available.`, 'error');
                 
-                const salePrice = this.state.dailyPrice;
-                const totalRevenue = numEggs * salePrice;
+                const salePrice = details.appliedPrice;
+                const totalRevenue = details.total;
                 
                 if (useCalc && receivedAmount < totalRevenue) return this.showToast('Amount received is less than total.', 'error');
                 const changeAmount = receivedAmount - totalRevenue;
@@ -978,7 +1152,11 @@
 
                 const newSale = {
                     id: 'TRX-' + Date.now(), timestamp: new Date().toISOString(), operator: this.state.role,
-                    qtyEggs: numEggs, weightKg: weightToDeduct, unitPrice: salePrice, total: totalRevenue,
+                    eggTypeId: details.eggType.id, eggTypeName: details.eggType.name,
+                    saleMode: details.saleMode, saleQuantity: details.saleQuantity,
+                    batchSize: details.saleMode === 'batch' ? this.state.batchSize : null,
+                    qtyEggs: numEggs, weightKg: weightToDeduct, unitPrice: salePrice,
+                    priceUnit: details.saleMode === 'batch' ? 'batch' : 'egg', total: totalRevenue,
                     costBasis: totalCostBasis, received: receivedAmount, change: changeAmount
                 };
 
@@ -1005,7 +1183,14 @@
                 document.getElementById('receipt-date').innerText = new Date(trx.timestamp).toLocaleString();
                 document.getElementById('receipt-id').innerText = trx.id;
                 document.getElementById('receipt-operator').innerText = trx.operator;
+                const isBatch = trx.saleMode === 'batch';
+                const saleQuantity = Number(trx.saleQuantity || trx.qtyEggs || 0);
+                const batchSize = Number(trx.batchSize || this.state.batchSize);
+                document.getElementById('receipt-egg-type').innerText = trx.eggTypeName || 'Legacy / Unspecified';
+                document.getElementById('receipt-sale-mode').innerText = isBatch ? `Batch (${batchSize} eggs)` : 'Retail';
+                document.getElementById('receipt-sale-qty').innerText = isBatch ? `${saleQuantity} batch${saleQuantity === 1 ? '' : 'es'} × ${batchSize}` : `${saleQuantity} egg${saleQuantity === 1 ? '' : 's'}`;
                 document.getElementById('receipt-qty').innerText = trx.qtyEggs;
+                document.getElementById('receipt-price-label').innerText = isBatch ? 'Price / Batch' : 'Price / Egg';
                 document.getElementById('receipt-unit-price').innerText = '$' + trx.unitPrice.toFixed(2);
                 document.getElementById('receipt-total').innerText = '$' + trx.total.toFixed(2);
                 document.getElementById('receipt-received').innerText = '$' + (trx.received ? trx.received.toFixed(2) : trx.total.toFixed(2));
@@ -1141,7 +1326,7 @@
                         const term = this.dashboardTable.search.toLowerCase();
                         const dateObj = new Date(sale.timestamp);
                         const formattedDate = `${dateObj.toLocaleDateString()} ${dateObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`;
-                        matchesSearch = (sale.id && sale.id.toLowerCase().includes(term)) || formattedDate.toLowerCase().includes(term) || sale.operator.toLowerCase().includes(term) || (sale.qtyEggs && sale.qtyEggs.toString().includes(term)) || sale.unitPrice.toString().includes(term) || sale.total.toFixed(2).includes(term);
+                        matchesSearch = (sale.id && sale.id.toLowerCase().includes(term)) || formattedDate.toLowerCase().includes(term) || sale.operator.toLowerCase().includes(term) || (sale.eggTypeName || '').toLowerCase().includes(term) || (sale.saleMode || 'retail').toLowerCase().includes(term) || (sale.qtyEggs && sale.qtyEggs.toString().includes(term)) || sale.unitPrice.toString().includes(term) || sale.total.toFixed(2).includes(term);
                     }
                     let matchesDateFrom = true;
                     if (this.dashboardTable.filters.dateFrom) matchesDateFrom = new Date(sale.timestamp) >= new Date(this.dashboardTable.filters.dateFrom + 'T00:00:00');
@@ -1167,12 +1352,14 @@
                     if(icon) icon.className = 'fa-solid ml-1 ' + (this.dashboardTable.sortBy === col ? (this.dashboardTable.sortDir === 'asc' ? 'fa-sort-up text-primary-600' : 'fa-sort-down text-primary-600') : 'fa-sort text-gray-300');
                 });
 
-                if(filteredSales.length === 0) { tbody.innerHTML = `<tr><td colspan="6" class="px-6 py-8 text-center text-gray-500">No transactions found matching your criteria.</td></tr>`; return; }
+                if(filteredSales.length === 0) { tbody.innerHTML = `<tr><td colspan="8" class="px-6 py-8 text-center text-gray-500">No transactions found matching your criteria.</td></tr>`; return; }
 
                 filteredSales.forEach(sale => {
                     const dateObj = new Date(sale.timestamp);
                     const formattedDate = `${dateObj.toLocaleDateString()} ${dateObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`;
-                    tbody.innerHTML += `<tr class="hover:bg-gray-50"><td class="px-6 py-4 whitespace-nowrap text-xs font-mono font-semibold text-slate-700">${sale.id || '-'}</td><td class="px-6 py-4 whitespace-nowrap text-xs">${formattedDate}</td><td class="px-6 py-4 capitalize text-xs font-medium text-gray-600">${sale.operator}</td><td class="px-6 py-4">${sale.qtyEggs ? sale.qtyEggs.toLocaleString() : '-'}</td><td class="px-6 py-4">$${sale.unitPrice.toFixed(2)}</td><td class="px-6 py-4 text-right font-bold text-gray-800">$${sale.total.toFixed(2)}</td></tr>`;
+                    const saleMode = sale.saleMode === 'batch' ? `Batch (${sale.batchSize || this.state.batchSize})` : 'Retail';
+                    const priceUnit = sale.saleMode === 'batch' ? 'batch' : 'egg';
+                    tbody.innerHTML += `<tr class="hover:bg-gray-50"><td class="px-6 py-4 whitespace-nowrap text-xs font-mono font-semibold text-slate-700">${sale.id || '-'}</td><td class="px-6 py-4 whitespace-nowrap text-xs">${formattedDate}</td><td class="px-6 py-4 capitalize text-xs font-medium text-gray-600">${sale.operator}</td><td class="px-6 py-4 font-medium text-gray-700">${this.escapeHtml(sale.eggTypeName || 'Legacy / Unspecified')}</td><td class="px-6 py-4">${saleMode}</td><td class="px-6 py-4">${sale.qtyEggs ? sale.qtyEggs.toLocaleString() : '-'}</td><td class="px-6 py-4">$${sale.unitPrice.toFixed(2)} / ${priceUnit}</td><td class="px-6 py-4 text-right font-bold text-gray-800">$${sale.total.toFixed(2)}</td></tr>`;
                 });
             },
 
@@ -1225,10 +1412,13 @@
             exportCSV() {
                 const data = this.dashboardTable.currentData;
                 if (!data || data.length === 0) return this.showToast('No data to export based on current filters.', 'warning');
-                let csvContent = "Transaction ID,Date,Operator,Quantity (Eggs),Unit Price,Total Revenue\n";
+                let csvContent = "Transaction ID,Date,Operator,Egg Type,Sale Option,Sale Quantity,Batch Size,Quantity (Eggs),Applied Price,Price Unit,Total Revenue\n";
                 data.forEach(sale => {
                     const trxId = `"${sale.id || ''}"`, dateObj = new Date(sale.timestamp), formattedDate = `"${dateObj.toLocaleDateString()} ${dateObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}"`;
-                    csvContent += `${trxId},${formattedDate},"${sale.operator}",${sale.qtyEggs || 0},${sale.unitPrice.toFixed(2)},${sale.total.toFixed(2)}\n`;
+                    const eggType = String(sale.eggTypeName || 'Legacy / Unspecified').replaceAll('"', '""');
+                    const saleMode = sale.saleMode || 'retail';
+                    const saleQuantity = sale.saleQuantity || sale.qtyEggs || 0;
+                    csvContent += `${trxId},${formattedDate},"${sale.operator}","${eggType}","${saleMode}",${saleQuantity},${sale.batchSize || ''},${sale.qtyEggs || 0},${sale.unitPrice.toFixed(2)},"${sale.priceUnit || 'egg'}",${sale.total.toFixed(2)}\n`;
                 });
                 this.downloadCSV(csvContent, `eggpro_transactions_${new Date().getTime()}.csv`);
                 this.showToast('Data exported successfully!', 'success');
@@ -1371,7 +1561,7 @@
                 this.showToast(i18n.t('Basic settings saved successfully!'),'success');
             },
 
-            permissionLabels: {pos:'Point of Sale page',pos_calc:'Amount received calculator',pos_receipt_op:'Operator name on receipt',pos_receipt_id:'Transaction ID on receipt',inventory:'Inventory page',inv_add:'Add inventory imports',inv_view:'View inventory records',inv_edit:'Edit inventory records',inv_delete:'Delete inventory records',dashboard:'Financial dashboard',dashboard_profit:'Gross profit KPI',dashboard_trend:'Sales trend graph',pricing:'Egg Price Tracker page',pricing_add:'Add daily prices',pricing_edit:'Edit price records',pricing_delete:'Delete price records',settings:'System Settings page',permissions:'Permission management page'},
+            permissionLabels: {pos:'Point of Sale page',pos_calc:'Amount received calculator',pos_receipt_op:'Operator name on receipt',pos_receipt_id:'Transaction ID on receipt',inventory:'Inventory page',inv_add:'Add inventory imports',inv_view:'View inventory records',inv_edit:'Edit inventory records',inv_delete:'Delete inventory records',dashboard:'Financial dashboard',dashboard_profit:'Gross profit KPI',dashboard_trend:'Sales trend graph',pricing:'Egg Pricing page',pricing_add:'Add daily reference prices',pricing_edit:'Edit reference price records',pricing_delete:'Delete reference price records',settings:'System Settings page',permissions:'Permission management page'},
             defaultPermissions(){return {pos:true,pos_calc:true,pos_receipt_op:true,pos_receipt_id:true,inventory:true,inv_add:true,inv_view:true,inv_edit:false,inv_delete:false,dashboard:false,dashboard_profit:false,dashboard_trend:false,pricing:false,pricing_add:false,pricing_edit:false,pricing_delete:false,settings:false,permissions:false};},
             logAudit(module,action,recordId,before,after,summary,changes=[]){if(!Array.isArray(this.state.auditLogs))this.state.auditLogs=[];this.state.auditLogs.push({id:'AUD-'+Date.now(),timestamp:new Date().toISOString(),actor:this.state.role,module,action,recordId,summary,changes,before,after});},
             buildPermissionChanges(before,after){return Object.keys(this.permissionLabels).filter(k=>Boolean(before[k])!==Boolean(after[k])).map(k=>({key:k,label:this.permissionLabels[k],from:Boolean(before[k]),to:Boolean(after[k])}));},
@@ -1380,6 +1570,10 @@
             formatAuditDate(value){if(!value)return '-';const d=new Date(value);return Number.isNaN(d.getTime())?String(value):d.toLocaleString();},
             renderPricingAudit(log){
                 const before=log.before||null,after=log.after||null;
+                if(log.recordId==='egg-type-pricing'&&Array.isArray(before)&&Array.isArray(after)){
+                    const changed=after.map((item,index)=>({before:before[index],after:item})).filter(pair=>JSON.stringify(pair.before)!==JSON.stringify(pair.after));
+                    return `<div class="space-y-2"><div class="font-semibold text-gray-800">Seven egg type prices updated</div><div class="text-xs text-gray-500">${changed.length} of 7 rows changed</div>${changed.map(pair=>`<div class="p-2 rounded-lg bg-gray-50"><span class="font-medium text-gray-700">${this.escapeHtml(pair.after.name)}</span><span class="text-xs text-gray-500 ml-2">Retail $${Number(pair.after.retailPrice).toFixed(2)} · Batch $${Number(pair.after.batchPrice).toFixed(2)}</span></div>`).join('')}</div>`;
+                }
                 if(log.action==='update'&&before&&after){
                     const changes=[];
                     if(before.date!==after.date)changes.push({label:'Effective date',from:before.date||'-',to:after.date||'-'});
