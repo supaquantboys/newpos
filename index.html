@@ -43,6 +43,7 @@
 
         body { font-family: 'Inter', sans-serif; }
         .chart-wrap { position: relative; min-height: 260px; height: 34vh; max-height: 380px; }
+        .egg-price-chart-wrap { min-height: 360px; height: 48vh; max-height: 520px; }
         @media (max-width: 767px) {
             #role-switcher-container { display: none; }
             nav:has(#nav-links.flex) #role-switcher-container { display: block; }
@@ -50,6 +51,7 @@
             main { min-height: 0; height: auto !important; overflow: visible !important; }
             #main-scroll-area { overflow: visible; }
             .chart-wrap { height: 280px; min-height: 280px; }
+            .egg-price-chart-wrap { height: 420px; min-height: 420px; max-height: none; }
             input, select, button { min-height: 44px; }
         }
         
@@ -537,17 +539,20 @@
                     </div>
                     <div class="bg-white p-5 sm:p-6 rounded-2xl shadow-sm border border-gray-100 mb-6">
                         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
-                            <div><h3 class="text-lg font-semibold text-gray-800">Egg Price Trend</h3><p class="text-sm text-gray-500">Daily selling price per egg</p></div>
+                            <div><h3 class="text-lg font-semibold text-gray-800">Seven Egg Type Price History</h3><p class="text-sm text-gray-500">Compare retail and 30-egg batch prices across all seven egg types.</p></div>
                             <div class="flex flex-col sm:flex-row items-center gap-2">
+                                <select id="egg-price-chart-mode" onchange="app.renderEggPriceChart()" class="w-full sm:w-auto px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:ring-primary-500">
+                                    <option value="retail">Retail prices (7 lines)</option><option value="batch">Batch prices (7 lines)</option><option value="both">Retail + Batch prices (14 lines)</option>
+                                </select>
                                 <div id="price-chart-custom-input" class="hidden flex items-center gap-2 w-full sm:w-auto">
-                                    <input type="number" id="price-chart-custom-num" onchange="app.renderPriceTracker()" min="1" value="10" class="w-full sm:w-24 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-primary-500" placeholder="Records">
+                                    <input type="number" id="price-chart-custom-num" onchange="app.renderEggPriceChart()" min="1" value="10" class="w-full sm:w-24 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-primary-500" placeholder="Records">
                                 </div>
-                                <select id="price-chart-range" onchange="app.togglePriceChartCustom(this.value); app.renderPriceTracker()" class="w-full sm:w-auto px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:ring-primary-500">
+                                <select id="price-chart-range" onchange="app.togglePriceChartCustom(this.value); app.renderEggPriceChart()" class="w-full sm:w-auto px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:ring-primary-500">
                                     <option value="30">Last 30 records</option><option value="90">Last 90 records</option><option value="all">All records</option><option value="custom">Custom Records</option>
                                 </select>
                             </div>
                         </div>
-                        <div class="chart-wrap"><canvas id="price-history-chart"></canvas></div>
+                        <div class="chart-wrap egg-price-chart-wrap"><canvas id="price-history-chart"></canvas></div>
                     </div>
                     <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
                         <div class="p-5 sm:p-6 border-b border-gray-100 bg-gray-50 flex flex-col gap-4">
@@ -700,6 +705,10 @@
                 const key = this.canonical(String(value));
                 return this.language === 'en' ? key : (this.translations[this.language]?.[key] || key);
             },
+            format(value, params = {}) {
+                return Object.entries(params).reduce((text, [key, replacement]) => text.replaceAll(`{${key}}`, String(replacement)), this.t(value));
+            },
+            locale() { return this.language === 'zh-TW' ? 'zh-TW' : this.language === 'my' ? 'my-MM' : 'en-US'; },
             translate(root = document.body) {
                 const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
                 const nodes = [];
@@ -715,15 +724,15 @@
                     if (el.hasAttribute(attr)) el.setAttribute(attr, this.t(el.getAttribute(attr)));
                 }));
                 document.documentElement.lang = this.language;
-                const select = document.getElementById('setting-language'); if (select && select.tagName === 'SELECT') select.value = this.language;
             },
             setLanguage(language) {
                 this.language = ['en','zh-TW','my'].includes(language) ? language : 'en';
                 localStorage.setItem('eggProLanguage', this.language);
                 this.translate(document.body);
                 if (typeof app !== 'undefined') {
-                    if(app.currentView === 'pricing') app.renderPriceTracker();
-                    if(app.currentView === 'dashboard') app.renderSalesChart();
+                    const select = document.getElementById('setting-language');
+                    if (select) select.value = this.language;
+                    app.updateUI();
                 }
             },
             init() {
@@ -747,11 +756,40 @@
         Object.assign(i18n.translations['my'], {'Egg price updated':'ဥစျေးနှုန်း ပြင်ဆင်ပြီး','Effective date':'သက်ရောက်သည့်ရက်','Price per egg':'တစ်လုံးစျေး','Increase':'မြင့်တက်','Decrease':'လျော့ကျ','No change':'ပြောင်းလဲမှုမရှိ','Egg price entry deleted':'ဥစျေးနှုန်းမှတ်တမ်း ဖျက်ပြီး','Egg price entry created':'ဥစျေးနှုန်းမှတ်တမ်း ဖန်တီးပြီး','The record was removed from price history.':'မှတ်တမ်းကို စျေးနှုန်းသမိုင်းမှ ဖယ်ရှားပြီးပါပြီ။'});
         Object.assign(i18n.translations['zh-TW'], {'Egg Price Entry':'雞蛋價格紀錄','A price record already exists for this date.':'此日期已有價格紀錄。','Price record updated.':'價格紀錄已更新。'});
         Object.assign(i18n.translations['my'], {'Egg Price Entry':'ဥစျေးနှုန်းမှတ်တမ်း','A price record already exists for this date.':'ဤရက်အတွက် စျေးနှုန်းမှတ်တမ်း ရှိပြီးသားဖြစ်သည်။','Price record updated.':'စျေးနှုန်းမှတ်တမ်း ပြင်ဆင်ပြီးပါပြီ။'});
+        Object.assign(i18n.translations['zh-TW'], {
+            'Access the inventory page.':'存取庫存頁面。','All Actions':'所有操作','All Modules':'所有模組','All seven names must be unique. Prices are saved together.':'七個名稱不得重複，所有價格會一併儲存。','Batch (30 eggs)':'整批（30 顆）','Batch price / 30 eggs':'每批 30 顆價格','Clear all local storage data. This action cannot be undone.':'清除所有本機儲存資料。此操作無法復原。','Cost Per kg ($)':'每公斤成本（$）','Create':'建立','Egg Pricing':'雞蛋定價','Egg Type':'雞蛋類型','Egg Type:':'雞蛋類型：','Egg type':'雞蛋類型','Egg type / size':'雞蛋類型／尺寸','Enter the number of individual eggs.':'輸入單顆雞蛋的數量。','Inventory':'庫存','Kept for existing price history. POS sales use the seven egg-type prices above.':'保留既有價格歷史；POS 銷售使用上方七種雞蛋價格。','Legacy Daily Reference Price':'舊版每日參考價格','Name each egg size and set separate retail and 30-egg batch prices. Supervisor access only.':'為每種雞蛋尺寸命名，並分別設定零售價與每批 30 顆價格。僅限主管。','Pricing':'定價','Retail':'零售','Retail (single eggs)':'零售（單顆）','Retail price / egg':'每顆零售價','Retail quantity':'零售數量','Review pricing; Supervisor manages the seven egg types.':'查看定價；七種雞蛋類型由主管管理。','Sale Option':'銷售方式','Sale Option:':'銷售方式：','Sale Quantity':'銷售數量','Sale option':'銷售方式','Sales':'銷售','Save Seven Prices':'儲存七種價格','Search audit records...':'搜尋稽核紀錄...','Selected Price: $':'選定價格：$','Settings':'設定','Seven Egg Type Prices':'七種雞蛋價格','Slot':'編號','Total Eggs':'雞蛋總數','Total eggs':'雞蛋總數','Update':'更新','egg':'顆','batch':'批','Batch':'整批','Price / Batch':'每批價格',
+            'Seven Egg Type Price History':'七種雞蛋價格歷史','Compare retail and 30-egg batch prices across all seven egg types.':'比較全部七種雞蛋的零售價與每批 30 顆價格。','Retail prices (7 lines)':'零售價格（7 條線）','Batch prices (7 lines)':'整批價格（7 條線）','Retail + Batch prices (14 lines)':'零售＋整批價格（14 條線）','Retail price':'零售價','Batch price':'整批價','No price history yet. Save the seven prices to begin tracking.':'尚無價格歷史。請儲存七種價格以開始追蹤。',
+            'Batch ({count} eggs)':'整批（{count} 顆）','Price per batch ({count})':'每批價格（{count} 顆）','Batch quantity':'整批數量','Quantity (Number of Batches)':'數量（批數）','Each batch contains {count} eggs.':'每批包含 {count} 顆雞蛋。','{count} batch':'{count} 批','{count} batches':'{count} 批','{count} egg':'{count} 顆','{count} eggs':'{count} 顆','{kg} kg (~{eggs} eggs)':'{kg} 公斤（約 {eggs} 顆）',
+            'Switched to Operator role.':'已切換為操作員角色。','Switched to Supervisor role.':'已切換為主管角色。','Only Supervisor can update egg type prices.':'只有主管可以更新雞蛋類型價格。','Every egg type needs a name.':'每種雞蛋類型都需要名稱。','Egg type names must be unique.':'雞蛋類型名稱不得重複。','Every retail and batch price must be greater than zero.':'所有零售價與整批價都必須大於零。','No pricing changes to save.':'沒有需要儲存的價格變更。','Seven egg type prices saved successfully!':'七種雞蛋價格已成功儲存！','Please enter a valid number of {unit}.':'請輸入有效的{unit}數量。','Insufficient stock! Only ~{count} eggs available.':'庫存不足！僅剩約 {count} 顆雞蛋。','Amount received is less than total.':'收現金額低於總金額。','Sale completed successfully! Amount: ${amount}':'銷售完成！金額：${amount}','batches':'批','Legacy / Unspecified':'舊版／未指定'
+        });
+        Object.assign(i18n.translations['my'], {
+            'Access the inventory page.':'ကုန်စာရင်းစာမျက်နှာကို ဝင်ရောက်ပါ။','All Actions':'လုပ်ဆောင်ချက်အားလုံး','All Modules':'မော်ဂျူးအားလုံး','All seven names must be unique. Prices are saved together.':'အမည် ၇ ခုလုံး မတူရပါ။ စျေးနှုန်းများကို တစ်ပြိုင်နက် သိမ်းမည်။','Batch (30 eggs)':'အသုတ် (ဥ ၃၀)','Batch price / 30 eggs':'ဥ ၃၀ အသုတ်စျေး','Clear all local storage data. This action cannot be undone.':'စက်တွင်းသိမ်းထားသောဒေတာအားလုံးကို ရှင်းမည်။ ပြန်ယူ၍မရပါ။','Cost Per kg ($)':'တစ် kg ကုန်ကျစရိတ် ($)','Create':'ဖန်တီးရန်','Egg Pricing':'ဥစျေးနှုန်းသတ်မှတ်ခြင်း','Egg Type':'ဥအမျိုးအစား','Egg Type:':'ဥအမျိုးအစား:','Egg type':'ဥအမျိုးအစား','Egg type / size':'ဥအမျိုးအစား / အရွယ်အစား','Enter the number of individual eggs.':'ဥတစ်လုံးချင်း အရေအတွက်ထည့်ပါ။','Inventory':'ကုန်စာရင်း','Kept for existing price history. POS sales use the seven egg-type prices above.':'ယခင်စျေးမှတ်တမ်းအတွက် ထားရှိထားသည်။ POS အရောင်းသည် အပေါ်ရှိ ဥ ၇ မျိုးစျေးကို သုံးသည်။','Legacy Daily Reference Price':'ယခင်နေ့စဉ်ရည်ညွှန်းစျေး','Name each egg size and set separate retail and 30-egg batch prices. Supervisor access only.':'ဥအရွယ်အစားတိုင်းကို အမည်ပေးပြီး လက်လီနှင့် ဥ ၃၀ အသုတ်စျေး သီးခြားသတ်မှတ်ပါ။ ကြီးကြပ်သူသာ အသုံးပြုနိုင်သည်။','Pricing':'စျေးနှုန်း','Retail':'လက်လီ','Retail (single eggs)':'လက်လီ (တစ်လုံးချင်း)','Retail price / egg':'တစ်လုံးလက်လီစျေး','Retail quantity':'လက်လီအရေအတွက်','Review pricing; Supervisor manages the seven egg types.':'စျေးနှုန်းကြည့်ရန်၊ ဥ ၇ မျိုးကို ကြီးကြပ်သူက စီမံသည်။','Sale Option':'ရောင်းချမှုပုံစံ','Sale Option:':'ရောင်းချမှုပုံစံ:','Sale Quantity':'ရောင်းချသည့်အရေအတွက်','Sale option':'ရောင်းချမှုပုံစံ','Sales':'အရောင်း','Save Seven Prices':'စျေး ၇ မျိုး သိမ်းရန်','Search audit records...':'စစ်ဆေးမှတ်တမ်း ရှာရန်...','Selected Price: $':'ရွေးချယ်စျေး: $','Settings':'ဆက်တင်များ','Seven Egg Type Prices':'ဥ ၇ မျိုး စျေးနှုန်းများ','Slot':'အမှတ်','Total Eggs':'ဥစုစုပေါင်း','Total eggs':'ဥစုစုပေါင်း','Update':'ပြင်ဆင်ရန်','egg':'ဥ','batch':'အသုတ်','Batch':'အသုတ်','Price / Batch':'တစ်အသုတ်စျေး',
+            'Seven Egg Type Price History':'ဥ ၇ မျိုး စျေးနှုန်းမှတ်တမ်း','Compare retail and 30-egg batch prices across all seven egg types.':'ဥ ၇ မျိုးလုံး၏ လက်လီနှင့် ဥ ၃၀ အသုတ်စျေးများကို နှိုင်းယှဉ်ပါ။','Retail prices (7 lines)':'လက်လီစျေး (မျဉ်း ၇ ကြောင်း)','Batch prices (7 lines)':'အသုတ်စျေး (မျဉ်း ၇ ကြောင်း)','Retail + Batch prices (14 lines)':'လက်လီ + အသုတ်စျေး (မျဉ်း ၁၄ ကြောင်း)','Retail price':'လက်လီစျေး','Batch price':'အသုတ်စျေး','No price history yet. Save the seven prices to begin tracking.':'စျေးမှတ်တမ်း မရှိသေးပါ။ စတင်မှတ်တမ်းတင်ရန် စျေး ၇ မျိုးကို သိမ်းပါ။',
+            'Batch ({count} eggs)':'အသုတ် (ဥ {count})','Price per batch ({count})':'အသုတ်တစ်ခုစျေး (ဥ {count})','Batch quantity':'အသုတ်အရေအတွက်','Quantity (Number of Batches)':'အရေအတွက် (အသုတ်အရေအတွက်)','Each batch contains {count} eggs.':'အသုတ်တစ်ခုတွင် ဥ {count} လုံး ပါသည်။','{count} batch':'{count} အသုတ်','{count} batches':'{count} အသုတ်','{count} egg':'ဥ {count} လုံး','{count} eggs':'ဥ {count} လုံး','{kg} kg (~{eggs} eggs)':'{kg} kg (ဥ {eggs} လုံးခန့်)',
+            'Switched to Operator role.':'အော်ပရေတာအခန်းကဏ္ဍသို့ ပြောင်းပြီးပါပြီ။','Switched to Supervisor role.':'ကြီးကြပ်သူအခန်းကဏ္ဍသို့ ပြောင်းပြီးပါပြီ။','Only Supervisor can update egg type prices.':'ကြီးကြပ်သူသာ ဥအမျိုးအစားစျေးများကို ပြင်နိုင်သည်။','Every egg type needs a name.':'ဥအမျိုးအစားတိုင်းတွင် အမည်လိုအပ်သည်။','Egg type names must be unique.':'ဥအမျိုးအစားအမည်များ မတူရပါ။','Every retail and batch price must be greater than zero.':'လက်လီနှင့် အသုတ်စျေးတိုင်း သုညထက်ကြီးရမည်။','No pricing changes to save.':'သိမ်းရန် စျေးနှုန်းပြောင်းလဲမှုမရှိပါ။','Seven egg type prices saved successfully!':'ဥ ၇ မျိုးစျေးကို အောင်မြင်စွာ သိမ်းပြီးပါပြီ။','Please enter a valid number of {unit}.':'မှန်ကန်သော {unit} အရေအတွက်ထည့်ပါ။','Insufficient stock! Only ~{count} eggs available.':'ကုန်လက်ကျန်မလုံလောက်ပါ။ ဥ {count} လုံးခန့်သာ ရှိသည်။','Amount received is less than total.':'လက်ခံရငွေသည် စုစုပေါင်းထက် နည်းနေသည်။','Sale completed successfully! Amount: ${amount}':'အရောင်းပြီးမြောက်ပါပြီ။ ငွေပမာဏ: ${amount}','batches':'အသုတ်များ','Legacy / Unspecified':'ယခင် / မသတ်မှတ်ထား'
+        });
+        Object.assign(i18n.translations['zh-TW'], {
+            'Cannot exceed available stock (~{count} eggs).':'不可超過可用庫存（約 {count} 顆）。','Access denied by Supervisor settings.':'主管設定拒絕存取。','Invalid input for import.':'進貨資料無效。','Successfully received {qty} kg.':'已成功接收 {qty} 公斤。','Cannot reduce total below sold amount ({qty} kg).':'總量不可低於已售出的 {qty} 公斤。','Batch updated successfully.':'批次已成功更新。','Cannot delete a batch that has been partially sold. Edit quantity instead.':'無法刪除已部分售出的批次，請改為編輯數量。','Batch deleted successfully.':'批次已成功刪除。','Data exported successfully!':'資料已成功匯出！','Cannot delete the last price record.':'無法刪除最後一筆價格紀錄。','Price record deleted.':'價格紀錄已刪除。'
+        });
+        Object.assign(i18n.translations['my'], {
+            'Require Amount Received Calculator':'လက်ခံရငွေတွက်ချက်စက် လိုအပ်ရန်','Allow Adding Imports':'ကုန်ဝင်အသစ် ထည့်ခွင့်','Allow Viewing Inventory Data & Table':'ကုန်စာရင်းဒေတာနှင့် ဇယားကြည့်ခွင့်','Cannot exceed available stock (~{count} eggs).':'လက်ရှိကုန်လက်ကျန် (ဥ {count} လုံးခန့်) ထက် မကျော်ရပါ။','Access denied by Supervisor settings.':'ကြီးကြပ်သူဆက်တင်ကြောင့် ဝင်ရောက်ခွင့်မရှိပါ။','Invalid input for import.':'ကုန်ဝင်အချက်အလက် မမှန်ပါ။','Successfully received {qty} kg.':'{qty} kg ကို အောင်မြင်စွာ လက်ခံပြီးပါပြီ။','Cannot reduce total below sold amount ({qty} kg).':'စုစုပေါင်းကို ရောင်းပြီးသော {qty} kg ထက် လျှော့၍မရပါ။','Batch updated successfully.':'အသုတ်ကို အောင်မြင်စွာ ပြင်ပြီးပါပြီ။','Cannot delete a batch that has been partially sold. Edit quantity instead.':'တစ်စိတ်တစ်ပိုင်း ရောင်းပြီးသောအသုတ်ကို ဖျက်၍မရပါ။ အရေအတွက်ကို ပြင်ပါ။','Batch deleted successfully.':'အသုတ်ကို အောင်မြင်စွာ ဖျက်ပြီးပါပြီ။','Data exported successfully!':'ဒေတာကို အောင်မြင်စွာ ထုတ်ယူပြီးပါပြီ။','Cannot delete the last price record.':'နောက်ဆုံးစျေးမှတ်တမ်းကို ဖျက်၍မရပါ။','Price record deleted.':'စျေးနှုန်းမှတ်တမ်းကို ဖျက်ပြီးပါပြီ။'
+        });
+        Object.assign(i18n.translations['zh-TW'], {
+            'No transactions found matching your criteria.':'找不到符合條件的交易。','No audit records found.':'找不到稽核紀錄。','Permission settings saved with no effective changes.':'權限設定已儲存，沒有實際變更。','{count} permissions changed':'已變更 {count} 項權限','Allowed':'允許','Blocked':'封鎖','View complete permission snapshot':'查看完整權限快照','View data trace':'查看資料軌跡','Before':'變更前','After':'變更後','Seven egg type prices updated':'七種雞蛋價格已更新','{count} of 7 rows changed':'7 列中有 {count} 列變更','No business fields changed.':'業務欄位沒有變更。','Updated':'更新於','Price':'價格','Pricing record changed':'定價紀錄已變更',
+            'Point of Sale page':'銷售點頁面','Amount received calculator':'收現計算機','Operator name on receipt':'收據上的操作員名稱','Transaction ID on receipt':'收據上的交易編號','Inventory page':'庫存頁面','Add inventory imports':'新增庫存進貨','View inventory records':'查看庫存紀錄','Edit inventory records':'編輯庫存紀錄','Delete inventory records':'刪除庫存紀錄','Financial dashboard':'財務儀表板','Gross profit KPI':'毛利 KPI','Sales trend graph':'銷售趨勢圖','Egg Pricing page':'雞蛋定價頁面','Add daily reference prices':'新增每日參考價格','Edit reference price records':'編輯參考價格紀錄','Delete reference price records':'刪除參考價格紀錄','System Settings page':'系統設定頁面','Permission management page':'權限管理頁面'
+        });
+        Object.assign(i18n.translations['my'], {
+            'No transactions found matching your criteria.':'သတ်မှတ်ချက်နှင့်ကိုက်ညီသော အရောင်းမတွေ့ပါ။','No audit records found.':'စစ်ဆေးမှတ်တမ်း မတွေ့ပါ။','Permission settings saved with no effective changes.':'အကျိုးသက်ရောက်သောပြောင်းလဲမှုမရှိဘဲ ခွင့်ပြုချက်ဆက်တင်ကို သိမ်းပြီးပါပြီ။','{count} permissions changed':'ခွင့်ပြုချက် {count} ခု ပြောင်းထားသည်','Allowed':'ခွင့်ပြု','Blocked':'ပိတ်ထား','View complete permission snapshot':'ခွင့်ပြုချက်အပြည့်အစုံ ကြည့်ရန်','View data trace':'ဒေတာမှတ်တမ်း ကြည့်ရန်','Before':'မပြောင်းမီ','After':'ပြောင်းပြီး','Seven egg type prices updated':'ဥ ၇ မျိုးစျေးကို ပြင်ပြီး','{count} of 7 rows changed':'၇ ကြောင်းအနက် {count} ကြောင်း ပြောင်းထားသည်','No business fields changed.':'လုပ်ငန်းအချက်အလက် ပြောင်းလဲမှုမရှိပါ။','Updated':'ပြင်ဆင်ချိန်','Price':'စျေးနှုန်း','Pricing record changed':'စျေးနှုန်းမှတ်တမ်း ပြောင်းထားသည်',
+            'Point of Sale page':'အရောင်းကောင်တာစာမျက်နှာ','Amount received calculator':'လက်ခံရငွေတွက်ချက်စက်','Operator name on receipt':'ပြေစာရှိ အော်ပရေတာအမည်','Transaction ID on receipt':'ပြေစာရှိ အရောင်း ID','Inventory page':'ကုန်စာရင်းစာမျက်နှာ','Add inventory imports':'ကုန်ဝင်အသစ်ထည့်ရန်','View inventory records':'ကုန်စာရင်းမှတ်တမ်းကြည့်ရန်','Edit inventory records':'ကုန်စာရင်းမှတ်တမ်းပြင်ရန်','Delete inventory records':'ကုန်စာရင်းမှတ်တမ်းဖျက်ရန်','Financial dashboard':'ဘဏ္ဍာရေးဒက်ရှ်ဘုတ်','Gross profit KPI':'အမြတ်ကြမ်း KPI','Sales trend graph':'အရောင်းလမ်းကြောင်းဂရပ်','Egg Pricing page':'ဥစျေးနှုန်းစာမျက်နှာ','Add daily reference prices':'နေ့စဉ်ရည်ညွှန်းစျေးထည့်ရန်','Edit reference price records':'ရည်ညွှန်းစျေးမှတ်တမ်းပြင်ရန်','Delete reference price records':'ရည်ညွှန်းစျေးမှတ်တမ်းဖျက်ရန်','System Settings page':'စနစ်ဆက်တင်စာမျက်နှာ','Permission management page':'ခွင့်ပြုချက်စီမံခန့်ခွဲမှုစာမျက်နှာ'
+        });
+        i18n.translations['zh-TW']['Are you absolutely sure you want to clear all data?'] = '您確定要清除所有資料嗎？';
+        i18n.translations['my']['Are you absolutely sure you want to clear all data?'] = 'ဒေတာအားလုံးကို ရှင်းမည်မှာ သေချာပါသလား။';
         const app = {
             state: {
                 role: 'operator',
                 dailyPrice: 0.15,
                 priceHistory: [],
+                eggPriceHistory: [],
                 batchSize: 30,
                 eggTypes: [],
                 selectedEggTypeId: 'size-1',
@@ -795,6 +833,7 @@
                 i18n.init();
                 this.loadData();
                 this.ensureEggTypes();
+                this.ensureEggPriceHistory();
                 this.ensurePriceHistory();
                 this.setupMobileMenu();
                 this.switchRole('operator');
@@ -821,7 +860,7 @@
                     let val = parseInt(e.target.value);
                     if (!isNaN(val) && val > maxSaleUnits) {
                         e.target.value = maxSaleUnits;
-                        this.showToast(`Cannot exceed available stock (~${maxEggs} eggs).`, 'warning');
+                        this.showToast(i18n.format('Cannot exceed available stock (~{count} eggs).', { count: maxEggs }), 'warning');
                     }
                     this.calculateTotal();
                 });
@@ -883,6 +922,34 @@
                 if (!['retail', 'batch'].includes(this.state.saleMode)) this.state.saleMode = 'retail';
                 localStorage.setItem('eggProData', JSON.stringify(this.state));
             },
+            buildEggPriceSnapshot(reason = 'update') {
+                return {
+                    id: `EPH-${Date.now()}`,
+                    timestamp: new Date().toISOString(),
+                    reason,
+                    prices: this.state.eggTypes.map(type => ({
+                        id: type.id,
+                        name: type.name,
+                        retailPrice: Number(type.retailPrice),
+                        batchPrice: Number(type.batchPrice)
+                    }))
+                };
+            },
+            recordEggPriceSnapshot(reason = 'update') {
+                if (!Array.isArray(this.state.eggPriceHistory)) this.state.eggPriceHistory = [];
+                const snapshot = this.buildEggPriceSnapshot(reason);
+                const fingerprint = item => JSON.stringify((item?.prices || []).map(({id, name, retailPrice, batchPrice}) => [id, name, Number(retailPrice), Number(batchPrice)]));
+                if (fingerprint(this.state.eggPriceHistory.at(-1)) === fingerprint(snapshot)) return false;
+                this.state.eggPriceHistory.push(snapshot);
+                this.state.eggPriceHistory = this.state.eggPriceHistory.slice(-365);
+                return true;
+            },
+            ensureEggPriceHistory() {
+                if (!Array.isArray(this.state.eggPriceHistory)) this.state.eggPriceHistory = [];
+                this.state.eggPriceHistory = this.state.eggPriceHistory.filter(snapshot => snapshot && snapshot.timestamp && Array.isArray(snapshot.prices)).slice(-365);
+                if (this.state.eggPriceHistory.length === 0) this.recordEggPriceSnapshot('migration');
+                localStorage.setItem('eggProData', JSON.stringify(this.state));
+            },
             saveData() {
                 localStorage.setItem('eggProData', JSON.stringify(this.state));
                 this.updateUI();
@@ -891,7 +958,7 @@
             navigate(view) {
                 if (this.state.role === 'operator') {
                     if (!this.state.permissions[view]) {
-                        this.showToast('Access denied by Supervisor settings.', 'error');
+                        this.showToast(i18n.t('Access denied by Supervisor settings.'), 'error');
                         return;
                     }
                 }
@@ -928,12 +995,12 @@
                     badge.innerText = 'S';
                     badge.classList.replace('bg-gray-200', 'bg-yellow-200');
                     badge.classList.replace('text-gray-600', 'text-yellow-800');
-                    label.innerText = 'Supervisor Mode';
+                    label.innerText = i18n.t('Supervisor Mode');
                 } else {
                     badge.innerText = 'O';
                     badge.classList.replace('bg-yellow-200', 'bg-gray-200');
                     badge.classList.replace('text-yellow-800', 'text-gray-600');
-                    label.innerText = 'Operator Mode';
+                    label.innerText = i18n.t('Operator Mode');
                     if (!this.state.permissions[this.currentView]) {
                         const pages = ['pos','inventory','dashboard','pricing','settings','permissions'];
                         const allowedView = pages.find(k => this.state.permissions[k]);
@@ -941,7 +1008,7 @@
                     }
                 }
                 document.getElementById('role-select').value = role;
-                if(this.state.dailyPrice > 0) this.showToast(`Switched to ${role.charAt(0).toUpperCase() + role.slice(1)} role.`, 'info');
+                if(this.state.dailyPrice > 0) this.showToast(i18n.t(isSup ? 'Switched to Supervisor role.' : 'Switched to Operator role.'), 'info');
                 this.updateUI();
             },
 
@@ -989,7 +1056,7 @@
 
             saveEggTypePricing(event) {
                 event.preventDefault();
-                if (this.state.role !== 'supervisor') return this.showToast('Only Supervisor can update egg type prices.', 'error');
+                if (this.state.role !== 'supervisor') return this.showToast(i18n.t('Only Supervisor can update egg type prices.'), 'error');
                 const updated = this.state.eggTypes.map(type => ({
                     id: type.id,
                     name: document.getElementById(`egg-name-${type.id}`).value.trim(),
@@ -997,16 +1064,19 @@
                     batchPrice: Number(document.getElementById(`egg-batch-${type.id}`).value)
                 }));
                 const normalizedNames = updated.map(type => type.name.toLocaleLowerCase());
-                if (updated.some(type => !type.name)) return this.showToast('Every egg type needs a name.', 'warning');
-                if (new Set(normalizedNames).size !== updated.length) return this.showToast('Egg type names must be unique.', 'warning');
-                if (updated.some(type => !(type.retailPrice > 0) || !(type.batchPrice > 0))) return this.showToast('Every retail and batch price must be greater than zero.', 'warning');
+                if (updated.some(type => !type.name)) return this.showToast(i18n.t('Every egg type needs a name.'), 'warning');
+                if (new Set(normalizedNames).size !== updated.length) return this.showToast(i18n.t('Egg type names must be unique.'), 'warning');
+                if (updated.some(type => !(type.retailPrice > 0) || !(type.batchPrice > 0))) return this.showToast(i18n.t('Every retail and batch price must be greater than zero.'), 'warning');
                 const before = JSON.parse(JSON.stringify(this.state.eggTypes));
+                const hasChanges = JSON.stringify(before) !== JSON.stringify(updated);
+                if (!hasChanges) return this.showToast(i18n.t('No pricing changes to save.'), 'info');
                 this.state.eggTypes = updated;
+                this.recordEggPriceSnapshot('update');
                 this.logAudit('pricing', 'update', 'egg-type-pricing', before, JSON.parse(JSON.stringify(updated)), 'Seven egg type prices updated');
                 this.saveData();
                 this.renderEggTypePricing();
                 this.calculateTotal();
-                this.showToast('Seven egg type prices saved successfully!', 'success');
+                this.showToast(i18n.t('Seven egg type prices saved successfully!'), 'success');
             },
 
             getSaleDetails() {
@@ -1025,11 +1095,11 @@
                 this.renderEggTypeOptions();
                 const selection = this.getSaleDetails();
                 document.getElementById('display-daily-price').innerText = selection.appliedPrice.toFixed(2);
-                document.getElementById('display-price-unit').innerText = selection.saleMode === 'batch' ? 'batch' : 'egg';
+                document.getElementById('display-price-unit').innerText = i18n.t(selection.saleMode === 'batch' ? 'batch' : 'egg');
                 
                 const totalStock = this.getTotalStock();
                 const estimatedEggs = Math.floor(totalStock / this.state.eggWeight);
-                document.getElementById('pos-stock-display').innerText = `${totalStock.toLocaleString(undefined, {minimumFractionDigits: 1, maximumFractionDigits: 1})} kg (~${estimatedEggs} eggs)`;
+                document.getElementById('pos-stock-display').innerText = i18n.format('{kg} kg (~{eggs} eggs)', { kg: totalStock.toLocaleString(i18n.locale(), {minimumFractionDigits: 1, maximumFractionDigits: 1}), eggs: estimatedEggs.toLocaleString(i18n.locale()) });
                 document.getElementById('pos-unit-price').innerText = selection.appliedPrice.toFixed(2);
                 
                 const todaySales = this.state.sales.filter(s => new Date(s.timestamp).toDateString() === new Date().toDateString());
@@ -1065,17 +1135,18 @@
                 const weightToDeduct = details.qtyEggs * this.state.eggWeight;
 
                 document.getElementById('pos-summary-type').innerText = details.eggType.name;
-                document.getElementById('pos-summary-mode').innerText = isBatch ? `Batch (${this.state.batchSize} eggs)` : 'Retail';
-                document.getElementById('pos-unit-price-label').innerText = isBatch ? `Price per batch (${this.state.batchSize})` : 'Price per egg';
+                document.getElementById('pos-summary-mode').innerText = isBatch ? i18n.format('Batch ({count} eggs)', { count: this.state.batchSize }) : i18n.t('Retail');
+                document.getElementById('pos-unit-price-label').innerText = isBatch ? i18n.format('Price per batch ({count})', { count: this.state.batchSize }) : i18n.t('Price per egg');
                 document.getElementById('pos-unit-price').innerText = details.appliedPrice.toFixed(2);
-                document.getElementById('pos-summary-qty-label').innerText = isBatch ? 'Batch quantity' : 'Retail quantity';
-                document.getElementById('pos-summary-qty').innerText = isBatch ? `${details.saleQuantity.toLocaleString()} batch${details.saleQuantity === 1 ? '' : 'es'}` : `${details.saleQuantity.toLocaleString()} egg${details.saleQuantity === 1 ? '' : 's'}`;
+                document.getElementById('pos-summary-qty-label').innerText = i18n.t(isBatch ? 'Batch quantity' : 'Retail quantity');
+                const countKey = isBatch ? (details.saleQuantity === 1 ? '{count} batch' : '{count} batches') : (details.saleQuantity === 1 ? '{count} egg' : '{count} eggs');
+                document.getElementById('pos-summary-qty').innerText = i18n.format(countKey, { count: details.saleQuantity.toLocaleString(i18n.locale()) });
                 document.getElementById('pos-summary-eggs').innerText = details.qtyEggs.toLocaleString();
                 document.getElementById('pos-total').innerText = details.total.toFixed(2);
-                document.getElementById('pos-quantity-label').innerText = isBatch ? 'Quantity (Number of Batches)' : 'Quantity (Number of Eggs)';
-                document.getElementById('pos-quantity-help').innerText = isBatch ? `Each batch contains ${this.state.batchSize} eggs.` : 'Enter the number of individual eggs.';
+                document.getElementById('pos-quantity-label').innerText = i18n.t(isBatch ? 'Quantity (Number of Batches)' : 'Quantity (Number of Eggs)');
+                document.getElementById('pos-quantity-help').innerText = isBatch ? i18n.format('Each batch contains {count} eggs.', { count: this.state.batchSize }) : i18n.t('Enter the number of individual eggs.');
                 document.getElementById('display-daily-price').innerText = details.appliedPrice.toFixed(2);
-                document.getElementById('display-price-unit').innerText = isBatch ? 'batch' : 'egg';
+                document.getElementById('display-price-unit').innerText = i18n.t(isBatch ? 'batch' : 'egg');
 
                 const receivedInput = document.getElementById('pos-received');
                 const received = parseFloat(receivedInput.value) || 0;
@@ -1117,17 +1188,17 @@
                 const receivedInput = document.getElementById('pos-received');
                 const receivedAmount = useCalc ? (parseFloat(receivedInput.value) || 0) : details.total;
 
-                if (!details.saleQuantity || details.saleQuantity <= 0) return this.showToast(`Please enter a valid number of ${details.saleMode === 'batch' ? 'batches' : 'eggs'}.`, 'warning');
+                if (!details.saleQuantity || details.saleQuantity <= 0) return this.showToast(i18n.format('Please enter a valid number of {unit}.', { unit: i18n.t(details.saleMode === 'batch' ? 'batches' : 'eggs') }), 'warning');
 
                 const weightToDeduct = numEggs * this.state.eggWeight;
                 const totalStock = this.getTotalStock();
 
-                if (weightToDeduct > totalStock) return this.showToast(`Insufficient stock! Only ~${Math.floor(totalStock / this.state.eggWeight)} eggs available.`, 'error');
+                if (weightToDeduct > totalStock) return this.showToast(i18n.format('Insufficient stock! Only ~{count} eggs available.', { count: Math.floor(totalStock / this.state.eggWeight) }), 'error');
                 
                 const salePrice = details.appliedPrice;
                 const totalRevenue = details.total;
                 
-                if (useCalc && receivedAmount < totalRevenue) return this.showToast('Amount received is less than total.', 'error');
+                if (useCalc && receivedAmount < totalRevenue) return this.showToast(i18n.t('Amount received is less than total.'), 'error');
                 const changeAmount = receivedAmount - totalRevenue;
 
                 let qtyToFulfill = weightToDeduct, totalCostBasis = 0, batchUpdates = [];
@@ -1168,7 +1239,7 @@
                 if (useCalc) receivedInput.value = '';
                 this.calculateTotal();
                 document.getElementById('btn-print-receipt').classList.remove('hidden');
-                this.showToast(`Sale completed successfully! Amount: $${totalRevenue.toFixed(2)}`, 'success');
+                this.showToast(i18n.format('Sale completed successfully! Amount: ${amount}', { amount: totalRevenue.toFixed(2) }), 'success');
             },
 
             printLastReceipt() {
@@ -1186,11 +1257,12 @@
                 const isBatch = trx.saleMode === 'batch';
                 const saleQuantity = Number(trx.saleQuantity || trx.qtyEggs || 0);
                 const batchSize = Number(trx.batchSize || this.state.batchSize);
-                document.getElementById('receipt-egg-type').innerText = trx.eggTypeName || 'Legacy / Unspecified';
-                document.getElementById('receipt-sale-mode').innerText = isBatch ? `Batch (${batchSize} eggs)` : 'Retail';
-                document.getElementById('receipt-sale-qty').innerText = isBatch ? `${saleQuantity} batch${saleQuantity === 1 ? '' : 'es'} × ${batchSize}` : `${saleQuantity} egg${saleQuantity === 1 ? '' : 's'}`;
+                document.getElementById('receipt-egg-type').innerText = trx.eggTypeName || i18n.t('Legacy / Unspecified');
+                document.getElementById('receipt-sale-mode').innerText = isBatch ? i18n.format('Batch ({count} eggs)', { count: batchSize }) : i18n.t('Retail');
+                const receiptCountKey = isBatch ? (saleQuantity === 1 ? '{count} batch' : '{count} batches') : (saleQuantity === 1 ? '{count} egg' : '{count} eggs');
+                document.getElementById('receipt-sale-qty').innerText = `${i18n.format(receiptCountKey, { count: saleQuantity })}${isBatch ? ` × ${batchSize}` : ''}`;
                 document.getElementById('receipt-qty').innerText = trx.qtyEggs;
-                document.getElementById('receipt-price-label').innerText = isBatch ? 'Price / Batch' : 'Price / Egg';
+                document.getElementById('receipt-price-label').innerText = i18n.t(isBatch ? 'Price / Batch' : 'Price / Egg');
                 document.getElementById('receipt-unit-price').innerText = '$' + trx.unitPrice.toFixed(2);
                 document.getElementById('receipt-total').innerText = '$' + trx.total.toFixed(2);
                 document.getElementById('receipt-received').innerText = '$' + (trx.received ? trx.received.toFixed(2) : trx.total.toFixed(2));
@@ -1205,14 +1277,14 @@
                 let cost = parseFloat(document.getElementById('import-cost').value);
                 if (isNaN(cost)) cost = 0;
 
-                if (!date || !qty || qty <= 0) return this.showToast('Invalid input for import.', 'error');
+                if (!date || !qty || qty <= 0) return this.showToast(i18n.t('Invalid input for import.'), 'error');
 
                 this.state.inventory.push({ id: 'B-' + Date.now(), date, time, totalQty: qty, remainingQty: qty, costPrice: cost });
                 this.saveData();
                 e.target.reset();
                 document.getElementById('import-date').valueAsDate = new Date();
                 document.getElementById('import-time').value = new Date().toTimeString().slice(0,5);
-                this.showToast(`Successfully received ${qty} kg.`, 'success');
+                this.showToast(i18n.format('Successfully received {qty} kg.', { qty }), 'success');
             },
 
             openEditInventoryModal(id) {
@@ -1244,7 +1316,7 @@
                 const newTotal = parseFloat(document.getElementById('edit-inv-qty').value);
                 const soldQty = batch.totalQty - batch.remainingQty;
                 
-                if (newTotal < soldQty) return this.showToast(`Cannot reduce total below sold amount (${soldQty} kg).`, 'error');
+                if (newTotal < soldQty) return this.showToast(i18n.format('Cannot reduce total below sold amount ({qty} kg).', { qty: soldQty }), 'error');
 
                 batch.date = document.getElementById('edit-inv-date').value;
                 batch.time = document.getElementById('edit-inv-time').value;
@@ -1254,18 +1326,18 @@
                 
                 this.saveData();
                 this.closeEditInventoryModal();
-                this.showToast('Batch updated successfully.', 'success');
+                this.showToast(i18n.t('Batch updated successfully.'), 'success');
             },
 
             deleteInventoryBatch(id) {
                 const batch = this.state.inventory.find(b => b.id === id);
                 if(!batch) return;
-                if(batch.totalQty !== batch.remainingQty) return this.showToast('Cannot delete a batch that has been partially sold. Edit quantity instead.', 'error');
+                if(batch.totalQty !== batch.remainingQty) return this.showToast(i18n.t('Cannot delete a batch that has been partially sold. Edit quantity instead.'), 'error');
                 if(!confirm(`Delete batch ${id}?`)) return;
                 
                 this.state.inventory = this.state.inventory.filter(b => b.id !== id);
                 this.saveData();
-                this.showToast('Batch deleted successfully.', 'success');
+                this.showToast(i18n.t('Batch deleted successfully.'), 'success');
             },
 
             getFilteredInventory() { let data=[...this.state.inventory],t=this.inventoryTable.search.toLowerCase(); data=data.filter(b=>(!t||b.id.toLowerCase().includes(t)||b.date.includes(t)||Number(b.costPrice).toFixed(2).includes(t))&&(!this.inventoryTable.filters.dateFrom||b.date>=this.inventoryTable.filters.dateFrom)&&(!this.inventoryTable.filters.dateTo||b.date<=this.inventoryTable.filters.dateTo)&&(this.inventoryTable.filters.status==='all'||(this.inventoryTable.filters.status==='depleted'?b.remainingQty<=0:b.remainingQty>0))); data.sort((a,b)=>{let x=a[this.inventoryTable.sortBy],y=b[this.inventoryTable.sortBy];let r=x<y?-1:x>y?1:0;return this.inventoryTable.sortDir==='asc'?r:-r}); return data; },
@@ -1325,7 +1397,7 @@
                     if (this.dashboardTable.search) {
                         const term = this.dashboardTable.search.toLowerCase();
                         const dateObj = new Date(sale.timestamp);
-                        const formattedDate = `${dateObj.toLocaleDateString()} ${dateObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`;
+                        const formattedDate = `${dateObj.toLocaleDateString(i18n.locale())} ${dateObj.toLocaleTimeString(i18n.locale(), {hour: '2-digit', minute:'2-digit'})}`;
                         matchesSearch = (sale.id && sale.id.toLowerCase().includes(term)) || formattedDate.toLowerCase().includes(term) || sale.operator.toLowerCase().includes(term) || (sale.eggTypeName || '').toLowerCase().includes(term) || (sale.saleMode || 'retail').toLowerCase().includes(term) || (sale.qtyEggs && sale.qtyEggs.toString().includes(term)) || sale.unitPrice.toString().includes(term) || sale.total.toFixed(2).includes(term);
                     }
                     let matchesDateFrom = true;
@@ -1352,14 +1424,15 @@
                     if(icon) icon.className = 'fa-solid ml-1 ' + (this.dashboardTable.sortBy === col ? (this.dashboardTable.sortDir === 'asc' ? 'fa-sort-up text-primary-600' : 'fa-sort-down text-primary-600') : 'fa-sort text-gray-300');
                 });
 
-                if(filteredSales.length === 0) { tbody.innerHTML = `<tr><td colspan="8" class="px-6 py-8 text-center text-gray-500">No transactions found matching your criteria.</td></tr>`; return; }
+                if(filteredSales.length === 0) { tbody.innerHTML = `<tr><td colspan="8" class="px-6 py-8 text-center text-gray-500">${i18n.t('No transactions found matching your criteria.')}</td></tr>`; return; }
 
                 filteredSales.forEach(sale => {
                     const dateObj = new Date(sale.timestamp);
-                    const formattedDate = `${dateObj.toLocaleDateString()} ${dateObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`;
-                    const saleMode = sale.saleMode === 'batch' ? `Batch (${sale.batchSize || this.state.batchSize})` : 'Retail';
-                    const priceUnit = sale.saleMode === 'batch' ? 'batch' : 'egg';
-                    tbody.innerHTML += `<tr class="hover:bg-gray-50"><td class="px-6 py-4 whitespace-nowrap text-xs font-mono font-semibold text-slate-700">${sale.id || '-'}</td><td class="px-6 py-4 whitespace-nowrap text-xs">${formattedDate}</td><td class="px-6 py-4 capitalize text-xs font-medium text-gray-600">${sale.operator}</td><td class="px-6 py-4 font-medium text-gray-700">${this.escapeHtml(sale.eggTypeName || 'Legacy / Unspecified')}</td><td class="px-6 py-4">${saleMode}</td><td class="px-6 py-4">${sale.qtyEggs ? sale.qtyEggs.toLocaleString() : '-'}</td><td class="px-6 py-4">$${sale.unitPrice.toFixed(2)} / ${priceUnit}</td><td class="px-6 py-4 text-right font-bold text-gray-800">$${sale.total.toFixed(2)}</td></tr>`;
+                    const formattedDate = `${dateObj.toLocaleDateString(i18n.locale())} ${dateObj.toLocaleTimeString(i18n.locale(), {hour: '2-digit', minute:'2-digit'})}`;
+                    const saleMode = sale.saleMode === 'batch' ? i18n.format('Batch ({count} eggs)', { count: sale.batchSize || this.state.batchSize }) : i18n.t('Retail');
+                    const priceUnit = i18n.t(sale.saleMode === 'batch' ? 'batch' : 'egg');
+                    const operator = i18n.t(sale.operator === 'supervisor' ? 'Supervisor' : 'Operator');
+                    tbody.innerHTML += `<tr class="hover:bg-gray-50"><td class="px-6 py-4 whitespace-nowrap text-xs font-mono font-semibold text-slate-700">${sale.id || '-'}</td><td class="px-6 py-4 whitespace-nowrap text-xs">${formattedDate}</td><td class="px-6 py-4 text-xs font-medium text-gray-600">${operator}</td><td class="px-6 py-4 font-medium text-gray-700">${this.escapeHtml(sale.eggTypeName || i18n.t('Legacy / Unspecified'))}</td><td class="px-6 py-4">${saleMode}</td><td class="px-6 py-4">${sale.qtyEggs ? sale.qtyEggs.toLocaleString(i18n.locale()) : '-'}</td><td class="px-6 py-4">$${sale.unitPrice.toFixed(2)} / ${priceUnit}</td><td class="px-6 py-4 text-right font-bold text-gray-800">$${sale.total.toFixed(2)}</td></tr>`;
                 });
             },
 
@@ -1411,7 +1484,7 @@
             clearFilters() { document.getElementById('filter-date-from').value = ''; document.getElementById('filter-date-to').value = ''; document.getElementById('filter-operator').value = 'all'; document.getElementById('dash-search').value = ''; this.dashboardTable.search = ''; this.applyFilters(); },
             exportCSV() {
                 const data = this.dashboardTable.currentData;
-                if (!data || data.length === 0) return this.showToast('No data to export based on current filters.', 'warning');
+                if (!data || data.length === 0) return this.showToast(i18n.t('No data to export based on current filters.'), 'warning');
                 let csvContent = "Transaction ID,Date,Operator,Egg Type,Sale Option,Sale Quantity,Batch Size,Quantity (Eggs),Applied Price,Price Unit,Total Revenue\n";
                 data.forEach(sale => {
                     const trxId = `"${sale.id || ''}"`, dateObj = new Date(sale.timestamp), formattedDate = `"${dateObj.toLocaleDateString()} ${dateObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}"`;
@@ -1421,7 +1494,7 @@
                     csvContent += `${trxId},${formattedDate},"${sale.operator}","${eggType}","${saleMode}",${saleQuantity},${sale.batchSize || ''},${sale.qtyEggs || 0},${sale.unitPrice.toFixed(2)},"${sale.priceUnit || 'egg'}",${sale.total.toFixed(2)}\n`;
                 });
                 this.downloadCSV(csvContent, `eggpro_transactions_${new Date().getTime()}.csv`);
-                this.showToast('Data exported successfully!', 'success');
+                this.showToast(i18n.t('Data exported successfully!'), 'success');
             },
             downloadCSV(csv,name){const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'}),a=document.createElement('a'),u=URL.createObjectURL(blob);a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(u);},
             handleDashboardSort(col) { if (this.dashboardTable.sortBy === col) { this.dashboardTable.sortDir = this.dashboardTable.sortDir === 'asc' ? 'desc' : 'asc'; } else { this.dashboardTable.sortBy = col; this.dashboardTable.sortDir = 'desc'; } this.renderDashboard(); },
@@ -1459,17 +1532,17 @@
             savePriceModal(e){
                 e.preventDefault();const idx=this.state.priceHistory.findIndex(p=>p.date===this.editingPriceDate);if(idx<0)return;
                 const before=JSON.parse(JSON.stringify(this.state.priceHistory[idx])),date=document.getElementById('price-modal-date').value,price=parseFloat(document.getElementById('price-modal-price').value);if(!date||price<=0)return;
-                if(this.state.priceHistory.some((p,i)=>i!==idx&&p.date===date))return this.showToast('A price record already exists for this date.','error');
-                const after={date,price,updatedAt:new Date().toISOString()};this.state.priceHistory[idx]=after;this.state.priceHistory.sort((a,b)=>a.date.localeCompare(b.date));this.state.dailyPrice=Number(this.state.priceHistory.at(-1).price);this.logAudit('pricing','update',date,before,after,'Egg price entry updated');this.saveData();this.closePriceModal();this.showToast('Price record updated.','success');
+                if(this.state.priceHistory.some((p,i)=>i!==idx&&p.date===date))return this.showToast(i18n.t('A price record already exists for this date.'),'error');
+                const after={date,price,updatedAt:new Date().toISOString()};this.state.priceHistory[idx]=after;this.state.priceHistory.sort((a,b)=>a.date.localeCompare(b.date));this.state.dailyPrice=Number(this.state.priceHistory.at(-1).price);this.logAudit('pricing','update',date,before,after,'Egg price entry updated');this.saveData();this.closePriceModal();this.showToast(i18n.t('Price record updated.'),'success');
             },
             deletePriceFromModal(){
-                if(this.state.priceHistory.length<=1)return this.showToast('Cannot delete the last price record.','error');const item=this.state.priceHistory.find(p=>p.date===this.editingPriceDate);if(!item)return;
-                this.state.priceHistory=this.state.priceHistory.filter(p=>p.date!==item.date);this.state.dailyPrice=Number(this.state.priceHistory.at(-1).price);this.logAudit('pricing','delete',item.date,item,null,'Egg price entry deleted');this.saveData();this.closePriceModal();this.showToast('Price record deleted.','success');
+                if(this.state.priceHistory.length<=1)return this.showToast(i18n.t('Cannot delete the last price record.'),'error');const item=this.state.priceHistory.find(p=>p.date===this.editingPriceDate);if(!item)return;
+                this.state.priceHistory=this.state.priceHistory.filter(p=>p.date!==item.date);this.state.dailyPrice=Number(this.state.priceHistory.at(-1).price);this.logAudit('pricing','delete',item.date,item,null,'Egg price entry deleted');this.saveData();this.closePriceModal();this.showToast(i18n.t('Price record deleted.'),'success');
             },
 
             renderPriceTracker() {
-                const tbody = document.getElementById('price-history-table'), canvas = document.getElementById('price-history-chart');
-                if (!tbody || !canvas) return;
+                const tbody = document.getElementById('price-history-table');
+                if (!tbody) return;
                 const data = this.getFilteredPriceData();
                 this.priceTable.currentData = data;
                 const chronological = [...this.state.priceHistory].sort((a,b) => a.date.localeCompare(b.date));
@@ -1499,18 +1572,44 @@
                 
                 ['date','price','updatedAt'].forEach(col => { const icon=document.getElementById(`price-sort-${col}`); if(icon) icon.className='fa-solid ml-1 '+(this.priceTable.sortBy===col?(this.priceTable.sortDir==='asc'?'fa-sort-up text-primary-600':'fa-sort-down text-primary-600'):'fa-sort text-gray-300'); });
                 
+                this.renderEggPriceChart();
+                i18n.translate(document.getElementById('price-history-table'));
+            },
+            renderEggPriceChart() {
+                const canvas = document.getElementById('price-history-chart');
+                if (!canvas || typeof Chart === 'undefined') return;
+                const chronological = [...(this.state.eggPriceHistory || [])].sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
                 const rangeVal = document.getElementById('price-chart-range')?.value || '30';
-                let chartData = [];
-                if (rangeVal === 'all') chartData = chronological;
-                else if (rangeVal === 'custom') chartData = chronological.slice(-(parseInt(document.getElementById('price-chart-custom-num').value) || 10));
-                else chartData = chronological.slice(-Number(rangeVal));
+                let chartData = chronological;
+                if (rangeVal === 'custom') chartData = chronological.slice(-(parseInt(document.getElementById('price-chart-custom-num')?.value, 10) || 10));
+                else if (rangeVal !== 'all') chartData = chronological.slice(-Number(rangeVal));
 
-                const primaryColor = getComputedStyle(document.documentElement).getPropertyValue('--primary-600').trim() || '#2563eb';
-                const hexToRgba = (hex, opacity) => { let c; if(/^#([A-Fa-f0-9]{3}){1,2}$/.test(hex)){ c= hex.substring(1).split(''); if(c.length== 3){ c= [c[0], c[0], c[1], c[1], c[2], c[2]]; } c= '0x'+c.join(''); return 'rgba('+[(c>>16)&255, (c>>8)&255, c&255].join(',')+','+opacity+')'; } return `rgba(37,99,235,${opacity})`; };
+                const mode = document.getElementById('egg-price-chart-mode')?.value || 'retail';
+                const colors = ['#2563eb', '#16a34a', '#f59e0b', '#dc2626', '#7c3aed', '#0891b2', '#db2777'];
+                const datasets = [];
+                this.state.eggTypes.forEach((type, index) => {
+                    const color = colors[index % colors.length];
+                    const values = key => chartData.map(snapshot => {
+                        const price = snapshot.prices.find(item => item.id === type.id);
+                        return price ? Number(price[key]) : null;
+                    });
+                    if (mode === 'retail' || mode === 'both') datasets.push({ label: `${type.name} — ${i18n.t('Retail price')}`, data: values('retailPrice'), borderColor: color, backgroundColor: color, borderWidth: 2, tension: .25, pointRadius: 3, pointHoverRadius: 6, spanGaps: true });
+                    if (mode === 'batch' || mode === 'both') datasets.push({ label: `${type.name} — ${i18n.t('Batch price')}`, data: values('batchPrice'), borderColor: color, backgroundColor: color, borderWidth: 2, borderDash: [7, 5], tension: .25, pointRadius: 3, pointStyle: 'rectRot', pointHoverRadius: 6, spanGaps: true });
+                });
 
                 if (this.priceChart) this.priceChart.destroy();
-                this.priceChart = new Chart(canvas, { type:'line', data:{ labels:chartData.map(i=>new Date(i.date+'T00:00:00').toLocaleDateString()), datasets:[{label:i18n.t('Price Per Egg'),data:chartData.map(i=>Number(i.price)),borderColor:primaryColor,backgroundColor:hexToRgba(primaryColor, 0.12),fill:true,tension:.3,pointRadius:4,pointHoverRadius:6}]}, options:{responsive:true,maintainAspectRatio:false,interaction:{intersect:false,mode:'index'},plugins:{legend:{display:false}},scales:{y:{beginAtZero:false,ticks:{callback:v=>'$'+Number(v).toFixed(2)}},x:{ticks:{maxRotation:0,autoSkip:true,maxTicksLimit:8}}}} });
-                i18n.translate(document.getElementById('price-history-table'));
+                this.priceChart = new Chart(canvas, {
+                    type: 'line',
+                    data: { labels: chartData.map(snapshot => new Date(snapshot.timestamp).toLocaleString(i18n.locale(), { dateStyle: 'medium', timeStyle: 'short' })), datasets },
+                    options: {
+                        responsive: true, maintainAspectRatio: false, interaction: { intersect: false, mode: 'index' },
+                        plugins: {
+                            legend: { display: true, position: 'bottom', labels: { usePointStyle: true, boxWidth: 10, padding: 14 } },
+                            tooltip: { callbacks: { label: context => `${context.dataset.label}: $${Number(context.parsed.y).toFixed(2)}` } }
+                        },
+                        scales: { y: { beginAtZero: false, ticks: { callback: value => '$' + Number(value).toFixed(2) } }, x: { ticks: { maxRotation: 0, autoSkip: true, maxTicksLimit: 8 } } }
+                    }
+                });
             },
             handlePriceSearch(e) { this.priceTable.search = e.target.value; this.renderPriceTracker(); },
             togglePriceFilters() { this.priceTable.filters.show = !this.priceTable.filters.show; document.getElementById('price-filter-panel').classList.toggle('hidden', !this.priceTable.filters.show); },
@@ -1566,28 +1665,28 @@
             logAudit(module,action,recordId,before,after,summary,changes=[]){if(!Array.isArray(this.state.auditLogs))this.state.auditLogs=[];this.state.auditLogs.push({id:'AUD-'+Date.now(),timestamp:new Date().toISOString(),actor:this.state.role,module,action,recordId,summary,changes,before,after});},
             buildPermissionChanges(before,after){return Object.keys(this.permissionLabels).filter(k=>Boolean(before[k])!==Boolean(after[k])).map(k=>({key:k,label:this.permissionLabels[k],from:Boolean(before[k]),to:Boolean(after[k])}));},
             getFilteredAudit(){let d=[...(this.state.auditLogs||[])],q=this.auditTable.search.toLowerCase();d=d.filter(x=>(!q||[x.actor,x.module,x.action,x.recordId,x.summary,JSON.stringify(x.changes)].join(' ').toLowerCase().includes(q))&&(!this.auditTable.filters.dateFrom||x.timestamp>=this.auditTable.filters.dateFrom+'T00:00:00')&&(!this.auditTable.filters.dateTo||x.timestamp<=this.auditTable.filters.dateTo+'T23:59:59')&&(this.auditTable.filters.module==='all'||x.module===this.auditTable.filters.module)&&(this.auditTable.filters.action==='all'||x.action===this.auditTable.filters.action));d.sort((a,b)=>{let x=a[this.auditTable.sortBy]||'',y=b[this.auditTable.sortBy]||'',r=x<y?-1:x>y?1:0;return this.auditTable.sortDir==='asc'?r:-r});return d;},
-            renderPermissionAudit(log){const changes=(log.changes&&log.changes.length)?log.changes:this.buildPermissionChanges({...this.defaultPermissions(),...(log.before||{})},{...this.defaultPermissions(),...(log.after||{})});if(!changes.length)return '<span class="text-gray-500">Permission settings saved with no effective changes.</span>';return `<div class="space-y-2"><div class="text-xs text-gray-500">${changes.length} permission${changes.length===1?'':'s'} changed</div>${changes.map(c=>`<div class="flex flex-wrap items-center gap-2"><span class="font-medium text-gray-700">${c.label}</span><span class="px-2 py-0.5 rounded-full text-xs ${c.from?'bg-emerald-50 text-emerald-700':'bg-gray-100 text-gray-500'}">${c.from?'Allowed':'Blocked'}</span><i class="fa-solid fa-arrow-right text-gray-300 text-xs"></i><span class="px-2 py-0.5 rounded-full text-xs ${c.to?'bg-emerald-50 text-emerald-700':'bg-gray-100 text-gray-500'}">${c.to?'Allowed':'Blocked'}</span></div>`).join('')}<details class="text-xs text-gray-500"><summary class="cursor-pointer">View complete permission snapshot</summary><div class="grid grid-cols-1 sm:grid-cols-2 gap-1 mt-2">${Object.keys(this.permissionLabels).map(k=>`<div class="flex justify-between gap-3 bg-gray-50 p-2 rounded"><span>${this.permissionLabels[k]}</span><b class="${log.after?.[k]?'text-emerald-600':'text-gray-400'}">${log.after?.[k]?'Allowed':'Blocked'}</b></div>`).join('')}</div></details></div>`;},
-            formatAuditDate(value){if(!value)return '-';const d=new Date(value);return Number.isNaN(d.getTime())?String(value):d.toLocaleString();},
+            renderPermissionAudit(log){const changes=(log.changes&&log.changes.length)?log.changes:this.buildPermissionChanges({...this.defaultPermissions(),...(log.before||{})},{...this.defaultPermissions(),...(log.after||{})});if(!changes.length)return `<span class="text-gray-500">${i18n.t('Permission settings saved with no effective changes.')}</span>`;return `<div class="space-y-2"><div class="text-xs text-gray-500">${i18n.format('{count} permissions changed',{count:changes.length})}</div>${changes.map(c=>`<div class="flex flex-wrap items-center gap-2"><span class="font-medium text-gray-700">${i18n.t(c.label)}</span><span class="px-2 py-0.5 rounded-full text-xs ${c.from?'bg-emerald-50 text-emerald-700':'bg-gray-100 text-gray-500'}">${i18n.t(c.from?'Allowed':'Blocked')}</span><i class="fa-solid fa-arrow-right text-gray-300 text-xs"></i><span class="px-2 py-0.5 rounded-full text-xs ${c.to?'bg-emerald-50 text-emerald-700':'bg-gray-100 text-gray-500'}">${i18n.t(c.to?'Allowed':'Blocked')}</span></div>`).join('')}<details class="text-xs text-gray-500"><summary class="cursor-pointer">${i18n.t('View complete permission snapshot')}</summary><div class="grid grid-cols-1 sm:grid-cols-2 gap-1 mt-2">${Object.keys(this.permissionLabels).map(k=>`<div class="flex justify-between gap-3 bg-gray-50 p-2 rounded"><span>${i18n.t(this.permissionLabels[k])}</span><b class="${log.after?.[k]?'text-emerald-600':'text-gray-400'}">${i18n.t(log.after?.[k]?'Allowed':'Blocked')}</b></div>`).join('')}</div></details></div>`;},
+            formatAuditDate(value){if(!value)return '-';const d=new Date(value);return Number.isNaN(d.getTime())?String(value):d.toLocaleString(i18n.locale());},
             renderPricingAudit(log){
                 const before=log.before||null,after=log.after||null;
                 if(log.recordId==='egg-type-pricing'&&Array.isArray(before)&&Array.isArray(after)){
                     const changed=after.map((item,index)=>({before:before[index],after:item})).filter(pair=>JSON.stringify(pair.before)!==JSON.stringify(pair.after));
-                    return `<div class="space-y-2"><div class="font-semibold text-gray-800">Seven egg type prices updated</div><div class="text-xs text-gray-500">${changed.length} of 7 rows changed</div>${changed.map(pair=>`<div class="p-2 rounded-lg bg-gray-50"><span class="font-medium text-gray-700">${this.escapeHtml(pair.after.name)}</span><span class="text-xs text-gray-500 ml-2">Retail $${Number(pair.after.retailPrice).toFixed(2)} · Batch $${Number(pair.after.batchPrice).toFixed(2)}</span></div>`).join('')}</div>`;
+                    return `<div class="space-y-2"><div class="font-semibold text-gray-800">${i18n.t('Seven egg type prices updated')}</div><div class="text-xs text-gray-500">${i18n.format('{count} of 7 rows changed',{count:changed.length})}</div>${changed.map(pair=>`<div class="p-2 rounded-lg bg-gray-50"><span class="font-medium text-gray-700">${this.escapeHtml(pair.after.name)}</span><span class="text-xs text-gray-500 ml-2">${i18n.t('Retail')} $${Number(pair.after.retailPrice).toFixed(2)} · ${i18n.t('Batch')} $${Number(pair.after.batchPrice).toFixed(2)}</span></div>`).join('')}</div>`;
                 }
                 if(log.action==='update'&&before&&after){
                     const changes=[];
                     if(before.date!==after.date)changes.push({label:'Effective date',from:before.date||'-',to:after.date||'-'});
                     if(Number(before.price)!==Number(after.price))changes.push({label:'Price per egg',from:`$${Number(before.price).toFixed(2)}`,to:`$${Number(after.price).toFixed(2)}`,price:true});
                     const delta=Number(after.price)-Number(before.price),direction=delta>0?'Increase':delta<0?'Decrease':'No change';
-                    return `<div class="space-y-3"><div class="flex flex-wrap items-center gap-2"><span class="font-semibold text-gray-800">Egg price updated</span>${delta!==0?`<span class="px-2 py-1 rounded-full text-xs ${delta>0?'bg-rose-50 text-rose-600':'bg-emerald-50 text-emerald-600'}">${direction} ${delta>0?'+':''}$${delta.toFixed(2)}</span>`:''}</div>${changes.length?changes.map(c=>`<div class="flex flex-wrap items-center gap-2"><span class="font-medium text-gray-700 min-w-[110px]">${c.label}</span><span class="px-2 py-1 rounded-lg bg-gray-100 text-gray-600">${c.from}</span><i class="fa-solid fa-arrow-right text-gray-300 text-xs"></i><span class="px-2 py-1 rounded-lg ${c.price?'bg-primary-50 text-primary-700':'bg-gray-100 text-gray-700'} font-medium">${c.to}</span></div>`).join(''):'<div class="text-gray-500">No business fields changed.</div>'}<div class="text-xs text-gray-500">Updated ${this.formatAuditDate(after.updatedAt)}</div></div>`;
+                    return `<div class="space-y-3"><div class="flex flex-wrap items-center gap-2"><span class="font-semibold text-gray-800">${i18n.t('Egg price updated')}</span>${delta!==0?`<span class="px-2 py-1 rounded-full text-xs ${delta>0?'bg-rose-50 text-rose-600':'bg-emerald-50 text-emerald-600'}">${i18n.t(direction)} ${delta>0?'+':''}$${delta.toFixed(2)}</span>`:''}</div>${changes.length?changes.map(c=>`<div class="flex flex-wrap items-center gap-2"><span class="font-medium text-gray-700 min-w-[110px]">${i18n.t(c.label)}</span><span class="px-2 py-1 rounded-lg bg-gray-100 text-gray-600">${c.from}</span><i class="fa-solid fa-arrow-right text-gray-300 text-xs"></i><span class="px-2 py-1 rounded-lg ${c.price?'bg-primary-50 text-primary-700':'bg-gray-100 text-gray-700'} font-medium">${c.to}</span></div>`).join(''):`<div class="text-gray-500">${i18n.t('No business fields changed.')}</div>`}<div class="text-xs text-gray-500">${i18n.t('Updated')} ${this.formatAuditDate(after.updatedAt)}</div></div>`;
                 }
-                if(log.action==='delete'&&before){return `<div class="space-y-2"><div class="font-semibold text-gray-800">Egg price entry deleted</div><div class="flex flex-wrap gap-2"><span class="px-2 py-1 rounded-lg bg-gray-100 text-gray-700">Date: ${before.date||'-'}</span><span class="px-2 py-1 rounded-lg bg-rose-50 text-rose-600">Price: $${Number(before.price).toFixed(2)}</span></div><div class="text-xs text-gray-500">The record was removed from price history.</div></div>`;}
-                if(log.action==='create'&&after){return `<div class="space-y-2"><div class="font-semibold text-gray-800">Egg price entry created</div><div class="flex flex-wrap gap-2"><span class="px-2 py-1 rounded-lg bg-gray-100 text-gray-700">Date: ${after.date||'-'}</span><span class="px-2 py-1 rounded-lg bg-emerald-50 text-emerald-600">Price: $${Number(after.price).toFixed(2)}</span></div></div>`;}
-                return `<div>${log.summary||'Pricing record changed'}</div>`;
+                if(log.action==='delete'&&before){return `<div class="space-y-2"><div class="font-semibold text-gray-800">${i18n.t('Egg price entry deleted')}</div><div class="flex flex-wrap gap-2"><span class="px-2 py-1 rounded-lg bg-gray-100 text-gray-700">${i18n.t('Date')}: ${before.date||'-'}</span><span class="px-2 py-1 rounded-lg bg-rose-50 text-rose-600">${i18n.t('Price')}: $${Number(before.price).toFixed(2)}</span></div><div class="text-xs text-gray-500">${i18n.t('The record was removed from price history.')}</div></div>`;}
+                if(log.action==='create'&&after){return `<div class="space-y-2"><div class="font-semibold text-gray-800">${i18n.t('Egg price entry created')}</div><div class="flex flex-wrap gap-2"><span class="px-2 py-1 rounded-lg bg-gray-100 text-gray-700">${i18n.t('Date')}: ${after.date||'-'}</span><span class="px-2 py-1 rounded-lg bg-emerald-50 text-emerald-600">${i18n.t('Price')}: $${Number(after.price).toFixed(2)}</span></div></div>`;}
+                return `<div>${i18n.t(log.summary||'Pricing record changed')}</div>`;
             },
-            renderAuditDetails(log){if(log.module==='permissions')return this.renderPermissionAudit(log);if(log.module==='pricing')return this.renderPricingAudit(log);return `<div>${log.summary||'-'}</div><details class="text-xs text-gray-500 mt-1"><summary class="cursor-pointer">View data trace</summary><pre class="whitespace-pre-wrap bg-gray-50 p-2 rounded mt-2">Before: ${JSON.stringify(log.before,null,2)}\nAfter: ${JSON.stringify(log.after,null,2)}</pre></details>`;},
-            renderAuditLog(){const b=document.getElementById('audit-list');if(!b)return;const d=this.getFilteredAudit();this.auditTable.currentData=d;b.innerHTML=d.length?d.map(x=>`<tr class="hover:bg-gray-50 align-top"><td class="px-5 py-4 whitespace-nowrap text-xs">${new Date(x.timestamp).toLocaleString()}</td><td class="px-5 py-4 capitalize">${x.actor}</td><td class="px-5 py-4 capitalize">${x.module}</td><td class="px-5 py-4"><span class="px-2 py-1 rounded-full text-xs ${x.action==='delete'?'bg-rose-50 text-rose-500':x.action==='update'?'bg-amber-50 text-amber-600':'bg-emerald-50 text-emerald-600'}">${x.action}</span></td><td class="px-5 py-4 font-mono text-xs">${x.recordId}</td><td class="px-5 py-4 min-w-[360px]">${this.renderAuditDetails(x)}</td></tr>`).join(''):'<tr><td colspan="6" class="p-10 text-center text-gray-500">No audit records found.</td></tr>';},
-            handleAuditSearch(e){this.auditTable.search=e.target.value;this.renderAuditLog();},toggleAuditFilters(){this.auditTable.filters.show=!this.auditTable.filters.show;document.getElementById('audit-filter-panel').classList.toggle('hidden',!this.auditTable.filters.show);},applyAuditFilters(){this.auditTable.filters.dateFrom=document.getElementById('audit-date-from').value;this.auditTable.filters.dateTo=document.getElementById('audit-date-to').value;this.auditTable.filters.module=document.getElementById('audit-module').value;this.auditTable.filters.action=document.getElementById('audit-action').value;this.renderAuditLog();},clearAuditFilters(){['audit-date-from','audit-date-to','audit-search'].forEach(id=>document.getElementById(id).value='');document.getElementById('audit-module').value='all';document.getElementById('audit-action').value='all';this.auditTable.search='';this.auditTable.filters={show:this.auditTable.filters.show,dateFrom:'',dateTo:'',module:'all',action:'all'};this.renderAuditLog();},sortAudit(c){if(this.auditTable.sortBy===c)this.auditTable.sortDir=this.auditTable.sortDir==='asc'?'desc':'asc';else{this.auditTable.sortBy=c;this.auditTable.sortDir='desc'}this.renderAuditLog();},exportAuditCSV(){const d=this.auditTable.currentData;if(!d.length)return this.showToast('No data to export based on current filters.','warning');let csv='Timestamp,Actor,Module,Action,Record,Summary,Changes\n';d.forEach(x=>csv+=`"${x.timestamp}","${x.actor}","${x.module}","${x.action}","${x.recordId}","${String(x.summary||'').replaceAll('"','""')}","${JSON.stringify(x.changes||[]).replaceAll('"','""')}"\n`);this.downloadCSV(csv,`eggpro_audit_${Date.now()}.csv`);},
+            renderAuditDetails(log){if(log.module==='permissions')return this.renderPermissionAudit(log);if(log.module==='pricing')return this.renderPricingAudit(log);return `<div>${i18n.t(log.summary||'-')}</div><details class="text-xs text-gray-500 mt-1"><summary class="cursor-pointer">${i18n.t('View data trace')}</summary><pre class="whitespace-pre-wrap bg-gray-50 p-2 rounded mt-2">${i18n.t('Before')}: ${JSON.stringify(log.before,null,2)}\n${i18n.t('After')}: ${JSON.stringify(log.after,null,2)}</pre></details>`;},
+            renderAuditLog(){const b=document.getElementById('audit-list');if(!b)return;const d=this.getFilteredAudit();this.auditTable.currentData=d;b.innerHTML=d.length?d.map(x=>`<tr class="hover:bg-gray-50 align-top"><td class="px-5 py-4 whitespace-nowrap text-xs">${new Date(x.timestamp).toLocaleString(i18n.locale())}</td><td class="px-5 py-4">${i18n.t(x.actor==='supervisor'?'Supervisor':'Operator')}</td><td class="px-5 py-4">${i18n.t(x.module.charAt(0).toUpperCase()+x.module.slice(1))}</td><td class="px-5 py-4"><span class="px-2 py-1 rounded-full text-xs ${x.action==='delete'?'bg-rose-50 text-rose-500':x.action==='update'?'bg-amber-50 text-amber-600':'bg-emerald-50 text-emerald-600'}">${i18n.t(x.action.charAt(0).toUpperCase()+x.action.slice(1))}</span></td><td class="px-5 py-4 font-mono text-xs">${x.recordId}</td><td class="px-5 py-4 min-w-[360px]">${this.renderAuditDetails(x)}</td></tr>`).join(''):`<tr><td colspan="6" class="p-10 text-center text-gray-500">${i18n.t('No audit records found.')}</td></tr>`;i18n.translate(b);},
+            handleAuditSearch(e){this.auditTable.search=e.target.value;this.renderAuditLog();},toggleAuditFilters(){this.auditTable.filters.show=!this.auditTable.filters.show;document.getElementById('audit-filter-panel').classList.toggle('hidden',!this.auditTable.filters.show)},applyAuditFilters(){this.auditTable.filters.dateFrom=document.getElementById('audit-date-from').value;this.auditTable.filters.dateTo=document.getElementById('audit-date-to').value;this.auditTable.filters.module=document.getElementById('audit-module').value;this.auditTable.filters.action=document.getElementById('audit-action').value;this.renderAuditLog()},clearAuditFilters(){['audit-date-from','audit-date-to','audit-search'].forEach(id=>document.getElementById(id).value='');document.getElementById('audit-module').value='all';document.getElementById('audit-action').value='all';this.auditTable.search='';this.auditTable.filters={show:this.auditTable.filters.show,dateFrom:'',dateTo:'',module:'all',action:'all'};this.renderAuditLog()},sortAudit(c){if(this.auditTable.sortBy===c)this.auditTable.sortDir=this.auditTable.sortDir==='asc'?'desc':'asc';else{this.auditTable.sortBy=c;this.auditTable.sortDir='desc'}this.renderAuditLog()},exportAuditCSV(){const d=this.auditTable.currentData;if(!d.length)return this.showToast(i18n.t('No data to export based on current filters.'),'warning');let csv='Timestamp,Actor,Module,Action,Record,Summary,Changes\n';d.forEach(x=>csv+=`"${x.timestamp}","${x.actor}","${x.module}","${x.action}","${x.recordId}","${String(x.summary||'').replaceAll('"','""')}","${JSON.stringify(x.changes||[]).replaceAll('"','""')}"\n`);this.downloadCSV(csv,`eggpro_audit_${Date.now()}.csv`)},
             updatePermissions() {
                 const before={...this.defaultPermissions(),...(this.state.permissions||{})};
                 const keys = ['pos', 'pos_calc', 'pos_receipt_op', 'pos_receipt_id', 'inventory', 'inv_add', 'inv_view', 'inv_edit', 'inv_delete', 'dashboard', 'dashboard_profit', 'dashboard_trend', 'pricing', 'pricing_add', 'pricing_edit', 'pricing_delete', 'settings', 'permissions'];
@@ -1601,7 +1700,7 @@
             },
 
             hardReset() {
-                if(confirm("Are you absolutely sure you want to clear all data?")) {
+                if(confirm(i18n.t('Are you absolutely sure you want to clear all data?'))) {
                     localStorage.removeItem('eggProData');
                     location.reload();
                 }
