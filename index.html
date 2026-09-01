@@ -185,11 +185,7 @@
     <main class="flex-1 min-w-0 w-full flex flex-col h-full overflow-hidden relative">
         <header class="bg-white shadow-sm z-10 px-4 sm:px-6 py-3 sm:py-4 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
             <h2 id="page-title" class="text-xl sm:text-2xl font-semibold text-gray-800 self-start">Point of Sale</h2>
-            <div class="flex items-center justify-between sm:justify-end gap-2 sm:gap-4 w-full sm:w-auto">
-                <div class="bg-primary-50 text-primary-700 px-3 py-1 rounded-full text-sm font-medium border border-primary-100 flex items-center gap-2">
-                    <i class="fa-solid fa-coins text-primary-500"></i>
-                    Selected Price: $<span id="display-daily-price">0.00</span> / <span id="display-price-unit">egg</span>
-                </div>
+            <div class="flex items-center justify-end gap-2 sm:gap-4 w-full sm:w-auto">
                 <div class="flex items-center gap-2 text-sm text-gray-500">
                     <div id="user-badge" class="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 font-bold">O</div>
                     <span id="user-role-label" class="hidden sm:inline font-medium">Operator Mode</span>
@@ -499,11 +495,6 @@
                                     <input type="checkbox" id="perm-pricing" onchange="app.updatePermissions()">
                                     <span><b>Egg Pricing</b><small>Review pricing; Supervisor manages the seven egg types.</small></span>
                                 </label>
-                                <div class="w-full pl-7 pt-3 mt-3 border-t border-gray-100 flex flex-col gap-2">
-                                    <label class="flex items-center gap-2 cursor-pointer text-sm text-gray-700"><input type="checkbox" id="perm-pricing_add" onchange="app.updatePermissions()"><span>Allow Adding New Daily Price</span></label>
-                                    <label class="flex items-center gap-2 cursor-pointer text-sm text-gray-700"><input type="checkbox" id="perm-pricing_edit" onchange="app.updatePermissions()"><span>Allow Editing Price Records</span></label>
-                                    <label class="flex items-center gap-2 cursor-pointer text-sm text-gray-700"><input type="checkbox" id="perm-pricing_delete" onchange="app.updatePermissions()"><span>Allow Deleting Price Records</span></label>
-                                </div>
                             </div>
 
                             <label class="permission-card"><input type="checkbox" id="perm-settings" onchange="app.updatePermissions()"><span><b>Basic Settings</b><small>Change language, appearance, and regional settings.</small></span></label>
@@ -533,10 +524,6 @@
                             </div>
                         </form>
                     </div>
-                    <div id="pricing-add-section" class="bg-white p-5 sm:p-6 rounded-2xl shadow-sm border border-gray-100 mb-6">
-                        <div class="flex items-center gap-3 mb-4"><i class="fa-solid fa-tag text-primary-600 text-xl"></i><div><h3 class="text-lg font-semibold text-gray-800">Legacy Daily Reference Price</h3><p class="text-sm text-gray-500">Kept for existing price history. POS sales use the seven egg-type prices above.</p></div></div>
-                        <form onsubmit="app.updatePriceOnly(event)" class="grid grid-cols-1 sm:grid-cols-3 gap-4 items-end"><div class="form-field"><label class="block text-sm font-medium text-gray-600 mb-1">Price Effective Date</label><input type="date" id="pricing-date" required class="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-primary-500"></div><div class="form-field"><label class="block text-sm font-medium text-gray-600 mb-1">Selling Price (Per Egg)</label><input type="number" id="pricing-price" step="0.01" min="0.01" required class="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-primary-500"></div><button type="submit" class="w-full p-3 bg-primary-600 hover:bg-primary-700 text-white font-semibold rounded-lg"><i class="fa-solid fa-floppy-disk mr-2"></i>Save Daily Price</button></form>
-                    </div>
                     <div class="bg-white p-5 sm:p-6 rounded-2xl shadow-sm border border-gray-100 mb-6">
                         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
                             <div><h3 class="text-lg font-semibold text-gray-800">Seven Egg Type Price History</h3><p class="text-sm text-gray-500">Compare retail and 30-egg batch prices across all seven egg types.</p></div>
@@ -557,9 +544,9 @@
                     <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
                         <div class="p-5 sm:p-6 border-b border-gray-100 bg-gray-50 flex flex-col gap-4">
                             <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-                                <div><h3 class="text-lg font-semibold text-gray-800">Daily Egg Price History</h3><p class="text-sm text-gray-500">Search, filter, sort, or export the daily records.</p></div>
+                                <div><h3 class="text-lg font-semibold text-gray-800">Seven Egg Price Records</h3><p class="text-sm text-gray-500">Every saved change adds one row for each egg type.</p></div>
                                 <div class="flex flex-col sm:flex-row gap-2 w-full lg:w-auto">
-                                    <div class="relative flex-1 sm:w-64"><i class="fa-solid fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i><input type="search" id="price-search" oninput="app.handlePriceSearch(event)" placeholder="Search date or price..." class="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm bg-white"></div>
+                                    <div class="relative flex-1 sm:w-72"><i class="fa-solid fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i><input type="search" id="price-search" oninput="app.handlePriceSearch(event)" placeholder="Search egg type, date, or price..." class="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm bg-white"></div>
                                     <button onclick="app.togglePriceFilters()" class="px-4 py-2 bg-white border border-gray-200 hover:bg-gray-100 text-gray-700 font-medium rounded-lg text-sm"><i class="fa-solid fa-filter mr-2"></i>Filters</button>
                                     <button onclick="app.exportPriceCSV()" class="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white font-medium rounded-lg text-sm"><i class="fa-solid fa-download mr-2"></i>Export CSV</button>
                                 </div>
@@ -571,13 +558,14 @@
                             </div>
                         </div>
                         <div class="overflow-x-auto">
-                            <table class="w-full min-w-[620px] text-left text-sm text-gray-600">
+                            <table class="w-full min-w-[980px] text-left text-sm text-gray-600">
                                 <thead class="text-xs text-gray-500 uppercase bg-white border-b border-gray-100"><tr>
-                                    <th class="px-6 py-4 cursor-pointer hover:bg-gray-50" onclick="app.sortPriceTable('date')">Date <i id="price-sort-date" class="fa-solid fa-sort ml-1 text-gray-300"></i></th>
-                                    <th class="px-6 py-4 cursor-pointer hover:bg-gray-50" onclick="app.sortPriceTable('price')">Price Per Egg <i id="price-sort-price" class="fa-solid fa-sort ml-1 text-gray-300"></i></th>
-                                    <th class="px-6 py-4 cursor-pointer hover:bg-gray-50" onclick="app.sortPriceTable('updatedAt')">Last Updated <i id="price-sort-updatedAt" class="fa-solid fa-sort ml-1 text-gray-300"></i></th>
-                                    <th class="px-6 py-4">Change</th>
-                                    <th id="price-th-actions" class="px-6 py-4 text-center">Actions</th>
+                                    <th class="px-5 py-4 cursor-pointer hover:bg-gray-50" onclick="app.sortPriceTable('timestamp')">Date & Time <i id="price-sort-timestamp" class="fa-solid fa-sort ml-1 text-gray-300"></i></th>
+                                    <th class="px-5 py-4 cursor-pointer hover:bg-gray-50" onclick="app.sortPriceTable('eggTypeName')">Egg Type <i id="price-sort-eggTypeName" class="fa-solid fa-sort ml-1 text-gray-300"></i></th>
+                                    <th class="px-5 py-4 cursor-pointer hover:bg-gray-50" onclick="app.sortPriceTable('retailPrice')">Retail / Egg <i id="price-sort-retailPrice" class="fa-solid fa-sort ml-1 text-gray-300"></i></th>
+                                    <th class="px-5 py-4 cursor-pointer hover:bg-gray-50" onclick="app.sortPriceTable('retailChange')">Retail Change <i id="price-sort-retailChange" class="fa-solid fa-sort ml-1 text-gray-300"></i></th>
+                                    <th class="px-5 py-4 cursor-pointer hover:bg-gray-50" onclick="app.sortPriceTable('batchPrice')">Batch / 30 eggs <i id="price-sort-batchPrice" class="fa-solid fa-sort ml-1 text-gray-300"></i></th>
+                                    <th class="px-5 py-4 cursor-pointer hover:bg-gray-50" onclick="app.sortPriceTable('batchChange')">Batch Change <i id="price-sort-batchChange" class="fa-solid fa-sort ml-1 text-gray-300"></i></th>
                                 </tr></thead>
                                 <tbody id="price-history-table" class="divide-y divide-gray-100"></tbody>
                             </table>
@@ -624,17 +612,6 @@
         </div>
     </div>
 
-    <div id="price-entry-modal" class="hidden fixed inset-0 bg-black/60 z-[60] flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl relative max-h-[90dvh] overflow-y-auto">
-            <div class="flex items-start justify-between gap-4 mb-4"><div><h3 class="text-xl font-bold text-gray-800">Egg Price Entry</h3><p id="price-modal-record" class="text-xs text-gray-500 mt-1"></p></div><button type="button" onclick="app.closePriceModal()" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark"></i></button></div>
-            <form onsubmit="app.savePriceModal(event)" class="space-y-4">
-                <div><label class="block text-sm font-medium text-gray-600 mb-1">Price Effective Date</label><input type="date" id="price-modal-date" required class="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg"></div>
-                <div><label class="block text-sm font-medium text-gray-600 mb-1">Selling Price (Per Egg)</label><input type="number" id="price-modal-price" step="0.01" min="0.01" required class="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg"></div>
-                <div><label class="block text-sm font-medium text-gray-600 mb-1">Last Updated</label><input type="text" id="price-modal-updated" readonly class="w-full p-3 bg-gray-100 border border-gray-200 rounded-lg text-gray-500"></div>
-                <div class="flex flex-col-reverse sm:flex-row gap-3 pt-2"><button id="price-modal-delete" type="button" onclick="app.deletePriceFromModal()" class="p-3 bg-gray-100 hover:bg-rose-50 text-rose-400 hover:text-rose-500 font-semibold rounded-lg"><i class="fa-regular fa-trash-can mr-2"></i>Delete</button><div class="flex-1"></div><button type="button" onclick="app.closePriceModal()" class="p-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-lg">Cancel</button><button type="submit" class="p-3 bg-primary-600 hover:bg-primary-700 text-white font-semibold rounded-lg">Save Changes</button></div>
-            </form>
-        </div>
-    </div>
     <div id="toast-container" class="fixed top-4 right-4 z-50 flex flex-col gap-2 w-full max-w-sm px-4 md:px-0"></div>
 
     <div id="printable-receipt" class="hidden">
@@ -784,6 +761,12 @@
         });
         i18n.translations['zh-TW']['Are you absolutely sure you want to clear all data?'] = '您確定要清除所有資料嗎？';
         i18n.translations['my']['Are you absolutely sure you want to clear all data?'] = 'ဒေတာအားလုံးကို ရှင်းမည်မှာ သေချာပါသလား။';
+        Object.assign(i18n.translations['zh-TW'], {
+            'Seven Egg Price Records':'七種雞蛋價格紀錄','Every saved change adds one row for each egg type.':'每次儲存變更都會為每種雞蛋新增一列。','Search egg type, date, or price...':'搜尋雞蛋類型、日期或價格...','Retail / Egg':'每顆零售價','Retail Change':'零售價變動','Batch / 30 eggs':'每批 30 顆價格','Batch Change':'整批價變動','No seven-type price records found.':'找不到七種雞蛋價格紀錄。'
+        });
+        Object.assign(i18n.translations['my'], {
+            'Seven Egg Price Records':'ဥ ၇ မျိုး စျေးနှုန်းမှတ်တမ်း','Every saved change adds one row for each egg type.':'သိမ်းထားသောပြောင်းလဲမှုတိုင်းသည် ဥအမျိုးအစားတစ်မျိုးစီအတွက် တစ်ကြောင်းထည့်ပေးသည်။','Search egg type, date, or price...':'ဥအမျိုးအစား၊ ရက်စွဲ သို့မဟုတ် စျေးနှုန်းရှာရန်...','Retail / Egg':'တစ်လုံးလက်လီစျေး','Retail Change':'လက်လီစျေးပြောင်းလဲမှု','Batch / 30 eggs':'ဥ ၃၀ အသုတ်စျေး','Batch Change':'အသုတ်စျေးပြောင်းလဲမှု','No seven-type price records found.':'ဥ ၇ မျိုး စျေးနှုန်းမှတ်တမ်း မတွေ့ပါ။'
+        });
         const app = {
             state: {
                 role: 'operator',
@@ -803,7 +786,7 @@
                     pos: true, pos_calc: true, pos_receipt_op: true, pos_receipt_id: true,
                     inventory: true, inv_add: true, inv_view: true, inv_edit: false, inv_delete: false,
                     dashboard: false, dashboard_profit: false, dashboard_trend: false, 
-                    pricing: false, pricing_add: false, pricing_edit: false, pricing_delete: false, 
+                    pricing: false,
                     settings: false, permissions: false
                 }
             },
@@ -813,9 +796,8 @@
             priceChart: null,
             salesChart: null,
             inventoryTable: { search:'', sortBy:'date', sortDir:'desc', filters:{show:false,dateFrom:'',dateTo:'',status:'all'}, currentData:[] },
-            priceTable: { search: '', sortBy: 'date', sortDir: 'desc', filters: { show: false, dateFrom: '', dateTo: '' }, currentData: [] },
+            priceTable: { search: '', sortBy: 'timestamp', sortDir: 'desc', filters: { show: false, dateFrom: '', dateTo: '' }, currentData: [] },
             editingBatchId: null,
-            editingPriceDate: null,
             auditTable: { search:'', sortBy:'timestamp', sortDir:'desc', filters:{show:false,dateFrom:'',dateTo:'',module:'all',action:'all'}, currentData:[] },
 
             defaultEggTypes(seedPrice = 0.15) {
@@ -834,14 +816,11 @@
                 this.loadData();
                 this.ensureEggTypes();
                 this.ensureEggPriceHistory();
-                this.ensurePriceHistory();
                 this.setupMobileMenu();
                 this.switchRole('operator');
                 
                 document.getElementById('import-date').valueAsDate = new Date();
                 document.getElementById('import-time').value = new Date().toTimeString().slice(0,5);
-                document.getElementById('pricing-date').value = this.getLocalDateKey();
-                document.getElementById('pricing-price').value = Number(this.state.dailyPrice).toFixed(2);
                 this.renderEggTypeOptions();
                 this.renderEggTypePricing();
                 
@@ -895,13 +874,6 @@
                 const m = String(date.getMonth() + 1).padStart(2, '0');
                 const d = String(date.getDate()).padStart(2, '0');
                 return `${y}-${m}-${d}`;
-            },
-            ensurePriceHistory() {
-                if (!Array.isArray(this.state.priceHistory)) this.state.priceHistory = [];
-                if (this.state.priceHistory.length === 0) {
-                    this.state.priceHistory.push({ date: this.getLocalDateKey(), price: Number(this.state.dailyPrice), updatedAt: new Date().toISOString() });
-                    localStorage.setItem('eggProData', JSON.stringify(this.state));
-                }
             },
             ensureEggTypes() {
                 const defaults = this.defaultEggTypes(this.state.dailyPrice);
@@ -1094,8 +1066,6 @@
                 const p = this.state.permissions;
                 this.renderEggTypeOptions();
                 const selection = this.getSaleDetails();
-                document.getElementById('display-daily-price').innerText = selection.appliedPrice.toFixed(2);
-                document.getElementById('display-price-unit').innerText = i18n.t(selection.saleMode === 'batch' ? 'batch' : 'egg');
                 
                 const totalStock = this.getTotalStock();
                 const estimatedEggs = Math.floor(totalStock / this.state.eggWeight);
@@ -1109,7 +1079,6 @@
                 document.getElementById('pos-calc-section').style.display = (isSup || p.pos_calc) ? 'block' : 'none';
                 document.getElementById('inv-add-section').style.display = (isSup || p.inv_add) ? 'block' : 'none';
                 document.getElementById('inv-view-section').style.display = (isSup || p.inv_view) ? 'block' : 'none';
-                document.getElementById('pricing-add-section').style.display = (isSup || p.pricing_add) ? 'block' : 'none';
                 document.getElementById('egg-type-pricing-section').style.display = isSup ? 'block' : 'none';
                 
                 const dashTrend = document.getElementById('dash-trend-section');
@@ -1121,7 +1090,7 @@
                 if (this.currentView === 'audit') this.renderAuditLog();
                 if (this.currentView === 'settings') this.loadBasicSettingsUI();
                 if (this.currentView === 'permissions') {
-                    const keys = ['pos', 'pos_calc', 'pos_receipt_op', 'pos_receipt_id', 'inventory', 'inv_add', 'inv_view', 'inv_edit', 'inv_delete', 'dashboard', 'dashboard_profit', 'dashboard_trend', 'pricing', 'pricing_add', 'pricing_edit', 'pricing_delete', 'settings', 'permissions'];
+                    const keys = ['pos', 'pos_calc', 'pos_receipt_op', 'pos_receipt_id', 'inventory', 'inv_add', 'inv_view', 'inv_edit', 'inv_delete', 'dashboard', 'dashboard_profit', 'dashboard_trend', 'pricing', 'settings', 'permissions'];
                     keys.forEach(k => { const el = document.getElementById('perm-'+k); if(el) el.checked = !!this.state.permissions[k]; });
                 }
                 this.calculateTotal();
@@ -1145,8 +1114,6 @@
                 document.getElementById('pos-total').innerText = details.total.toFixed(2);
                 document.getElementById('pos-quantity-label').innerText = i18n.t(isBatch ? 'Quantity (Number of Batches)' : 'Quantity (Number of Eggs)');
                 document.getElementById('pos-quantity-help').innerText = isBatch ? i18n.format('Each batch contains {count} eggs.', { count: this.state.batchSize }) : i18n.t('Enter the number of individual eggs.');
-                document.getElementById('display-daily-price').innerText = details.appliedPrice.toFixed(2);
-                document.getElementById('display-price-unit').innerText = i18n.t(isBatch ? 'batch' : 'egg');
 
                 const receivedInput = document.getElementById('pos-received');
                 const received = parseFloat(receivedInput.value) || 0;
@@ -1499,19 +1466,51 @@
             downloadCSV(csv,name){const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'}),a=document.createElement('a'),u=URL.createObjectURL(blob);a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(u);},
             handleDashboardSort(col) { if (this.dashboardTable.sortBy === col) { this.dashboardTable.sortDir = this.dashboardTable.sortDir === 'asc' ? 'desc' : 'asc'; } else { this.dashboardTable.sortBy = col; this.dashboardTable.sortDir = 'desc'; } this.renderDashboard(); },
 
+            getEggPriceHistoryRows() {
+                const previousByType = new Map();
+                const rows = [];
+                [...(this.state.eggPriceHistory || [])].sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp)).forEach(snapshot => {
+                    (snapshot.prices || []).forEach(price => {
+                        const previous = previousByType.get(price.id);
+                        const retailPrice = Number(price.retailPrice);
+                        const batchPrice = Number(price.batchPrice);
+                        rows.push({
+                            id: `${snapshot.id}-${price.id}`,
+                            snapshotId: snapshot.id,
+                            timestamp: snapshot.timestamp,
+                            eggTypeId: price.id,
+                            eggTypeName: price.name || this.state.eggTypes.find(type => type.id === price.id)?.name || price.id,
+                            retailPrice,
+                            retailChange: previous ? retailPrice - previous.retailPrice : null,
+                            batchPrice,
+                            batchChange: previous ? batchPrice - previous.batchPrice : null
+                        });
+                        previousByType.set(price.id, { retailPrice, batchPrice });
+                    });
+                });
+                return rows;
+            },
             getFilteredPriceData() {
-                let data = [...this.state.priceHistory];
+                let data = this.getEggPriceHistoryRows();
                 const term = this.priceTable.search.trim().toLowerCase();
                 data = data.filter(item => {
-                    const formatted = new Date(item.date + 'T00:00:00').toLocaleDateString();
-                    const matchesSearch = !term || item.date.toLowerCase().includes(term) || formatted.toLowerCase().includes(term) || Number(item.price).toFixed(2).includes(term);
-                    const matchesFrom = !this.priceTable.filters.dateFrom || item.date >= this.priceTable.filters.dateFrom;
-                    const matchesTo = !this.priceTable.filters.dateTo || item.date <= this.priceTable.filters.dateTo;
+                    const date = item.timestamp.slice(0, 10);
+                    const formatted = new Date(item.timestamp).toLocaleString(i18n.locale());
+                    const searchable = [item.eggTypeName, date, formatted, item.retailPrice.toFixed(2), item.batchPrice.toFixed(2)].join(' ').toLowerCase();
+                    const matchesSearch = !term || searchable.includes(term);
+                    const matchesFrom = !this.priceTable.filters.dateFrom || date >= this.priceTable.filters.dateFrom;
+                    const matchesTo = !this.priceTable.filters.dateTo || date <= this.priceTable.filters.dateTo;
                     return matchesSearch && matchesFrom && matchesTo;
                 });
                 data.sort((a, b) => {
-                    let av = a[this.priceTable.sortBy] || '', bv = b[this.priceTable.sortBy] || '';
-                    if (this.priceTable.sortBy === 'price') { av = Number(av); bv = Number(bv); }
+                    let av = a[this.priceTable.sortBy], bv = b[this.priceTable.sortBy];
+                    if (['retailPrice','retailChange','batchPrice','batchChange'].includes(this.priceTable.sortBy)) {
+                        av = av === null ? Number.NEGATIVE_INFINITY : Number(av);
+                        bv = bv === null ? Number.NEGATIVE_INFINITY : Number(bv);
+                    } else {
+                        av = String(av || '').toLocaleLowerCase();
+                        bv = String(bv || '').toLocaleLowerCase();
+                    }
                     const result = av < bv ? -1 : av > bv ? 1 : 0;
                     return this.priceTable.sortDir === 'asc' ? result : -result;
                 });
@@ -1524,53 +1523,17 @@
                 else { customInput.classList.add('hidden'); customInput.classList.remove('flex'); }
             },
 
-            openPriceModal(date) {
-                const item=this.state.priceHistory.find(p=>p.date===date);if(!item)return;
-                this.editingPriceDate=date;document.getElementById('price-modal-record').innerText=date;document.getElementById('price-modal-date').value=item.date;document.getElementById('price-modal-price').value=Number(item.price).toFixed(2);document.getElementById('price-modal-updated').value=item.updatedAt?new Date(item.updatedAt).toLocaleString():'-';document.getElementById('price-modal-delete').style.display=(this.state.role==='supervisor'||this.state.permissions.pricing_delete)?'block':'none';document.getElementById('price-entry-modal').classList.remove('hidden');
-            },
-            closePriceModal(){this.editingPriceDate=null;document.getElementById('price-entry-modal').classList.add('hidden');},
-            savePriceModal(e){
-                e.preventDefault();const idx=this.state.priceHistory.findIndex(p=>p.date===this.editingPriceDate);if(idx<0)return;
-                const before=JSON.parse(JSON.stringify(this.state.priceHistory[idx])),date=document.getElementById('price-modal-date').value,price=parseFloat(document.getElementById('price-modal-price').value);if(!date||price<=0)return;
-                if(this.state.priceHistory.some((p,i)=>i!==idx&&p.date===date))return this.showToast(i18n.t('A price record already exists for this date.'),'error');
-                const after={date,price,updatedAt:new Date().toISOString()};this.state.priceHistory[idx]=after;this.state.priceHistory.sort((a,b)=>a.date.localeCompare(b.date));this.state.dailyPrice=Number(this.state.priceHistory.at(-1).price);this.logAudit('pricing','update',date,before,after,'Egg price entry updated');this.saveData();this.closePriceModal();this.showToast(i18n.t('Price record updated.'),'success');
-            },
-            deletePriceFromModal(){
-                if(this.state.priceHistory.length<=1)return this.showToast(i18n.t('Cannot delete the last price record.'),'error');const item=this.state.priceHistory.find(p=>p.date===this.editingPriceDate);if(!item)return;
-                this.state.priceHistory=this.state.priceHistory.filter(p=>p.date!==item.date);this.state.dailyPrice=Number(this.state.priceHistory.at(-1).price);this.logAudit('pricing','delete',item.date,item,null,'Egg price entry deleted');this.saveData();this.closePriceModal();this.showToast(i18n.t('Price record deleted.'),'success');
-            },
-
             renderPriceTracker() {
                 const tbody = document.getElementById('price-history-table');
                 if (!tbody) return;
                 const data = this.getFilteredPriceData();
                 this.priceTable.currentData = data;
-                const chronological = [...this.state.priceHistory].sort((a,b) => a.date.localeCompare(b.date));
-                const previousByDate = new Map(chronological.map((item, index) => [item.date, index ? Number(chronological[index-1].price) : null]));
-                
-                const isSup = this.state.role === 'supervisor';
-                const canEdit = isSup || this.state.permissions.pricing_edit;
-                const canDelete = isSup || this.state.permissions.pricing_delete;
-                const showActions = canEdit || canDelete;
-                
-                document.getElementById('price-th-actions').style.display = showActions ? 'table-cell' : 'none';
-
+                const changeHtml = change => change === null ? '<span class="text-gray-400">-</span>' : `<span class="font-medium ${change > 0 ? 'text-red-600' : change < 0 ? 'text-green-600' : 'text-gray-500'}">${change > 0 ? '+' : ''}$${change.toFixed(2)}</span>`;
                 tbody.innerHTML = data.length ? data.map(item => {
-                    const previous = previousByDate.get(item.date), change = previous === null ? null : Number(item.price) - previous;
-                    const changeHtml = change === null ? '<span class="text-gray-400">-</span>' : `<span class="font-medium ${change > 0 ? 'text-red-600' : change < 0 ? 'text-green-600' : 'text-gray-500'}">${change > 0 ? '+' : ''}$${change.toFixed(2)}</span>`;
-                    
-                    let actionsHtml = '';
-                    if (showActions) {
-                        actionsHtml = `<td class="px-6 py-4 flex gap-2 justify-center items-center h-full">`;
-                        if(canEdit) actionsHtml += `<button title="Edit" onclick="app.openPriceModal('${item.date}')" class="table-action-btn table-action-edit" aria-label="Edit"><i class="fa-regular fa-pen-to-square"></i></button>`;
-                        if(canDelete) actionsHtml += `<button title="Delete" onclick="app.openPriceModal('${item.date}')" class="table-action-btn table-action-delete" aria-label="Delete"><i class="fa-regular fa-trash-can"></i></button>`;
-                        actionsHtml += `</td>`;
-                    }
-
-                    return `<tr class="hover:bg-gray-50"><td class="px-6 py-4 whitespace-nowrap font-medium text-gray-800">${new Date(item.date+'T00:00:00').toLocaleDateString()}</td><td class="px-6 py-4 font-bold text-primary-600">$${Number(item.price).toFixed(2)}</td><td class="px-6 py-4 whitespace-nowrap text-xs">${item.updatedAt ? new Date(item.updatedAt).toLocaleString() : '-'}</td><td class="px-6 py-4">${changeHtml}</td>${showActions ? actionsHtml : ''}</tr>`;
-                }).join('') : `<tr><td colspan="${showActions ? 5 : 4}" class="px-6 py-10 text-center text-gray-500">${i18n.t('No price records found.')}</td></tr>`;
+                    return `<tr class="hover:bg-gray-50"><td class="px-5 py-4 whitespace-nowrap text-xs text-gray-600">${new Date(item.timestamp).toLocaleString(i18n.locale())}</td><td class="px-5 py-4 font-semibold text-gray-800">${this.escapeHtml(item.eggTypeName)}</td><td class="px-5 py-4 font-bold text-primary-600">$${item.retailPrice.toFixed(2)}</td><td class="px-5 py-4">${changeHtml(item.retailChange)}</td><td class="px-5 py-4 font-bold text-indigo-600">$${item.batchPrice.toFixed(2)}</td><td class="px-5 py-4">${changeHtml(item.batchChange)}</td></tr>`;
+                }).join('') : `<tr><td colspan="6" class="px-6 py-10 text-center text-gray-500">${i18n.t('No seven-type price records found.')}</td></tr>`;
                 
-                ['date','price','updatedAt'].forEach(col => { const icon=document.getElementById(`price-sort-${col}`); if(icon) icon.className='fa-solid ml-1 '+(this.priceTable.sortBy===col?(this.priceTable.sortDir==='asc'?'fa-sort-up text-primary-600':'fa-sort-down text-primary-600'):'fa-sort text-gray-300'); });
+                ['timestamp','eggTypeName','retailPrice','retailChange','batchPrice','batchChange'].forEach(col => { const icon=document.getElementById(`price-sort-${col}`); if(icon) icon.className='fa-solid ml-1 '+(this.priceTable.sortBy===col?(this.priceTable.sortDir==='asc'?'fa-sort-up text-primary-600':'fa-sort-down text-primary-600'):'fa-sort text-gray-300'); });
                 
                 this.renderEggPriceChart();
                 i18n.translate(document.getElementById('price-history-table'));
@@ -1619,12 +1582,11 @@
             exportPriceCSV() {
                 const data=this.priceTable.currentData;
                 if(!data.length){this.showToast(i18n.t('No data to export based on current filters.'),'warning');return;}
-                let csv='Date,Price Per Egg,Last Updated\n';
-                data.forEach(item=>{csv+=`"${item.date}",${Number(item.price).toFixed(2)},"${item.updatedAt||''}"\n`;});
-                this.downloadCSV(csv, `eggpro_price_history_${Date.now()}.csv`);
+                let csv='Timestamp,Egg Type,Retail Price Per Egg,Retail Change,Batch Price (30 Eggs),Batch Change\n';
+                data.forEach(item=>{const name=String(item.eggTypeName).replaceAll('"','""');csv+=`"${item.timestamp}","${name}",${item.retailPrice.toFixed(2)},${item.retailChange===null?'':item.retailChange.toFixed(2)},${item.batchPrice.toFixed(2)},${item.batchChange===null?'':item.batchChange.toFixed(2)}\n`;});
+                this.downloadCSV(csv, `eggpro_seven_type_price_history_${Date.now()}.csv`);
                 this.showToast(i18n.t('Price history exported successfully!'),'success');
             },
-            updatePriceOnly(e) { e.preventDefault(); const date=document.getElementById('pricing-date').value,price=parseFloat(document.getElementById('pricing-price').value); if(!date||price<=0)return; const rec={date,price,updatedAt:new Date().toISOString()},idx=this.state.priceHistory.findIndex(x=>x.date===date),before=idx>=0?JSON.parse(JSON.stringify(this.state.priceHistory[idx])):null; if(idx>=0)this.state.priceHistory[idx]=rec;else this.state.priceHistory.push(rec);this.logAudit('pricing',idx>=0?'update':'create',date,before,rec,idx>=0?'Egg price entry updated':'Egg price entry created');this.state.priceHistory.sort((a,b)=>a.date.localeCompare(b.date));this.state.dailyPrice=Number(this.state.priceHistory.at(-1).price);this.saveData();this.showToast(i18n.t('Daily price saved successfully!'),'success'); },
             
             loadBasicSettingsUI(){
                 const a=this.state.appSettings||{};
@@ -1660,8 +1622,8 @@
                 this.showToast(i18n.t('Basic settings saved successfully!'),'success');
             },
 
-            permissionLabels: {pos:'Point of Sale page',pos_calc:'Amount received calculator',pos_receipt_op:'Operator name on receipt',pos_receipt_id:'Transaction ID on receipt',inventory:'Inventory page',inv_add:'Add inventory imports',inv_view:'View inventory records',inv_edit:'Edit inventory records',inv_delete:'Delete inventory records',dashboard:'Financial dashboard',dashboard_profit:'Gross profit KPI',dashboard_trend:'Sales trend graph',pricing:'Egg Pricing page',pricing_add:'Add daily reference prices',pricing_edit:'Edit reference price records',pricing_delete:'Delete reference price records',settings:'System Settings page',permissions:'Permission management page'},
-            defaultPermissions(){return {pos:true,pos_calc:true,pos_receipt_op:true,pos_receipt_id:true,inventory:true,inv_add:true,inv_view:true,inv_edit:false,inv_delete:false,dashboard:false,dashboard_profit:false,dashboard_trend:false,pricing:false,pricing_add:false,pricing_edit:false,pricing_delete:false,settings:false,permissions:false};},
+            permissionLabels: {pos:'Point of Sale page',pos_calc:'Amount received calculator',pos_receipt_op:'Operator name on receipt',pos_receipt_id:'Transaction ID on receipt',inventory:'Inventory page',inv_add:'Add inventory imports',inv_view:'View inventory records',inv_edit:'Edit inventory records',inv_delete:'Delete inventory records',dashboard:'Financial dashboard',dashboard_profit:'Gross profit KPI',dashboard_trend:'Sales trend graph',pricing:'Egg Pricing page',settings:'System Settings page',permissions:'Permission management page'},
+            defaultPermissions(){return {pos:true,pos_calc:true,pos_receipt_op:true,pos_receipt_id:true,inventory:true,inv_add:true,inv_view:true,inv_edit:false,inv_delete:false,dashboard:false,dashboard_profit:false,dashboard_trend:false,pricing:false,settings:false,permissions:false};},
             logAudit(module,action,recordId,before,after,summary,changes=[]){if(!Array.isArray(this.state.auditLogs))this.state.auditLogs=[];this.state.auditLogs.push({id:'AUD-'+Date.now(),timestamp:new Date().toISOString(),actor:this.state.role,module,action,recordId,summary,changes,before,after});},
             buildPermissionChanges(before,after){return Object.keys(this.permissionLabels).filter(k=>Boolean(before[k])!==Boolean(after[k])).map(k=>({key:k,label:this.permissionLabels[k],from:Boolean(before[k]),to:Boolean(after[k])}));},
             getFilteredAudit(){let d=[...(this.state.auditLogs||[])],q=this.auditTable.search.toLowerCase();d=d.filter(x=>(!q||[x.actor,x.module,x.action,x.recordId,x.summary,JSON.stringify(x.changes)].join(' ').toLowerCase().includes(q))&&(!this.auditTable.filters.dateFrom||x.timestamp>=this.auditTable.filters.dateFrom+'T00:00:00')&&(!this.auditTable.filters.dateTo||x.timestamp<=this.auditTable.filters.dateTo+'T23:59:59')&&(this.auditTable.filters.module==='all'||x.module===this.auditTable.filters.module)&&(this.auditTable.filters.action==='all'||x.action===this.auditTable.filters.action));d.sort((a,b)=>{let x=a[this.auditTable.sortBy]||'',y=b[this.auditTable.sortBy]||'',r=x<y?-1:x>y?1:0;return this.auditTable.sortDir==='asc'?r:-r});return d;},
@@ -1689,7 +1651,7 @@
             handleAuditSearch(e){this.auditTable.search=e.target.value;this.renderAuditLog();},toggleAuditFilters(){this.auditTable.filters.show=!this.auditTable.filters.show;document.getElementById('audit-filter-panel').classList.toggle('hidden',!this.auditTable.filters.show)},applyAuditFilters(){this.auditTable.filters.dateFrom=document.getElementById('audit-date-from').value;this.auditTable.filters.dateTo=document.getElementById('audit-date-to').value;this.auditTable.filters.module=document.getElementById('audit-module').value;this.auditTable.filters.action=document.getElementById('audit-action').value;this.renderAuditLog()},clearAuditFilters(){['audit-date-from','audit-date-to','audit-search'].forEach(id=>document.getElementById(id).value='');document.getElementById('audit-module').value='all';document.getElementById('audit-action').value='all';this.auditTable.search='';this.auditTable.filters={show:this.auditTable.filters.show,dateFrom:'',dateTo:'',module:'all',action:'all'};this.renderAuditLog()},sortAudit(c){if(this.auditTable.sortBy===c)this.auditTable.sortDir=this.auditTable.sortDir==='asc'?'desc':'asc';else{this.auditTable.sortBy=c;this.auditTable.sortDir='desc'}this.renderAuditLog()},exportAuditCSV(){const d=this.auditTable.currentData;if(!d.length)return this.showToast(i18n.t('No data to export based on current filters.'),'warning');let csv='Timestamp,Actor,Module,Action,Record,Summary,Changes\n';d.forEach(x=>csv+=`"${x.timestamp}","${x.actor}","${x.module}","${x.action}","${x.recordId}","${String(x.summary||'').replaceAll('"','""')}","${JSON.stringify(x.changes||[]).replaceAll('"','""')}"\n`);this.downloadCSV(csv,`eggpro_audit_${Date.now()}.csv`)},
             updatePermissions() {
                 const before={...this.defaultPermissions(),...(this.state.permissions||{})};
-                const keys = ['pos', 'pos_calc', 'pos_receipt_op', 'pos_receipt_id', 'inventory', 'inv_add', 'inv_view', 'inv_edit', 'inv_delete', 'dashboard', 'dashboard_profit', 'dashboard_trend', 'pricing', 'pricing_add', 'pricing_edit', 'pricing_delete', 'settings', 'permissions'];
+                const keys = ['pos', 'pos_calc', 'pos_receipt_op', 'pos_receipt_id', 'inventory', 'inv_add', 'inv_view', 'inv_edit', 'inv_delete', 'dashboard', 'dashboard_profit', 'dashboard_trend', 'pricing', 'settings', 'permissions'];
                 const after={}; keys.forEach(k=>{const el=document.getElementById('perm-'+k);if(el)after[k]=el.checked;});
                 this.state.permissions=after;
                 const changes=this.buildPermissionChanges(before,after);
