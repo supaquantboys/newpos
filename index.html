@@ -44,6 +44,12 @@
         body { font-family: 'Inter', sans-serif; }
         .chart-wrap { position: relative; min-height: 260px; height: 34vh; max-height: 380px; }
         .egg-price-chart-wrap { min-height: 360px; height: 48vh; max-height: 520px; }
+        .egg-grid { display: grid; gap: .75rem; grid-template-columns: repeat(auto-fit, minmax(min(100%, 8.75rem), 1fr)); }
+        .egg-grid-compact { gap: .5rem; }
+        .egg-type-row { display: grid; gap: .75rem; grid-template-columns: minmax(0, 1fr); align-items: start; }
+        @media (min-width: 640px) { .egg-type-row { grid-template-columns: 2.5rem minmax(0, 1fr) 9.5rem 3rem; align-items: end; } }
+        @media (min-width: 1024px) { .egg-type-row { grid-template-columns: 3rem minmax(0, 1fr) 11rem 3.5rem; } }
+        button:disabled { opacity: .45; cursor: not-allowed; }
         @media (max-width: 767px) {
             #role-switcher-container { display: none; }
             nav:has(#nav-links.flex) #role-switcher-container { display: block; }
@@ -221,7 +227,7 @@
                         <h3 class="text-sm font-semibold text-gray-700">Stock by Egg Size</h3>
                         <span class="text-xs text-gray-500">Live sellable quantity</span>
                     </div>
-                    <div id="pos-size-stock-grid" class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2"></div>
+                    <div id="pos-size-stock-grid" class="egg-grid egg-grid-compact"></div>
                     <p id="pos-stock-empty" class="hidden mt-3 px-4 py-3 rounded-xl bg-amber-50 border border-amber-200 text-sm text-amber-800">No graded egg stock is available. Record Egg Grading before selling.</p>
                 </div>
                 
@@ -361,10 +367,10 @@
                 <div class="max-w-7xl mx-auto space-y-6">
                     <div>
                         <h3 class="text-xl font-semibold text-gray-800">Egg Grading</h3>
-                        <p class="text-sm text-gray-500 mt-1">Grade each receiving batch into the seven sellable egg sizes.</p>
+                        <p class="text-sm text-gray-500 mt-1">Grade each receiving batch into the sellable egg types.</p>
                     </div>
 
-                    <div id="grading-stock-grid" class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3"></div>
+                    <div id="grading-stock-grid" class="egg-grid"></div>
 
                     <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
                         <div class="p-5 sm:p-6 border-b border-gray-100 bg-gray-50">
@@ -380,10 +386,10 @@
                                 <div class="rounded-xl bg-primary-50 border border-primary-100 px-4 py-3">
                                     <p class="text-xs text-primary-700 font-medium">Available ungraded weight</p>
                                     <p id="grading-batch-available" class="text-2xl font-bold text-primary-700 mt-1">0.0 kg</p>
-                                    <p class="text-xs text-primary-600 mt-1">Calculated with the configured average egg weight.</p>
+                                    <p class="text-xs text-primary-600 mt-1">Calculated from the per-type weights in System Settings.</p>
                                 </div>
                             </div>
-                            <div id="grading-input-grid" class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3"></div>
+                            <div id="grading-input-grid" class="egg-grid"></div>
                             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-xl bg-gray-50 border border-gray-100 p-4">
                                 <div class="flex flex-wrap gap-x-6 gap-y-2 text-sm">
                                     <span><span class="text-gray-500">Total eggs:</span> <b id="grading-total-eggs">0</b></span>
@@ -572,7 +578,7 @@
                             <div class="permission-card flex-col items-start gap-0">
                                 <label class="flex items-center gap-3 w-full cursor-pointer">
                                     <input type="checkbox" id="perm-pricing" onchange="app.updatePermissions()">
-                                    <span><b>Egg Pricing</b><small>Review pricing; Supervisor manages the seven egg types.</small></span>
+                                    <span><b>Egg Pricing</b><small>Review pricing; Supervisor manages egg type prices.</small></span>
                                 </label>
                             </div>
 
@@ -587,7 +593,7 @@
             <section id="view-pricing" class="hidden">
                 <div class="max-w-6xl mx-auto">
                     <div id="egg-type-pricing-section" class="bg-white p-5 sm:p-6 rounded-2xl shadow-sm border border-gray-100 mb-6">
-                        <div class="flex items-start gap-3 mb-5"><i class="fa-solid fa-egg text-yellow-500 text-xl mt-1"></i><div><h3 class="text-lg font-semibold text-gray-800">Seven Egg Type Prices</h3><p class="text-sm text-gray-500">Name each egg size and set separate retail and 30-egg batch prices. Supervisor access only.</p></div></div>
+                        <div class="flex items-start gap-3 mb-5"><i class="fa-solid fa-egg text-yellow-500 text-xl mt-1"></i><div><h3 class="text-lg font-semibold text-gray-800">Egg Type Prices</h3><p class="text-sm text-gray-500">Set retail and 30-egg batch prices for every egg type. Names and weights come from System Settings.</p></div></div>
                         <form onsubmit="app.saveEggTypePricing(event)">
                             <div class="overflow-x-auto border border-gray-200 rounded-xl">
                                 <div class="min-w-[720px]">
@@ -598,17 +604,17 @@
                                 </div>
                             </div>
                             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mt-4">
-                                <p class="text-xs text-gray-500">All seven names must be unique. Prices are saved together.</p>
-                                <button type="submit" class="w-full sm:w-auto px-6 py-3 bg-primary-600 hover:bg-primary-700 text-white font-semibold rounded-lg"><i class="fa-solid fa-floppy-disk mr-2"></i>Save Seven Prices</button>
+                                <p class="text-xs text-gray-500">Prices are saved together. Names and weights are managed in System Settings.</p>
+                                <button type="submit" class="w-full sm:w-auto px-6 py-3 bg-primary-600 hover:bg-primary-700 text-white font-semibold rounded-lg"><i class="fa-solid fa-floppy-disk mr-2"></i>Save Prices</button>
                             </div>
                         </form>
                     </div>
                     <div class="bg-white p-5 sm:p-6 rounded-2xl shadow-sm border border-gray-100 mb-6">
                         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
-                            <div><h3 class="text-lg font-semibold text-gray-800">Seven Egg Type Price History</h3><p class="text-sm text-gray-500">Compare retail and 30-egg batch prices across all seven egg types.</p></div>
+                            <div><h3 class="text-lg font-semibold text-gray-800">Egg Type Price History</h3><p class="text-sm text-gray-500">Compare retail and 30-egg batch prices across every egg type.</p></div>
                             <div class="flex flex-col sm:flex-row items-center gap-2">
                                 <select id="egg-price-chart-mode" onchange="app.renderEggPriceChart()" class="w-full sm:w-auto px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:ring-primary-500">
-                                    <option value="retail">Retail prices (7 lines)</option><option value="batch">Batch prices (7 lines)</option><option value="both">Retail + Batch prices (14 lines)</option>
+                                    <option value="retail">Retail prices</option><option value="batch">Batch prices</option><option value="both">Retail + Batch prices</option>
                                 </select>
                                 <div id="price-chart-custom-input" class="hidden flex items-center gap-2 w-full sm:w-auto">
                                     <input type="number" id="price-chart-custom-num" onchange="app.renderEggPriceChart()" min="1" value="10" class="w-full sm:w-24 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-primary-500" placeholder="Records">
@@ -623,7 +629,7 @@
                     <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
                         <div class="p-5 sm:p-6 border-b border-gray-100 bg-gray-50 flex flex-col gap-4">
                             <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-                                <div><h3 class="text-lg font-semibold text-gray-800">Seven Egg Price Records</h3><p class="text-sm text-gray-500">Every saved change adds one row for each egg type.</p></div>
+                                <div><h3 class="text-lg font-semibold text-gray-800">Egg Price Records</h3><p class="text-sm text-gray-500">Every saved change adds one row for each egg type.</p></div>
                                 <div class="flex flex-col sm:flex-row gap-2 w-full lg:w-auto">
                                     <div class="relative flex-1 sm:w-72"><i class="fa-solid fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i><input type="search" id="price-search" oninput="app.handlePriceSearch(event)" placeholder="Search egg type, date, or price..." class="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm bg-white"></div>
                                     <button onclick="app.togglePriceFilters()" class="px-4 py-2 bg-white border border-gray-200 hover:bg-gray-100 text-gray-700 font-medium rounded-lg text-sm"><i class="fa-solid fa-filter mr-2"></i>Filters</button>
@@ -662,10 +668,32 @@
                     <div><label class="block text-sm font-medium mb-2">Accent Color (Theme)</label><select id="setting-color" class="w-full p-3 border rounded-xl focus:ring-primary-500 focus:border-primary-500"><option value="blue">Blue</option><option value="green">Green</option><option value="purple">Purple</option><option value="gray">Dark Grey</option></select></div>
                     <div><label class="block text-sm font-medium mb-2">Timezone</label><select id="setting-timezone" class="w-full p-3 border rounded-xl focus:ring-primary-500 focus:border-primary-500"></select></div>
                     <div><label class="block text-sm font-medium mb-2">Currency</label><select id="setting-currency" class="w-full p-3 border rounded-xl focus:ring-primary-500 focus:border-primary-500"><option value="USD">USD ($)</option><option value="MMK">MMK (Ks)</option><option value="TWD">TWD (NT$)</option></select></div>
-                    <div><label class="block text-sm font-medium mb-2">Average Egg Weight (kg)</label><input type="number" id="setting-egg-weight" step="0.001" min="0.01" class="w-full p-3 border rounded-xl focus:ring-primary-500 focus:border-primary-500"></div>
                     <div><label class="block text-sm font-medium mb-2">Low Stock Alert (kg)</label><input type="number" id="setting-low-stock" step="0.1" min="0" class="w-full p-3 border rounded-xl focus:ring-primary-500 focus:border-primary-500"></div>
                     <div class="md:col-span-2"><button class="w-full p-3 bg-primary-600 hover:bg-primary-700 text-white font-semibold rounded-xl transition-colors">Save Basic Settings</button></div>
                 </form></div>
+                <div id="egg-types-section" class="bg-white p-5 sm:p-6 lg:p-8 rounded-2xl border border-gray-100 shadow-sm">
+                    <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-5">
+                        <div class="flex items-start gap-3 min-w-0">
+                            <i class="fa-solid fa-egg text-yellow-500 text-xl mt-1 shrink-0"></i>
+                            <div class="min-w-0">
+                                <h3 class="text-lg sm:text-xl font-semibold text-gray-800">Egg Types</h3>
+                                <p class="text-sm text-gray-500">Define each egg type name and its approximate weight. Every other page inherits these values.</p>
+                            </div>
+                        </div>
+                        <span id="egg-types-count" class="self-start shrink-0 px-3 py-1 rounded-full bg-primary-50 text-primary-700 text-xs font-semibold whitespace-nowrap"></span>
+                    </div>
+                    <form onsubmit="app.saveEggTypeSettings(event)">
+                        <div id="egg-types-editor" class="space-y-3"></div>
+                        <div class="mt-4 flex flex-col sm:flex-row sm:items-center gap-3">
+                            <button type="button" id="btn-add-egg-type" onclick="app.addEggTypeRow()" class="w-full sm:w-auto px-4 py-3 rounded-xl border border-dashed border-primary-300 bg-primary-50 hover:bg-primary-100 text-primary-700 font-medium"><i class="fa-solid fa-plus mr-2"></i>Add Egg Type</button>
+                            <p class="text-xs text-gray-500 sm:text-right sm:ml-auto">Minimum 1 and maximum 7 egg types. Names must be unique.</p>
+                        </div>
+                        <div class="mt-4 rounded-xl bg-gray-50 border border-gray-100 p-3 text-xs text-gray-500">
+                            <span>Average weight</span>: <b id="egg-types-average" class="text-gray-700">-</b>
+                        </div>
+                        <button type="submit" class="mt-4 w-full p-3 bg-primary-600 hover:bg-primary-700 text-white font-semibold rounded-xl transition-colors"><i class="fa-solid fa-floppy-disk mr-2"></i>Save Egg Types</button>
+                    </form>
+                </div>
                 <div class="bg-red-50 p-6 rounded-2xl border border-red-100"><h3 class="text-red-800 font-semibold mb-2">System Reset</h3><p class="text-sm text-red-600 mb-4">Clear all local storage data. This action cannot be undone.</p><button onclick="app.hardReset()" class="px-4 py-2 bg-white text-red-600 border border-red-200 rounded hover:bg-red-50 transition-colors">Clear Database</button></div>
             </div></section>
         </div>
@@ -854,6 +882,8 @@
         });
         i18n.translations['zh-TW']['Cannot exceed {type} stock ({count} eggs).'] = '不可超過 {type} 的庫存（{count} 顆）。';
         i18n.translations['my']['Cannot exceed {type} stock ({count} eggs).'] = '{type} လက်ကျန် ဥ {count} လုံးထက် မကျော်ရပါ။';
+        Object.assign(i18n.translations['zh-TW'], {"Egg Types": "蛋的種類", "Define each egg type name and its approximate weight. Every other page inherits these values.": "定義每種蛋的名稱與大約重量，其他頁面都會沿用這裡的設定。", "{count} / {max} egg types": "{count} / {max} 種蛋", "Egg type name": "蛋種名稱", "Weight per egg (g)": "每顆重量（公克）", "Add Egg Type": "新增蛋種", "Save Egg Types": "儲存蛋種設定", "Minimum 1 and maximum 7 egg types. Names must be unique.": "最少 1 種、最多 7 種，名稱不可重複。", "Remove egg type": "刪除蛋種", "Average weight": "平均重量", "New Egg Type": "新蛋種", "Only Supervisor can update egg type settings.": "只有主管可以修改蛋種設定。", "At least one egg type is required.": "至少需要一種蛋。", "You can define up to {max} egg types.": "最多只能設定 {max} 種蛋。", "Every egg weight must be between 0 and 500 g.": "每顆蛋的重量必須介於 0 到 500 公克之間。", "Cannot remove {type}: it still has stock or historical records.": "無法刪除 {type}：仍有庫存或歷史紀錄。", "No egg type changes to save.": "沒有需要儲存的蛋種變更。", "Egg types saved successfully!": "蛋種設定已成功儲存！", "Egg type settings updated": "蛋種設定已更新", "Egg Type Prices": "蛋種價格", "Set retail and 30-egg batch prices for every egg type. Names and weights come from System Settings.": "為每種蛋設定零售價與每批 30 顆價格；名稱與重量來自系統設定。", "Prices are saved together. Names and weights are managed in System Settings.": "所有價格會一併儲存；名稱與重量請於系統設定管理。", "Save Prices": "儲存價格", "Egg Type Price History": "蛋種價格歷史", "Compare retail and 30-egg batch prices across every egg type.": "比較每種蛋的零售價與每批 30 顆價格。", "Retail prices": "零售價格", "Batch prices": "整批價格", "Retail + Batch prices": "零售＋整批價格", "Egg Price Records": "蛋價紀錄", "No egg type price records found.": "找不到蛋種價格紀錄。", "Egg type prices updated": "蛋種價格已更新", "{count} of {total} rows changed": "共 {total} 列中有 {count} 列變更", "Egg type prices saved successfully!": "蛋種價格已成功儲存！", "Review pricing; Supervisor manages egg type prices.": "查看定價；蛋種價格由主管管理。", "Grade each receiving batch into the sellable egg types.": "將每個進貨批次分級為可販售的蛋種。", "Calculated from the per-type weights in System Settings.": "依系統設定中各蛋種的重量計算。"});
+        Object.assign(i18n.translations['my'], {"Egg Types": "ဥအမျိုးအစားများ", "Define each egg type name and its approximate weight. Every other page inherits these values.": "ဥအမျိုးအစားတစ်ခုစီ၏ အမည်နှင့် ခန့်မှန်းအလေးချိန်ကို သတ်မှတ်ပါ။ အခြားစာမျက်နှာအားလုံးက ဤတန်ဖိုးများကို အသုံးပြုသည်။", "{count} / {max} egg types": "ဥအမျိုးအစား {count} / {max}", "Egg type name": "ဥအမျိုးအစားအမည်", "Weight per egg (g)": "တစ်လုံးအလေးချိန် (ဂရမ်)", "Add Egg Type": "ဥအမျိုးအစား ထည့်ရန်", "Save Egg Types": "ဥအမျိုးအစားများ သိမ်းရန်", "Minimum 1 and maximum 7 egg types. Names must be unique.": "အနည်းဆုံး ၁ မျိုး၊ အများဆုံး ၇ မျိုး။ အမည်များ မတူညီရပါ။", "Remove egg type": "ဥအမျိုးအစား ဖျက်ရန်", "Average weight": "ပျမ်းမျှအလေးချိန်", "New Egg Type": "ဥအမျိုးအစားအသစ်", "Only Supervisor can update egg type settings.": "ကြီးကြပ်သူသာ ဥအမျိုးအစားဆက်တင်များကို ပြင်နိုင်သည်။", "At least one egg type is required.": "အနည်းဆုံး ဥအမျိုးအစား တစ်မျိုး လိုအပ်သည်။", "You can define up to {max} egg types.": "ဥအမျိုးအစား အများဆုံး {max} မျိုးသာ သတ်မှတ်နိုင်သည်။", "Every egg weight must be between 0 and 500 g.": "ဥအလေးချိန်တိုင်း ၀ နှင့် ၅၀၀ ဂရမ်ကြား ဖြစ်ရမည်။", "Cannot remove {type}: it still has stock or historical records.": "{type} ကို ဖျက်၍မရပါ။ လက်ကျန် သို့မဟုတ် မှတ်တမ်းများ ရှိနေသေးသည်။", "No egg type changes to save.": "သိမ်းရန် ဥအမျိုးအစား ပြောင်းလဲမှု မရှိပါ။", "Egg types saved successfully!": "ဥအမျိုးအစားများကို အောင်မြင်စွာ သိမ်းပြီးပါပြီ။", "Egg type settings updated": "ဥအမျိုးအစားဆက်တင် ပြင်ဆင်ပြီး", "Egg Type Prices": "ဥအမျိုးအစား စျေးနှုန်းများ", "Set retail and 30-egg batch prices for every egg type. Names and weights come from System Settings.": "ဥအမျိုးအစားတိုင်းအတွက် လက်လီနှင့် ဥ ၃၀ အသုတ်စျေးကို သတ်မှတ်ပါ။ အမည်နှင့် အလေးချိန်များကို စနစ်ဆက်တင်မှ ရယူသည်။", "Prices are saved together. Names and weights are managed in System Settings.": "စျေးနှုန်းများကို အတူတကွ သိမ်းသည်။ အမည်နှင့် အလေးချိန်များကို စနစ်ဆက်တင်တွင် စီမံပါ။", "Save Prices": "စျေးနှုန်းများ သိမ်းရန်", "Egg Type Price History": "ဥအမျိုးအစား စျေးနှုန်းမှတ်တမ်း", "Compare retail and 30-egg batch prices across every egg type.": "ဥအမျိုးအစားတိုင်း၏ လက်လီနှင့် ဥ ၃၀ အသုတ်စျေးများကို နှိုင်းယှဉ်ပါ။", "Retail prices": "လက်လီစျေးများ", "Batch prices": "အသုတ်စျေးများ", "Retail + Batch prices": "လက်လီ + အသုတ်စျေးများ", "Egg Price Records": "ဥစျေးနှုန်းမှတ်တမ်းများ", "No egg type price records found.": "ဥအမျိုးအစား စျေးနှုန်းမှတ်တမ်း မတွေ့ပါ။", "Egg type prices updated": "ဥအမျိုးအစားစျေးနှုန်းများ ပြင်ဆင်ပြီး", "{count} of {total} rows changed": "စုစုပေါင်း {total} ကြောင်းအနက် {count} ကြောင်း ပြောင်းလဲထားသည်", "Egg type prices saved successfully!": "ဥအမျိုးအစားစျေးနှုန်းများကို အောင်မြင်စွာ သိမ်းပြီးပါပြီ။", "Review pricing; Supervisor manages egg type prices.": "စျေးနှုန်းကြည့်ရန်၊ ဥအမျိုးအစားစျေးများကို ကြီးကြပ်သူက စီမံသည်။", "Grade each receiving batch into the sellable egg types.": "လက်ခံအသုတ်တိုင်းကို ရောင်းချနိုင်သော ဥအမျိုးအစားများအဖြစ် ခွဲပါ။", "Calculated from the per-type weights in System Settings.": "စနစ်ဆက်တင်ရှိ အမျိုးအစားအလိုက် အလေးချိန်များဖြင့် တွက်ချက်ထားသည်။"});
         const app = {
             state: {
                 role: 'operator',
@@ -889,15 +919,47 @@
             editingBatchId: null,
             auditTable: { search:'', sortBy:'timestamp', sortDir:'desc', filters:{show:false,dateFrom:'',dateTo:'',module:'all',action:'all'}, currentData:[] },
 
+            maxEggTypes: 7,
+            minEggTypes: 1,
+            eggTypeDraft: null,
+
             defaultEggTypes(seedPrice = 0.15) {
                 const retailPrice = Number(seedPrice) > 0 ? Number(seedPrice) : 0.15;
-                const names = ['Peewee', 'Small', 'Medium', 'Large', 'Extra Large', 'Jumbo', 'Super Jumbo'];
-                return names.map((name, index) => ({
+                const presets = [['Peewee', 0.035], ['Small', 0.043], ['Medium', 0.05], ['Large', 0.057], ['Extra Large', 0.064], ['Jumbo', 0.071], ['Super Jumbo', 0.078]];
+                return presets.map(([name, weight], index) => ({
                     id: `size-${index + 1}`,
                     name,
+                    weight,
                     retailPrice,
                     batchPrice: Number((retailPrice * 30).toFixed(2))
                 }));
+            },
+
+            getEggTypeWeight(eggTypeId) {
+                const type = (this.state.eggTypes || []).find(item => item.id === eggTypeId);
+                if (Number(type?.weight) > 0) return Number(type.weight);
+                return Number(this.state.eggWeight) > 0 ? Number(this.state.eggWeight) : 0.06;
+            },
+
+            getAverageEggWeight() {
+                const weights = (this.state.eggTypes || []).map(type => Number(type.weight)).filter(weight => weight > 0);
+                if (!weights.length) return Number(this.state.eggWeight) > 0 ? Number(this.state.eggWeight) : 0.06;
+                return weights.reduce((sum, weight) => sum + weight, 0) / weights.length;
+            },
+
+            getMinEggTypeWeight() {
+                const weights = (this.state.eggTypes || []).map(type => Number(type.weight)).filter(weight => weight > 0);
+                return weights.length ? Math.min(...weights) : this.getAverageEggWeight();
+            },
+
+            getGradingWeight(quantities) {
+                return Object.entries(quantities || {}).reduce((sum, [eggTypeId, qty]) => sum + Math.max(0, Number(qty) || 0) * this.getEggTypeWeight(eggTypeId), 0);
+            },
+
+            formatGrams(weightKg) {
+                const grams = Number(weightKg) * 1000;
+                if (!(grams > 0)) return '-';
+                return `${grams >= 100 ? grams.toFixed(0) : grams.toFixed(1)} g`;
             },
 
             init() {
@@ -913,6 +975,7 @@
                 document.getElementById('import-time').value = new Date().toTimeString().slice(0,5);
                 this.renderEggTypeOptions();
                 this.renderEggTypePricing();
+                this.renderEggTypeSettings(true);
                 this.renderGradingPage();
                 
                 const today = new Date();
@@ -971,32 +1034,56 @@
             },
             ensureEggTypes() {
                 const defaults = this.defaultEggTypes(this.state.dailyPrice);
-                const existing = Array.isArray(this.state.eggTypes) ? this.state.eggTypes : [];
+                const saved = Array.isArray(this.state.eggTypes) ? this.state.eggTypes.filter(Boolean) : [];
+                const isFresh = saved.length === 0;
+                const source = isFresh ? defaults : saved;
+                const legacyWeight = Number(this.state.eggWeight) > 0 ? Number(this.state.eggWeight) : 0.06;
                 this.state.batchSize = 30;
-                this.state.eggTypes = defaults.map((fallback, index) => {
-                    const saved = existing[index] || {};
-                    const retailPrice = Number(saved.retailPrice) > 0 ? Number(saved.retailPrice) : fallback.retailPrice;
-                    const batchPrice = Number(saved.batchPrice) > 0 ? Number(saved.batchPrice) : Number((retailPrice * 30).toFixed(2));
+                const usedIds = new Set();
+                const takeId = preferred => {
+                    const wanted = String(preferred || '');
+                    if (/^size-[1-7]$/.test(wanted) && !usedIds.has(wanted)) { usedIds.add(wanted); return wanted; }
+                    for (let i = 1; i <= this.maxEggTypes; i++) {
+                        const id = `size-${i}`;
+                        if (!usedIds.has(id)) { usedIds.add(id); return id; }
+                    }
+                    const fallbackId = `size-${usedIds.size + 1}`;
+                    usedIds.add(fallbackId);
+                    return fallbackId;
+                };
+                const normalized = source.slice(0, this.maxEggTypes).map((item, index) => {
+                    const fallback = defaults[index] || defaults[defaults.length - 1];
+                    const retailPrice = Number(item.retailPrice) > 0 ? Number(item.retailPrice) : fallback.retailPrice;
+                    const batchPrice = Number(item.batchPrice) > 0 ? Number(item.batchPrice) : Number((retailPrice * 30).toFixed(2));
+                    const weight = Number(item.weight) > 0 ? Number(item.weight) : (isFresh ? fallback.weight : legacyWeight);
                     return {
-                        id: fallback.id,
-                        name: String(saved.name || fallback.name).trim() || fallback.name,
+                        id: takeId(item.id || fallback.id),
+                        name: String(item.name || fallback.name).trim() || fallback.name,
+                        weight: Number(weight.toFixed(4)),
                         retailPrice,
                         batchPrice
                     };
                 });
+                this.state.eggTypes = normalized.length ? normalized : [{ ...defaults[0] }];
+                this.state.eggWeight = Number(this.getAverageEggWeight().toFixed(4));
                 if (!this.state.eggTypes.some(type => type.id === this.state.selectedEggTypeId)) this.state.selectedEggTypeId = this.state.eggTypes[0].id;
                 if (!['retail', 'batch'].includes(this.state.saleMode)) this.state.saleMode = 'retail';
                 localStorage.setItem('eggProData', JSON.stringify(this.state));
             },
             ensureGradingRecords() {
                 if (!Array.isArray(this.state.gradingRecords)) this.state.gradingRecords = [];
-                const validTypeIds = new Set(this.state.eggTypes.map(type => type.id));
-                this.state.gradingRecords = this.state.gradingRecords.filter(record => record && record.id && record.importBatchId && record.timestamp && record.quantities).map(record => ({
-                    ...record,
-                    quantities: Object.fromEntries(this.state.eggTypes.map(type => [type.id, validTypeIds.has(type.id) ? Math.max(0, Math.floor(Number(record.quantities[type.id]) || 0)) : 0])),
-                    totalEggs: this.state.eggTypes.reduce((sum, type) => sum + Math.max(0, Math.floor(Number(record.quantities[type.id]) || 0)), 0),
-                    estimatedWeight: Number(record.estimatedWeight) || this.state.eggTypes.reduce((sum, type) => sum + Math.max(0, Math.floor(Number(record.quantities[type.id]) || 0)), 0) * this.state.eggWeight
-                }));
+                this.state.gradingRecords = this.state.gradingRecords.filter(record => record && record.id && record.importBatchId && record.timestamp && record.quantities).map(record => {
+                    const quantities = {};
+                    this.state.eggTypes.forEach(type => { quantities[type.id] = 0; });
+                    Object.entries(record.quantities || {}).forEach(([eggTypeId, qty]) => { quantities[eggTypeId] = Math.max(0, Math.floor(Number(qty) || 0)); });
+                    const totalEggs = Object.values(quantities).reduce((sum, qty) => sum + qty, 0);
+                    return {
+                        ...record,
+                        quantities,
+                        totalEggs,
+                        estimatedWeight: Number(record.estimatedWeight) > 0 ? Number(record.estimatedWeight) : this.getGradingWeight(quantities)
+                    };
+                });
                 localStorage.setItem('eggProData', JSON.stringify(this.state));
             },
             buildEggPriceSnapshot(reason = 'update') {
@@ -1101,6 +1188,7 @@
                 if (!grid) return;
                 grid.innerHTML = this.state.eggTypes.map((type, index) => `<label class="block rounded-xl border border-gray-200 bg-white p-3">
                     <span class="flex items-center gap-2 text-xs text-gray-500"><b class="text-primary-600">${index + 1}</b><span class="truncate" title="${this.escapeHtml(type.name)}">${this.escapeHtml(type.name)}</span></span>
+                    <span class="block text-[11px] text-gray-400 mt-0.5">${this.formatGrams(type.weight)}</span>
                     <input id="grading-qty-${type.id}" data-grading-qty type="number" inputmode="numeric" min="0" step="1" value="0" oninput="app.updateGradingSummary()" class="w-full mt-2 p-2.5 text-xl font-bold text-center bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500">
                 </label>`).join('');
             },
@@ -1111,7 +1199,7 @@
                 const select = document.getElementById('grading-batch');
                 if (!select) return;
                 const previous = select.value;
-                const batches = this.state.inventory.map(batch => ({ batch, available: this.getBatchUngradedWeight(batch.id) })).filter(item => item.available + 1e-9 >= this.state.eggWeight);
+                const batches = this.state.inventory.map(batch => ({ batch, available: this.getBatchUngradedWeight(batch.id) })).filter(item => item.available + 1e-9 >= this.getMinEggTypeWeight());
                 if (!batches.length) {
                     select.replaceChildren(new Option(i18n.t('No receiving batches are available for grading.'), '', true, true));
                     select.disabled = true;
@@ -1133,7 +1221,7 @@
                 const values = Object.values(quantities);
                 const valid = values.every(value => Number.isInteger(value) && value >= 0);
                 const totalEggs = valid ? values.reduce((sum, value) => sum + value, 0) : 0;
-                const estimatedWeight = totalEggs * this.state.eggWeight;
+                const estimatedWeight = valid ? this.getGradingWeight(quantities) : 0;
                 const batchId = document.getElementById('grading-batch')?.value || '';
                 const available = batchId ? this.getBatchUngradedWeight(batchId) : 0;
                 const totalEl = document.getElementById('grading-total-eggs');
@@ -1157,7 +1245,7 @@
                 const totalEggs = values.reduce((sum, value) => sum + value, 0);
                 if (totalEggs <= 0) return this.showToast(i18n.t('Enter at least one egg to save a grading record.'), 'warning');
                 const availableWeight = this.getBatchUngradedWeight(importBatchId);
-                const estimatedWeight = totalEggs * this.state.eggWeight;
+                const estimatedWeight = this.getGradingWeight(quantities);
                 if (estimatedWeight > availableWeight + 1e-9) return this.showToast(i18n.format('Estimated grading weight exceeds the available ungraded weight ({weight} kg).', { weight: availableWeight.toFixed(1) }), 'error');
                 const record = {
                     id: `GRD-${Date.now()}`,
@@ -1166,6 +1254,7 @@
                     operator: this.state.role,
                     quantities,
                     typeNames: Object.fromEntries(this.state.eggTypes.map(type => [type.id, type.name])),
+                    typeWeights: Object.fromEntries(this.state.eggTypes.map(type => [type.id, Number(type.weight)])),
                     totalEggs,
                     estimatedWeight
                 };
@@ -1192,6 +1281,7 @@
                         return;
                     }
                 }
+                if (view === 'settings' && this.currentView !== 'settings') this.eggTypeDraft = null;
                 this.currentView = view;
                 document.querySelectorAll('.nav-item').forEach(el => {
                     el.classList.remove('bg-primary-600', 'text-white', 'bg-slate-800');
@@ -1297,7 +1387,10 @@
                 list.innerHTML = this.state.eggTypes.map((type, index) => `
                     <div class="grid grid-cols-[70px_1fr_180px_190px] gap-3 px-4 py-3 items-center">
                         <span class="font-semibold text-gray-500">${index + 1}</span>
-                        <input id="egg-name-${type.id}" type="text" maxlength="40" required value="${this.escapeHtml(type.name)}" class="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500">
+                        <div class="min-w-0">
+                            <p class="font-semibold text-gray-800 truncate" title="${this.escapeHtml(type.name)}">${this.escapeHtml(type.name)}</p>
+                            <p class="text-xs text-gray-500">${this.formatGrams(type.weight)}</p>
+                        </div>
                         <input id="egg-retail-${type.id}" type="number" min="0.01" step="0.01" required value="${Number(type.retailPrice).toFixed(2)}" class="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500">
                         <input id="egg-batch-${type.id}" type="number" min="0.01" step="0.01" required value="${Number(type.batchPrice).toFixed(2)}" class="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500">
                     </div>`).join('');
@@ -1308,24 +1401,22 @@
                 if (this.state.role !== 'supervisor') return this.showToast(i18n.t('Only Supervisor can update egg type prices.'), 'error');
                 const updated = this.state.eggTypes.map(type => ({
                     id: type.id,
-                    name: document.getElementById(`egg-name-${type.id}`).value.trim(),
+                    name: type.name,
+                    weight: Number(type.weight),
                     retailPrice: Number(document.getElementById(`egg-retail-${type.id}`).value),
                     batchPrice: Number(document.getElementById(`egg-batch-${type.id}`).value)
                 }));
-                const normalizedNames = updated.map(type => type.name.toLocaleLowerCase());
-                if (updated.some(type => !type.name)) return this.showToast(i18n.t('Every egg type needs a name.'), 'warning');
-                if (new Set(normalizedNames).size !== updated.length) return this.showToast(i18n.t('Egg type names must be unique.'), 'warning');
                 if (updated.some(type => !(type.retailPrice > 0) || !(type.batchPrice > 0))) return this.showToast(i18n.t('Every retail and batch price must be greater than zero.'), 'warning');
                 const before = JSON.parse(JSON.stringify(this.state.eggTypes));
                 const hasChanges = JSON.stringify(before) !== JSON.stringify(updated);
                 if (!hasChanges) return this.showToast(i18n.t('No pricing changes to save.'), 'info');
                 this.state.eggTypes = updated;
                 this.recordEggPriceSnapshot('update');
-                this.logAudit('pricing', 'update', 'egg-type-pricing', before, JSON.parse(JSON.stringify(updated)), 'Seven egg type prices updated');
+                this.logAudit('pricing', 'update', 'egg-type-pricing', before, JSON.parse(JSON.stringify(updated)), 'Egg type prices updated');
                 this.saveData();
                 this.renderEggTypePricing();
                 this.calculateTotal();
-                this.showToast(i18n.t('Seven egg type prices saved successfully!'), 'success');
+                this.showToast(i18n.t('Egg type prices saved successfully!'), 'success');
             },
 
             getSaleDetails() {
@@ -1359,6 +1450,8 @@
                 document.getElementById('inv-add-section').style.display = (isSup || p.inv_add) ? 'block' : 'none';
                 document.getElementById('inv-view-section').style.display = (isSup || p.inv_view) ? 'block' : 'none';
                 document.getElementById('egg-type-pricing-section').style.display = isSup ? 'block' : 'none';
+                const eggTypesSection = document.getElementById('egg-types-section');
+                if (eggTypesSection) eggTypesSection.style.display = isSup ? 'block' : 'none';
                 
                 const dashTrend = document.getElementById('dash-trend-section');
                 if (dashTrend) dashTrend.style.display = (isSup || p.dashboard_trend) ? 'block' : 'none';
@@ -1368,7 +1461,7 @@
                 if (this.currentView === 'dashboard') this.renderDashboard();
                 if (this.currentView === 'pricing') { this.renderEggTypePricing(); this.renderPriceTracker(); }
                 if (this.currentView === 'audit') this.renderAuditLog();
-                if (this.currentView === 'settings') this.loadBasicSettingsUI();
+                if (this.currentView === 'settings') { this.loadBasicSettingsUI(); this.renderEggTypeSettings(); }
                 if (this.currentView === 'permissions') {
                     const keys = ['pos', 'pos_calc', 'pos_receipt_op', 'pos_receipt_id', 'inventory', 'inv_add', 'inv_view', 'inv_edit', 'inv_delete', 'grading', 'dashboard', 'dashboard_profit', 'dashboard_trend', 'pricing', 'settings', 'permissions'];
                     keys.forEach(k => { const el = document.getElementById('perm-'+k); if(el) el.checked = !!this.state.permissions[k]; });
@@ -1454,7 +1547,7 @@
                     const qtyEggs = Math.min(lot.available, eggsToFulfill);
                     const batch = this.state.inventory.find(item => item.id === lot.record.importBatchId);
                     if (!batch) continue;
-                    const expectedWeight = qtyEggs * this.state.eggWeight;
+                    const expectedWeight = qtyEggs * this.getEggTypeWeight(details.eggType.id);
                     const weightKg = Math.min(Number(batch.remainingQty || 0), expectedWeight);
                     batch.remainingQty = Math.max(0, Number(batch.remainingQty || 0) - weightKg);
                     totalCostBasis += weightKg * Number(batch.costPrice || 0);
@@ -1813,7 +1906,7 @@
                 const changeHtml = change => change === null ? '<span class="text-gray-400">-</span>' : `<span class="font-medium ${change > 0 ? 'text-red-600' : change < 0 ? 'text-green-600' : 'text-gray-500'}">${change > 0 ? '+' : ''}$${change.toFixed(2)}</span>`;
                 tbody.innerHTML = data.length ? data.map(item => {
                     return `<tr class="hover:bg-gray-50"><td class="px-5 py-4 whitespace-nowrap text-xs text-gray-600">${new Date(item.timestamp).toLocaleString(i18n.locale())}</td><td class="px-5 py-4 font-semibold text-gray-800">${this.escapeHtml(item.eggTypeName)}</td><td class="px-5 py-4 font-bold text-primary-600">$${item.retailPrice.toFixed(2)}</td><td class="px-5 py-4">${changeHtml(item.retailChange)}</td><td class="px-5 py-4 font-bold text-indigo-600">$${item.batchPrice.toFixed(2)}</td><td class="px-5 py-4">${changeHtml(item.batchChange)}</td></tr>`;
-                }).join('') : `<tr><td colspan="6" class="px-6 py-10 text-center text-gray-500">${i18n.t('No seven-type price records found.')}</td></tr>`;
+                }).join('') : `<tr><td colspan="6" class="px-6 py-10 text-center text-gray-500">${i18n.t('No egg type price records found.')}</td></tr>`;
                 
                 ['timestamp','eggTypeName','retailPrice','retailChange','batchPrice','batchChange'].forEach(col => { const icon=document.getElementById(`price-sort-${col}`); if(icon) icon.className='fa-solid ml-1 '+(this.priceTable.sortBy===col?(this.priceTable.sortDir==='asc'?'fa-sort-up text-primary-600':'fa-sort-down text-primary-600'):'fa-sort text-gray-300'); });
                 
@@ -1832,14 +1925,22 @@
                 const mode = document.getElementById('egg-price-chart-mode')?.value || 'retail';
                 const colors = ['#2563eb', '#16a34a', '#f59e0b', '#dc2626', '#7c3aed', '#0891b2', '#db2777'];
                 const datasets = [];
-                this.state.eggTypes.forEach((type, index) => {
+                const seriesIds = [];
+                const seriesNames = {};
+                this.state.eggTypes.forEach(type => { seriesIds.push(type.id); seriesNames[type.id] = type.name; });
+                chartData.forEach(snapshot => (snapshot.prices || []).forEach(price => {
+                    if (!seriesIds.includes(price.id)) seriesIds.push(price.id);
+                    if (!seriesNames[price.id]) seriesNames[price.id] = price.name || price.id;
+                }));
+                seriesIds.forEach((eggTypeId, index) => {
                     const color = colors[index % colors.length];
+                    const label = seriesNames[eggTypeId] || eggTypeId;
                     const values = key => chartData.map(snapshot => {
-                        const price = snapshot.prices.find(item => item.id === type.id);
+                        const price = (snapshot.prices || []).find(item => item.id === eggTypeId);
                         return price ? Number(price[key]) : null;
                     });
-                    if (mode === 'retail' || mode === 'both') datasets.push({ label: `${type.name} — ${i18n.t('Retail price')}`, data: values('retailPrice'), borderColor: color, backgroundColor: color, borderWidth: 2, tension: .25, pointRadius: 3, pointHoverRadius: 6, spanGaps: true });
-                    if (mode === 'batch' || mode === 'both') datasets.push({ label: `${type.name} — ${i18n.t('Batch price')}`, data: values('batchPrice'), borderColor: color, backgroundColor: color, borderWidth: 2, borderDash: [7, 5], tension: .25, pointRadius: 3, pointStyle: 'rectRot', pointHoverRadius: 6, spanGaps: true });
+                    if (mode === 'retail' || mode === 'both') datasets.push({ label: `${label} — ${i18n.t('Retail price')}`, data: values('retailPrice'), borderColor: color, backgroundColor: color, borderWidth: 2, tension: .25, pointRadius: 3, pointHoverRadius: 6, spanGaps: true });
+                    if (mode === 'batch' || mode === 'both') datasets.push({ label: `${label} — ${i18n.t('Batch price')}`, data: values('batchPrice'), borderColor: color, backgroundColor: color, borderWidth: 2, borderDash: [7, 5], tension: .25, pointRadius: 3, pointStyle: 'rectRot', pointHoverRadius: 6, spanGaps: true });
                 });
 
                 if (this.priceChart) this.priceChart.destroy();
@@ -1870,13 +1971,156 @@
                 this.showToast(i18n.t('Price history exported successfully!'),'success');
             },
             
+            resetEggTypeDraft() {
+                this.eggTypeDraft = (this.state.eggTypes || []).map((type, index) => ({
+                    uid: `et-${index + 1}-${Math.random().toString(36).slice(2, 7)}`,
+                    id: type.id,
+                    name: type.name,
+                    weightInput: (Number(type.weight) * 1000).toFixed(1)
+                }));
+            },
+
+            syncEggTypeDraft() {
+                if (!Array.isArray(this.eggTypeDraft)) return;
+                this.eggTypeDraft.forEach(row => {
+                    const nameInput = document.getElementById(`egg-type-name-${row.uid}`);
+                    const weightInput = document.getElementById(`egg-type-weight-${row.uid}`);
+                    if (nameInput) row.name = nameInput.value;
+                    if (weightInput) row.weightInput = weightInput.value;
+                });
+            },
+
+            eggTypeHasRecords(eggTypeId) {
+                if (!eggTypeId) return false;
+                if (this.getEggTypeStock(eggTypeId) > 0) return true;
+                if ((this.state.gradingRecords || []).some(record => Number(record.quantities?.[eggTypeId] || 0) > 0)) return true;
+                return (this.state.sales || []).some(sale => sale.eggTypeId === eggTypeId);
+            },
+
+            renderEggTypeSettings(force = false) {
+                const editor = document.getElementById('egg-types-editor');
+                if (!editor) return;
+                if (force || !Array.isArray(this.eggTypeDraft) || !this.eggTypeDraft.length) this.resetEggTypeDraft();
+                else this.syncEggTypeDraft();
+                const rows = this.eggTypeDraft;
+                const canRemove = rows.length > this.minEggTypes;
+                const removeBtn = (row, extraClass) => `<button type="button" onclick="app.removeEggTypeRow('${row.uid}')" ${canRemove ? '' : 'disabled'} class="${extraClass} table-action-btn table-action-delete" title="Remove egg type" aria-label="Remove egg type"><i class="fa-regular fa-trash-can"></i></button>`;
+                editor.innerHTML = rows.map((row, index) => `
+                    <div class="egg-type-row rounded-xl border border-gray-200 bg-gray-50 p-3 sm:p-4">
+                        <div class="flex items-center justify-between gap-2 sm:justify-center sm:pb-2">
+                            <span class="w-8 h-8 rounded-full bg-primary-100 text-primary-700 text-sm font-bold flex items-center justify-center shrink-0">${index + 1}</span>
+                            ${removeBtn(row, 'sm:hidden')}
+                        </div>
+                        <div class="min-w-0">
+                            <label class="block text-xs font-medium text-gray-500 mb-1" for="egg-type-name-${row.uid}">Egg type name</label>
+                            <input id="egg-type-name-${row.uid}" type="text" maxlength="40" value="${this.escapeHtml(row.name)}" class="w-full p-2.5 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500">
+                        </div>
+                        <div class="min-w-0">
+                            <label class="block text-xs font-medium text-gray-500 mb-1" for="egg-type-weight-${row.uid}">Weight per egg (g)</label>
+                            <input id="egg-type-weight-${row.uid}" type="number" inputmode="decimal" min="1" max="500" step="0.1" value="${this.escapeHtml(row.weightInput)}" oninput="app.updateEggTypeAverage()" class="w-full p-2.5 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500">
+                        </div>
+                        <div class="hidden sm:flex items-center justify-center pb-1">
+                            ${removeBtn(row, '')}
+                        </div>
+                    </div>`).join('');
+                const counter = document.getElementById('egg-types-count');
+                if (counter) counter.innerText = i18n.format('{count} / {max} egg types', { count: rows.length, max: this.maxEggTypes });
+                const addBtn = document.getElementById('btn-add-egg-type');
+                if (addBtn) addBtn.disabled = rows.length >= this.maxEggTypes;
+                this.updateEggTypeAverage();
+                i18n.translate(editor);
+            },
+
+            updateEggTypeAverage() {
+                const target = document.getElementById('egg-types-average');
+                if (!target) return;
+                this.syncEggTypeDraft();
+                const weights = (this.eggTypeDraft || []).map(row => Number(row.weightInput)).filter(value => value > 0);
+                target.innerText = weights.length ? this.formatGrams(weights.reduce((sum, value) => sum + value, 0) / weights.length / 1000) : '-';
+            },
+
+            addEggTypeRow() {
+                if (!Array.isArray(this.eggTypeDraft)) this.resetEggTypeDraft();
+                else this.syncEggTypeDraft();
+                if (this.eggTypeDraft.length >= this.maxEggTypes) return this.showToast(i18n.format('You can define up to {max} egg types.', { max: this.maxEggTypes }), 'warning');
+                this.eggTypeDraft.push({
+                    uid: `et-new-${Date.now()}-${this.eggTypeDraft.length}`,
+                    id: null,
+                    name: i18n.t('New Egg Type'),
+                    weightInput: (this.getAverageEggWeight() * 1000).toFixed(1)
+                });
+                this.renderEggTypeSettings();
+            },
+
+            removeEggTypeRow(uid) {
+                if (!Array.isArray(this.eggTypeDraft)) return;
+                this.syncEggTypeDraft();
+                if (this.eggTypeDraft.length <= this.minEggTypes) return this.showToast(i18n.t('At least one egg type is required.'), 'warning');
+                const row = this.eggTypeDraft.find(item => item.uid === uid);
+                if (!row) return;
+                if (row.id && this.eggTypeHasRecords(row.id)) return this.showToast(i18n.format('Cannot remove {type}: it still has stock or historical records.', { type: row.name }), 'error');
+                this.eggTypeDraft = this.eggTypeDraft.filter(item => item.uid !== uid);
+                this.renderEggTypeSettings();
+            },
+
+            saveEggTypeSettings(event) {
+                event.preventDefault();
+                if (this.state.role !== 'supervisor') return this.showToast(i18n.t('Only Supervisor can update egg type settings.'), 'error');
+                if (!Array.isArray(this.eggTypeDraft)) this.resetEggTypeDraft();
+                else this.syncEggTypeDraft();
+                const rows = this.eggTypeDraft;
+                if (rows.length < this.minEggTypes) return this.showToast(i18n.t('At least one egg type is required.'), 'warning');
+                if (rows.length > this.maxEggTypes) return this.showToast(i18n.format('You can define up to {max} egg types.', { max: this.maxEggTypes }), 'warning');
+
+                const names = rows.map(row => String(row.name || '').trim());
+                if (names.some(name => !name)) return this.showToast(i18n.t('Every egg type needs a name.'), 'warning');
+                if (new Set(names.map(name => name.toLocaleLowerCase())).size !== names.length) return this.showToast(i18n.t('Egg type names must be unique.'), 'warning');
+                const weights = rows.map(row => Number(row.weightInput) / 1000);
+                if (weights.some(weight => !(weight > 0) || weight > 0.5)) return this.showToast(i18n.t('Every egg weight must be between 0 and 500 g.'), 'warning');
+
+                const keptIds = new Set(rows.map(row => row.id).filter(Boolean));
+                const blocked = this.state.eggTypes.find(type => !keptIds.has(type.id) && this.eggTypeHasRecords(type.id));
+                if (blocked) return this.showToast(i18n.format('Cannot remove {type}: it still has stock or historical records.', { type: blocked.name }), 'error');
+
+                const usedIds = new Set(keptIds);
+                const nextId = () => {
+                    for (let i = 1; i <= this.maxEggTypes; i++) {
+                        const id = `size-${i}`;
+                        if (!usedIds.has(id)) { usedIds.add(id); return id; }
+                    }
+                    const fallbackId = `size-${usedIds.size + 1}`;
+                    usedIds.add(fallbackId);
+                    return fallbackId;
+                };
+                const seedPrice = Number(this.state.eggTypes[0]?.retailPrice) > 0 ? Number(this.state.eggTypes[0].retailPrice) : (Number(this.state.dailyPrice) > 0 ? Number(this.state.dailyPrice) : 0.15);
+                const before = JSON.parse(JSON.stringify(this.state.eggTypes));
+                const updated = rows.map((row, index) => {
+                    const previous = row.id ? this.state.eggTypes.find(type => type.id === row.id) : null;
+                    const retailPrice = Number(previous?.retailPrice) > 0 ? Number(previous.retailPrice) : seedPrice;
+                    const batchPrice = Number(previous?.batchPrice) > 0 ? Number(previous.batchPrice) : Number((retailPrice * this.state.batchSize).toFixed(2));
+                    return { id: row.id || nextId(), name: names[index], weight: Number(weights[index].toFixed(4)), retailPrice, batchPrice };
+                });
+                if (JSON.stringify(before) === JSON.stringify(updated)) return this.showToast(i18n.t('No egg type changes to save.'), 'info');
+
+                this.state.eggTypes = updated;
+                this.state.eggWeight = Number(this.getAverageEggWeight().toFixed(4));
+                if (!updated.some(type => type.id === this.state.selectedEggTypeId)) this.state.selectedEggTypeId = updated[0].id;
+                this.recordEggPriceSnapshot('update');
+                this.logAudit('settings', 'update', 'egg-types', before, JSON.parse(JSON.stringify(updated)), 'Egg type settings updated');
+                this.saveData();
+                this.renderEggTypeSettings(true);
+                this.renderEggTypePricing();
+                this.renderEggTypeOptions();
+                this.renderGradingPage();
+                this.showToast(i18n.t('Egg types saved successfully!'), 'success');
+            },
+
             loadBasicSettingsUI(){
                 const a=this.state.appSettings||{};
                 document.getElementById('setting-language').value=i18n.language;
                 document.getElementById('setting-theme').value=a.theme||'light';
                 document.getElementById('setting-color').value=a.accentColor||'blue';
                 document.getElementById('setting-currency').value=a.currency||'USD';
-                document.getElementById('setting-egg-weight').value=this.state.eggWeight;
                 document.getElementById('setting-low-stock').value=a.lowStock??10;
                 const timezoneSelect=document.getElementById('setting-timezone');
                 if(!timezoneSelect.options.length){
@@ -1897,7 +2141,7 @@
             saveBasicSettings(e){
                 e.preventDefault();
                 this.state.appSettings = { theme: document.getElementById('setting-theme').value, accentColor: document.getElementById('setting-color').value, timezone: document.getElementById('setting-timezone').value, currency: document.getElementById('setting-currency').value, lowStock: parseFloat(document.getElementById('setting-low-stock').value)||0 };
-                this.state.eggWeight=parseFloat(document.getElementById('setting-egg-weight').value)||this.state.eggWeight;
+                this.state.eggWeight=Number(this.getAverageEggWeight().toFixed(4));
                 i18n.setLanguage(document.getElementById('setting-language').value);
                 this.applyTheme();
                 this.saveData();
@@ -1914,8 +2158,8 @@
             renderPricingAudit(log){
                 const before=log.before||null,after=log.after||null;
                 if(log.recordId==='egg-type-pricing'&&Array.isArray(before)&&Array.isArray(after)){
-                    const changed=after.map((item,index)=>({before:before[index],after:item})).filter(pair=>JSON.stringify(pair.before)!==JSON.stringify(pair.after));
-                    return `<div class="space-y-2"><div class="font-semibold text-gray-800">${i18n.t('Seven egg type prices updated')}</div><div class="text-xs text-gray-500">${i18n.format('{count} of 7 rows changed',{count:changed.length})}</div>${changed.map(pair=>`<div class="p-2 rounded-lg bg-gray-50"><span class="font-medium text-gray-700">${this.escapeHtml(pair.after.name)}</span><span class="text-xs text-gray-500 ml-2">${i18n.t('Retail')} $${Number(pair.after.retailPrice).toFixed(2)} · ${i18n.t('Batch')} $${Number(pair.after.batchPrice).toFixed(2)}</span></div>`).join('')}</div>`;
+                    const changed=after.map(item=>({before:before.find(entry=>entry&&entry.id===item.id)||null,after:item})).filter(pair=>JSON.stringify(pair.before)!==JSON.stringify(pair.after));
+                    return `<div class="space-y-2"><div class="font-semibold text-gray-800">${i18n.t('Egg type prices updated')}</div><div class="text-xs text-gray-500">${i18n.format('{count} of {total} rows changed',{count:changed.length,total:after.length})}</div>${changed.map(pair=>`<div class="p-2 rounded-lg bg-gray-50"><span class="font-medium text-gray-700">${this.escapeHtml(pair.after.name)}</span><span class="text-xs text-gray-500 ml-2">${i18n.t('Retail')} $${Number(pair.after.retailPrice).toFixed(2)} · ${i18n.t('Batch')} $${Number(pair.after.batchPrice).toFixed(2)}</span></div>`).join('')}</div>`;
                 }
                 if(log.action==='update'&&before&&after){
                     const changes=[];
