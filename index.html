@@ -85,8 +85,8 @@
             input[type="date"], input[type="time"] { width: 100%; font-size: 16px; }
         }
     
-        main, #main-scroll-area, #view-inventory, #view-pricing,
-        #view-inventory > div, #view-pricing > div { min-width: 0; width: 100%; max-width: 100%; }
+        main, #main-scroll-area, #view-inventory, #view-grading, #view-pricing,
+        #view-inventory > div, #view-grading > div, #view-pricing > div { min-width: 0; width: 100%; max-width: 100%; }
         #form-import, #view-pricing form { min-width: 0; max-width: 100%; overflow: hidden; }
         .form-field { min-width: 0; max-width: 100%; overflow: hidden; }
         .form-field input[type="date"],
@@ -103,7 +103,7 @@
         }
         @media (max-width: 767px) {
             #main-scroll-area { padding-left: .75rem !important; padding-right: .75rem !important; }
-            #view-inventory .bg-white, #view-pricing .bg-white { max-width: 100%; overflow: hidden; }
+            #view-inventory .bg-white, #view-grading .bg-white, #view-pricing .bg-white { max-width: 100%; overflow: hidden; }
             #form-import, #view-pricing form { display: flex !important; flex-direction: column; align-items: stretch; }
             #form-import > *, #view-pricing form > * { flex: 0 0 auto; min-width: 0; max-width: 100%; width: 100%; }
         }
@@ -143,6 +143,12 @@
                     <button onclick="app.navigate('inventory')" id="nav-inventory" class="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left hover:bg-slate-800 transition-colors text-slate-300 nav-item">
                         <i class="fa-solid fa-boxes-stacked w-5 text-center"></i>
                         <span class="font-medium">Inventory (Imports)</span>
+                    </button>
+                </li>
+                <li>
+                    <button onclick="app.navigate('grading')" id="nav-grading" class="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left hover:bg-slate-800 transition-colors text-slate-300 nav-item">
+                        <i class="fa-solid fa-arrow-down-wide-short w-5 text-center"></i>
+                        <span class="font-medium">Egg Grading</span>
                     </button>
                 </li>
                 <li>
@@ -210,6 +216,14 @@
                         </div>
                     </div>
                 </div>
+                <div class="mb-4 sm:mb-6">
+                    <div class="flex items-center justify-between gap-3 mb-2">
+                        <h3 class="text-sm font-semibold text-gray-700">Stock by Egg Size</h3>
+                        <span class="text-xs text-gray-500">Live sellable quantity</span>
+                    </div>
+                    <div id="pos-size-stock-grid" class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2"></div>
+                    <p id="pos-stock-empty" class="hidden mt-3 px-4 py-3 rounded-xl bg-amber-50 border border-amber-200 text-sm text-amber-800">No graded egg stock is available. Record Egg Grading before selling.</p>
+                </div>
                 
                 <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden flex flex-col md:flex-row">
                     <!-- Checkout Form -->
@@ -258,6 +272,10 @@
                             <div class="flex justify-between items-center mb-2">
                                 <span class="text-gray-600">Sale option</span>
                                 <span id="pos-summary-mode" class="font-medium">Retail</span>
+                            </div>
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="text-gray-600">Available for this size</span>
+                                <span id="pos-summary-stock" class="font-medium">0 eggs</span>
                             </div>
                             <div class="flex justify-between items-center mb-2">
                                 <span id="pos-unit-price-label" class="text-gray-600">Price per egg</span>
@@ -334,6 +352,62 @@
                                     <tbody id="inventory-list" class="divide-y divide-gray-100"></tbody>
                                 </table>
                             </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="view-grading" class="hidden">
+                <div class="max-w-7xl mx-auto space-y-6">
+                    <div>
+                        <h3 class="text-xl font-semibold text-gray-800">Egg Grading</h3>
+                        <p class="text-sm text-gray-500 mt-1">Grade each receiving batch into the seven sellable egg sizes.</p>
+                    </div>
+
+                    <div id="grading-stock-grid" class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3"></div>
+
+                    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                        <div class="p-5 sm:p-6 border-b border-gray-100 bg-gray-50">
+                            <h3 class="text-lg font-semibold text-gray-800">Record Batch Grading</h3>
+                            <p class="text-sm text-gray-500">Select a receiving batch, then enter the whole-egg count for every size.</p>
+                        </div>
+                        <form id="form-grading" onsubmit="app.processGrading(event)" class="p-5 sm:p-6 space-y-5">
+                            <div class="grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-600 mb-2">Receiving Batch</label>
+                                    <select id="grading-batch" required class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500"></select>
+                                </div>
+                                <div class="rounded-xl bg-primary-50 border border-primary-100 px-4 py-3">
+                                    <p class="text-xs text-primary-700 font-medium">Available ungraded weight</p>
+                                    <p id="grading-batch-available" class="text-2xl font-bold text-primary-700 mt-1">0.0 kg</p>
+                                    <p class="text-xs text-primary-600 mt-1">Calculated with the configured average egg weight.</p>
+                                </div>
+                            </div>
+                            <div id="grading-input-grid" class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3"></div>
+                            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-xl bg-gray-50 border border-gray-100 p-4">
+                                <div class="flex flex-wrap gap-x-6 gap-y-2 text-sm">
+                                    <span><span class="text-gray-500">Total eggs:</span> <b id="grading-total-eggs">0</b></span>
+                                    <span><span class="text-gray-500">Estimated weight:</span> <b id="grading-estimated-weight">0.0 kg</b></span>
+                                </div>
+                                <button id="btn-save-grading" type="submit" class="px-6 py-3 bg-primary-600 hover:bg-primary-700 text-white font-semibold rounded-xl disabled:opacity-50 disabled:cursor-not-allowed">
+                                    <i class="fa-solid fa-check mr-2"></i>Save Grading Record
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                        <div class="p-5 sm:p-6 border-b border-gray-100 bg-gray-50">
+                            <h3 class="text-lg font-semibold text-gray-800">Grading History</h3>
+                            <p class="text-sm text-gray-500">Immutable records linked to their original receiving batch.</p>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full min-w-[900px] text-left text-sm text-gray-600">
+                                <thead class="text-xs uppercase border-b bg-white text-gray-500"><tr>
+                                    <th class="px-5 py-4">Date & Time</th><th class="px-5 py-4">Grading ID</th><th class="px-5 py-4">Receiving Batch</th><th class="px-5 py-4">Size Breakdown</th><th class="px-5 py-4 text-right">Total Eggs</th><th class="px-5 py-4">Operator</th>
+                                </tr></thead>
+                                <tbody id="grading-history-list" class="divide-y divide-gray-100"></tbody>
+                            </table>
                         </div>
                     </div>
                 </div>
@@ -476,6 +550,11 @@
                                     <label class="flex items-center gap-2 cursor-pointer text-sm text-gray-700"><input type="checkbox" id="perm-inv_delete" onchange="app.updatePermissions()"><span>Allow Deleting Imports</span></label>
                                 </div>
                             </div>
+
+                            <label class="permission-card">
+                                <input type="checkbox" id="perm-grading" onchange="app.updatePermissions()">
+                                <span><b>Egg Grading</b><small>Grade receiving batches and view size-level stock.</small></span>
+                            </label>
                             
                             <!-- Dashboard Permissions -->
                             <div class="permission-card flex-col items-start gap-0">
@@ -767,6 +846,14 @@
         Object.assign(i18n.translations['my'], {
             'Seven Egg Price Records':'ဥ ၇ မျိုး စျေးစာရင်း','Every saved change adds one row for each egg type.':'သိမ်းထားသောပြောင်းလဲမှုတိုင်းသည် ဥအမျိုးအစားတစ်မျိုးစီအတွက် တစ်ကြောင်းထည့်ပေးသည်။','Search egg type, date, or price...':'ဥအမျိုးအစား၊ ရက်စွဲ သို့မဟုတ် စျေးနှုန်းရှာရန်...','Retail / Egg':'လက်လီ / ဥတစ်လုံး','Retail Change':'လက်လီစျေးပြောင်းလဲမှု','Batch / 30 eggs':'အသုတ် / ဥ ၃၀','Batch Change':'အသုတ်စျေးပြောင်းလဲမှု','No seven-type price records found.':'ဥ ၇ မျိုး စျေးနှုန်းမှတ်တမ်း မတွေ့ပါ။'
         });
+        Object.assign(i18n.translations['zh-TW'], {
+            'Egg Grading':'蛋品分級','Stock by Egg Size':'各尺寸雞蛋庫存','Live sellable quantity':'即時可售數量','No graded egg stock is available. Record Egg Grading before selling.':'目前沒有已分級的雞蛋庫存，請先完成蛋品分級再銷售。','Available for this size':'此尺寸可售庫存','Grade each receiving batch into the seven sellable egg sizes.':'將每個進貨批次依七種可售尺寸完成分級。','Record Batch Grading':'新增批次分級','Select a receiving batch, then enter the whole-egg count for every size.':'選擇進貨批次，並輸入各尺寸的完整雞蛋顆數。','Receiving Batch':'進貨批次','Available ungraded weight':'可分級剩餘重量','Calculated with the configured average egg weight.':'依系統設定的雞蛋平均重量估算。','Total eggs:':'總顆數：','Estimated weight:':'估算重量：','Save Grading Record':'儲存分級紀錄','Grading History':'分級歷史','Immutable records linked to their original receiving batch.':'不可修改的紀錄，並連結至原始進貨批次。','Grading ID':'分級編號','Size Breakdown':'尺寸明細','Total Eggs':'總顆數','Grade receiving batches and view size-level stock.':'將進貨批次分級並查看各尺寸庫存。','Egg Grading page':'蛋品分級頁面','No receiving batches are available for grading.':'目前沒有可分級的進貨批次。','Select a receiving batch.':'請選擇進貨批次。','Enter at least one egg to save a grading record.':'至少輸入一顆雞蛋才能儲存分級紀錄。','Egg quantities must be non-negative whole numbers.':'雞蛋數量必須為非負整數。','Estimated grading weight exceeds the available ungraded weight ({weight} kg).':'估算分級重量超過可分級剩餘重量（{weight} 公斤）。','Grading record saved for batch {batch}.':'批次 {batch} 的分級紀錄已儲存。','No grading records yet.':'尚無分級紀錄。','{count} eggs':'{count} 顆','{count} batches available':'可售 {count} 批','Unavailable for selected sale option':'目前銷售方式不可用','Insufficient {type} stock. Only {count} eggs are available.':'{type} 庫存不足，目前僅有 {count} 顆。','Import received as batch {batch} ({qty} kg).':'已建立進貨批次 {batch}（{qty} 公斤）。','Cannot delete a batch with grading records.':'無法刪除已有分級紀錄的進貨批次。','Cannot reduce total below committed weight ({qty} kg).':'總重量不可低於已分級或已售出的 {qty} 公斤。','Batch grading recorded':'已建立批次分級','Receiving batch created':'已建立進貨批次'
+        });
+        Object.assign(i18n.translations['my'], {
+            'Egg Grading':'ဥအရွယ်ခွဲခြားခြင်း','Stock by Egg Size':'ဥအရွယ်အလိုက် လက်ကျန်','Live sellable quantity':'လက်ရှိ ရောင်းနိုင်သောအရေအတွက်','No graded egg stock is available. Record Egg Grading before selling.':'အရွယ်ခွဲထားသော ဥလက်ကျန်မရှိပါ။ မရောင်းမီ ဥအရွယ်ခွဲခြားမှုကို မှတ်တမ်းတင်ပါ။','Available for this size':'ဤအရွယ်အတွက် ရနိုင်သောလက်ကျန်','Grade each receiving batch into the seven sellable egg sizes.':'လက်ခံရရှိသောအသုတ်တိုင်းကို ရောင်းချနိုင်သည့် ဥအရွယ် ၇ မျိုး ခွဲပါ။','Record Batch Grading':'အသုတ်အရွယ်ခွဲမှု မှတ်တမ်းတင်ရန်','Select a receiving batch, then enter the whole-egg count for every size.':'လက်ခံအသုတ်ကို ရွေးပြီး အရွယ်တိုင်းအတွက် ဥအလုံးရေကို ထည့်ပါ။','Receiving Batch':'လက်ခံအသုတ်','Available ungraded weight':'မခွဲရသေးသော အလေးချိန်','Calculated with the configured average egg weight.':'သတ်မှတ်ထားသော ဥပျမ်းမျှအလေးချိန်ဖြင့် တွက်ထားသည်။','Total eggs:':'စုစုပေါင်းဥ：','Estimated weight:':'ခန့်မှန်းအလေးချိန်：','Save Grading Record':'အရွယ်ခွဲမှတ်တမ်း သိမ်းရန်','Grading History':'အရွယ်ခွဲမှတ်တမ်း','Immutable records linked to their original receiving batch.':'မူရင်းလက်ခံအသုတ်နှင့် ချိတ်ဆက်ထားသော မပြောင်းလဲနိုင်သည့်မှတ်တမ်းများ။','Grading ID':'အရွယ်ခွဲ ID','Size Breakdown':'အရွယ်အသေးစိတ်','Total Eggs':'စုစုပေါင်းဥ','Grade receiving batches and view size-level stock.':'လက်ခံအသုတ်များကို အရွယ်ခွဲပြီး အရွယ်အလိုက်လက်ကျန် ကြည့်ရန်။','Egg Grading page':'ဥအရွယ်ခွဲစာမျက်နှာ','No receiving batches are available for grading.':'အရွယ်ခွဲရန် လက်ခံအသုတ်မရှိပါ။','Select a receiving batch.':'လက်ခံအသုတ်တစ်ခု ရွေးပါ။','Enter at least one egg to save a grading record.':'အရွယ်ခွဲမှတ်တမ်းသိမ်းရန် အနည်းဆုံး ဥတစ်လုံး ထည့်ပါ။','Egg quantities must be non-negative whole numbers.':'ဥအရေအတွက်သည် သုည သို့မဟုတ် အပေါင်းကိန်းပြည့် ဖြစ်ရမည်။','Estimated grading weight exceeds the available ungraded weight ({weight} kg).':'ခန့်မှန်းအလေးချိန်သည် မခွဲရသေးသော {weight} kg ထက် ကျော်နေသည်။','Grading record saved for batch {batch}.':'အသုတ် {batch} အတွက် အရွယ်ခွဲမှတ်တမ်း သိမ်းပြီးပါပြီ။','No grading records yet.':'အရွယ်ခွဲမှတ်တမ်း မရှိသေးပါ။','{count} eggs':'ဥ {count} လုံး','{count} batches available':'အသုတ် {count} ခု ရနိုင်သည်','Unavailable for selected sale option':'ရွေးထားသော အရောင်းပုံစံအတွက် မရနိုင်ပါ','Insufficient {type} stock. Only {count} eggs are available.':'{type} လက်ကျန်မလုံလောက်ပါ။ ဥ {count} လုံးသာ ရှိသည်။','Import received as batch {batch} ({qty} kg).':'ကုန်ဝင်ကို အသုတ် {batch} ({qty} kg) အဖြစ် လက်ခံပြီးပါပြီ။','Cannot delete a batch with grading records.':'အရွယ်ခွဲမှတ်တမ်းရှိသော အသုတ်ကို ဖျက်၍မရပါ။','Cannot reduce total below committed weight ({qty} kg).':'စုစုပေါင်းကို သတ်မှတ်ပြီးသော {qty} kg ထက် လျှော့၍မရပါ။','Batch grading recorded':'အသုတ်အရွယ်ခွဲမှု မှတ်တမ်းတင်ပြီး','Receiving batch created':'လက်ခံအသုတ် ဖန်တီးပြီး'
+        });
+        i18n.translations['zh-TW']['Cannot exceed {type} stock ({count} eggs).'] = '不可超過 {type} 的庫存（{count} 顆）。';
+        i18n.translations['my']['Cannot exceed {type} stock ({count} eggs).'] = '{type} လက်ကျန် ဥ {count} လုံးထက် မကျော်ရပါ။';
         const app = {
             state: {
                 role: 'operator',
@@ -779,12 +866,14 @@
                 saleMode: 'retail',
                 eggWeight: 0.06,
                 inventory: [],
+                gradingRecords: [],
                 appSettings: { theme: 'light', accentColor: 'blue', timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC', currency: 'USD', lowStock: 10 },
                 sales: [],
                 auditLogs: [],
                 permissions: { 
                     pos: true, pos_calc: true, pos_receipt_op: true, pos_receipt_id: true,
                     inventory: true, inv_add: true, inv_view: true, inv_edit: false, inv_delete: false,
+                    grading: true,
                     dashboard: false, dashboard_profit: false, dashboard_trend: false, 
                     pricing: false,
                     settings: false, permissions: false
@@ -815,6 +904,7 @@
                 i18n.init();
                 this.loadData();
                 this.ensureEggTypes();
+                this.ensureGradingRecords();
                 this.ensureEggPriceHistory();
                 this.setupMobileMenu();
                 this.switchRole('operator');
@@ -823,6 +913,7 @@
                 document.getElementById('import-time').value = new Date().toTimeString().slice(0,5);
                 this.renderEggTypeOptions();
                 this.renderEggTypePricing();
+                this.renderGradingPage();
                 
                 const today = new Date();
                 const lastWeek = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
@@ -833,13 +924,14 @@
                 
                 // Add strict input cap for POS quantity
                 document.getElementById('pos-quantity').addEventListener('input', (e) => {
-                    const maxEggs = Math.floor(this.getTotalStock() / this.state.eggWeight);
+                    const selectedType = this.getSelectedEggType();
+                    const maxEggs = selectedType ? this.getEggTypeStock(selectedType.id) : 0;
                     const eggsPerSaleUnit = this.state.saleMode === 'batch' ? this.state.batchSize : 1;
                     const maxSaleUnits = Math.floor(maxEggs / eggsPerSaleUnit);
                     let val = parseInt(e.target.value);
                     if (!isNaN(val) && val > maxSaleUnits) {
                         e.target.value = maxSaleUnits;
-                        this.showToast(i18n.format('Cannot exceed available stock (~{count} eggs).', { count: maxEggs }), 'warning');
+                        this.showToast(i18n.format('Cannot exceed {type} stock ({count} eggs).', { type: selectedType?.name || '', count: maxEggs }), 'warning');
                     }
                     this.calculateTotal();
                 });
@@ -851,9 +943,11 @@
                 document.getElementById('pos-sale-mode').addEventListener('change', (e) => {
                     this.state.saleMode = e.target.value === 'batch' ? 'batch' : 'retail';
                     document.getElementById('pos-quantity').value = '';
+                    this.renderEggTypeOptions();
                     this.calculateTotal();
                 });
                 document.getElementById('pos-received').addEventListener('input', () => this.calculateTotal());
+                document.getElementById('grading-batch').addEventListener('change', () => this.updateGradingSummary());
             },
 
             loadData() {
@@ -894,6 +988,17 @@
                 if (!['retail', 'batch'].includes(this.state.saleMode)) this.state.saleMode = 'retail';
                 localStorage.setItem('eggProData', JSON.stringify(this.state));
             },
+            ensureGradingRecords() {
+                if (!Array.isArray(this.state.gradingRecords)) this.state.gradingRecords = [];
+                const validTypeIds = new Set(this.state.eggTypes.map(type => type.id));
+                this.state.gradingRecords = this.state.gradingRecords.filter(record => record && record.id && record.importBatchId && record.timestamp && record.quantities).map(record => ({
+                    ...record,
+                    quantities: Object.fromEntries(this.state.eggTypes.map(type => [type.id, validTypeIds.has(type.id) ? Math.max(0, Math.floor(Number(record.quantities[type.id]) || 0)) : 0])),
+                    totalEggs: this.state.eggTypes.reduce((sum, type) => sum + Math.max(0, Math.floor(Number(record.quantities[type.id]) || 0)), 0),
+                    estimatedWeight: Number(record.estimatedWeight) || this.state.eggTypes.reduce((sum, type) => sum + Math.max(0, Math.floor(Number(record.quantities[type.id]) || 0)), 0) * this.state.eggWeight
+                }));
+                localStorage.setItem('eggProData', JSON.stringify(this.state));
+            },
             buildEggPriceSnapshot(reason = 'update') {
                 return {
                     id: `EPH-${Date.now()}`,
@@ -927,6 +1032,159 @@
                 this.updateUI();
             },
 
+            generateImportBatchId(date) {
+                const datePart = String(date || this.getLocalDateKey()).replaceAll('-', '');
+                const prefix = `IMP-${datePart}-`;
+                const next = this.state.inventory.reduce((max, batch) => {
+                    if (!String(batch.id || '').startsWith(prefix)) return max;
+                    const value = Number(String(batch.id).slice(prefix.length));
+                    return Number.isInteger(value) ? Math.max(max, value) : max;
+                }, 0) + 1;
+                return `${prefix}${String(next).padStart(3, '0')}`;
+            },
+
+            getAvailableGradingLots(eggTypeId) {
+                const usedByRecord = {};
+                this.state.sales.forEach(sale => (sale.gradingAllocations || []).forEach(allocation => {
+                    if (allocation.eggTypeId !== eggTypeId) return;
+                    usedByRecord[allocation.gradingRecordId] = (usedByRecord[allocation.gradingRecordId] || 0) + Number(allocation.qtyEggs || 0);
+                }));
+                return [...this.state.gradingRecords].sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp)).map(record => ({
+                    record,
+                    available: Math.max(0, Number(record.quantities?.[eggTypeId] || 0) - Number(usedByRecord[record.id] || 0))
+                })).filter(lot => lot.available > 0);
+            },
+
+            getEggTypeStock(eggTypeId) {
+                return this.getAvailableGradingLots(eggTypeId).reduce((sum, lot) => sum + lot.available, 0);
+            },
+
+            getEggTypeStocks() {
+                return Object.fromEntries(this.state.eggTypes.map(type => [type.id, this.getEggTypeStock(type.id)]));
+            },
+
+            getBatchGradedWeight(batchId) {
+                return this.state.gradingRecords.filter(record => record.importBatchId === batchId).reduce((sum, record) => sum + Number(record.estimatedWeight || 0), 0);
+            },
+
+            getBatchGradedSoldWeight(batchId) {
+                return this.state.sales.reduce((sum, sale) => sum + (sale.gradingAllocations || []).filter(allocation => allocation.importBatchId === batchId).reduce((n, allocation) => n + Number(allocation.weightKg || 0), 0), 0);
+            },
+
+            getBatchUngradedWeight(batchId) {
+                const batch = this.state.inventory.find(item => item.id === batchId);
+                if (!batch) return 0;
+                const rawConsumed = Math.max(0, Number(batch.totalQty || 0) - Number(batch.remainingQty || 0));
+                const legacyConsumed = Math.max(0, rawConsumed - this.getBatchGradedSoldWeight(batchId));
+                return Math.max(0, Number(batch.totalQty || 0) - legacyConsumed - this.getBatchGradedWeight(batchId));
+            },
+
+            renderSizeStockCards(targetId, compact = false) {
+                const target = document.getElementById(targetId);
+                if (!target) return;
+                const stocks = this.getEggTypeStocks();
+                const threshold = this.state.saleMode === 'batch' ? this.state.batchSize : 1;
+                target.innerHTML = this.state.eggTypes.map((type, index) => {
+                    const stock = stocks[type.id] || 0;
+                    const available = stock >= threshold;
+                    return `<div class="${compact ? 'p-3' : 'p-4'} rounded-xl border ${available ? 'bg-white border-gray-200' : 'bg-gray-100 border-gray-200 opacity-70'} shadow-sm min-w-0">
+                        <div class="flex items-center justify-between gap-2"><span class="w-6 h-6 rounded-full bg-primary-100 text-primary-700 text-xs font-bold flex items-center justify-center">${index + 1}</span>${available ? '<span class="w-2 h-2 rounded-full bg-emerald-500"></span>' : '<span class="w-2 h-2 rounded-full bg-gray-400"></span>'}</div>
+                        <p class="text-xs text-gray-500 mt-2 truncate" title="${this.escapeHtml(type.name)}">${this.escapeHtml(type.name)}</p>
+                        <p class="${compact ? 'text-lg' : 'text-2xl'} font-bold text-gray-800 mt-0.5">${stock.toLocaleString(i18n.locale())}</p>
+                        <p class="text-[11px] text-gray-500">${i18n.t('eggs')} · ${Math.floor(stock / this.state.batchSize).toLocaleString(i18n.locale())} × 30</p>
+                    </div>`;
+                }).join('');
+            },
+
+            renderGradingInputs() {
+                const grid = document.getElementById('grading-input-grid');
+                if (!grid) return;
+                grid.innerHTML = this.state.eggTypes.map((type, index) => `<label class="block rounded-xl border border-gray-200 bg-white p-3">
+                    <span class="flex items-center gap-2 text-xs text-gray-500"><b class="text-primary-600">${index + 1}</b><span class="truncate" title="${this.escapeHtml(type.name)}">${this.escapeHtml(type.name)}</span></span>
+                    <input id="grading-qty-${type.id}" data-grading-qty type="number" inputmode="numeric" min="0" step="1" value="0" oninput="app.updateGradingSummary()" class="w-full mt-2 p-2.5 text-xl font-bold text-center bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500">
+                </label>`).join('');
+            },
+
+            renderGradingPage() {
+                this.renderSizeStockCards('grading-stock-grid');
+                this.renderGradingInputs();
+                const select = document.getElementById('grading-batch');
+                if (!select) return;
+                const previous = select.value;
+                const batches = this.state.inventory.map(batch => ({ batch, available: this.getBatchUngradedWeight(batch.id) })).filter(item => item.available + 1e-9 >= this.state.eggWeight);
+                if (!batches.length) {
+                    select.replaceChildren(new Option(i18n.t('No receiving batches are available for grading.'), '', true, true));
+                    select.disabled = true;
+                } else {
+                    select.replaceChildren(...batches.map(({batch, available}) => new Option(`${batch.id} — ${batch.date} — ${available.toFixed(1)} kg`, batch.id)));
+                    select.disabled = false;
+                    select.value = batches.some(item => item.batch.id === previous) ? previous : batches[0].batch.id;
+                }
+                this.updateGradingSummary();
+                this.renderGradingHistory();
+            },
+
+            getGradingFormQuantities() {
+                return Object.fromEntries(this.state.eggTypes.map(type => [type.id, Number(document.getElementById(`grading-qty-${type.id}`)?.value || 0)]));
+            },
+
+            updateGradingSummary() {
+                const quantities = this.getGradingFormQuantities();
+                const values = Object.values(quantities);
+                const valid = values.every(value => Number.isInteger(value) && value >= 0);
+                const totalEggs = valid ? values.reduce((sum, value) => sum + value, 0) : 0;
+                const estimatedWeight = totalEggs * this.state.eggWeight;
+                const batchId = document.getElementById('grading-batch')?.value || '';
+                const available = batchId ? this.getBatchUngradedWeight(batchId) : 0;
+                const totalEl = document.getElementById('grading-total-eggs');
+                const weightEl = document.getElementById('grading-estimated-weight');
+                const availableEl = document.getElementById('grading-batch-available');
+                const submit = document.getElementById('btn-save-grading');
+                if (totalEl) totalEl.innerText = totalEggs.toLocaleString(i18n.locale());
+                if (weightEl) weightEl.innerText = `${estimatedWeight.toFixed(1)} kg`;
+                if (availableEl) availableEl.innerText = `${available.toFixed(1)} kg`;
+                if (submit) submit.disabled = !batchId || !valid || totalEggs <= 0 || estimatedWeight > available + 1e-9;
+            },
+
+            processGrading(event) {
+                event.preventDefault();
+                if (this.state.role !== 'supervisor' && !this.state.permissions.grading) return this.showToast(i18n.t('Access denied by Supervisor settings.'), 'error');
+                const importBatchId = document.getElementById('grading-batch').value;
+                if (!importBatchId || !this.state.inventory.some(batch => batch.id === importBatchId)) return this.showToast(i18n.t('Select a receiving batch.'), 'warning');
+                const quantities = this.getGradingFormQuantities();
+                const values = Object.values(quantities);
+                if (!values.every(value => Number.isInteger(value) && value >= 0)) return this.showToast(i18n.t('Egg quantities must be non-negative whole numbers.'), 'warning');
+                const totalEggs = values.reduce((sum, value) => sum + value, 0);
+                if (totalEggs <= 0) return this.showToast(i18n.t('Enter at least one egg to save a grading record.'), 'warning');
+                const availableWeight = this.getBatchUngradedWeight(importBatchId);
+                const estimatedWeight = totalEggs * this.state.eggWeight;
+                if (estimatedWeight > availableWeight + 1e-9) return this.showToast(i18n.format('Estimated grading weight exceeds the available ungraded weight ({weight} kg).', { weight: availableWeight.toFixed(1) }), 'error');
+                const record = {
+                    id: `GRD-${Date.now()}`,
+                    importBatchId,
+                    timestamp: new Date().toISOString(),
+                    operator: this.state.role,
+                    quantities,
+                    typeNames: Object.fromEntries(this.state.eggTypes.map(type => [type.id, type.name])),
+                    totalEggs,
+                    estimatedWeight
+                };
+                this.state.gradingRecords.push(record);
+                this.logAudit('grading', 'create', record.id, null, JSON.parse(JSON.stringify(record)), 'Batch grading recorded');
+                this.saveData();
+                this.showToast(i18n.format('Grading record saved for batch {batch}.', { batch: importBatchId }), 'success');
+            },
+
+            renderGradingHistory() {
+                const tbody = document.getElementById('grading-history-list');
+                if (!tbody) return;
+                const records = [...this.state.gradingRecords].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+                tbody.innerHTML = records.length ? records.map(record => {
+                    const breakdown = this.state.eggTypes.filter(type => Number(record.quantities?.[type.id] || 0) > 0).map(type => `<span class="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-primary-50 text-primary-700 text-xs"><b>${this.escapeHtml(record.typeNames?.[type.id] || type.name)}</b> ${Number(record.quantities[type.id]).toLocaleString(i18n.locale())}</span>`).join(' ');
+                    return `<tr class="hover:bg-gray-50"><td class="px-5 py-4 whitespace-nowrap">${new Date(record.timestamp).toLocaleString(i18n.locale())}</td><td class="px-5 py-4 font-mono text-xs font-semibold">${record.id}</td><td class="px-5 py-4 font-medium">${record.importBatchId}</td><td class="px-5 py-4"><div class="flex flex-wrap gap-1">${breakdown}</div></td><td class="px-5 py-4 text-right font-bold">${Number(record.totalEggs).toLocaleString(i18n.locale())}</td><td class="px-5 py-4">${i18n.t(record.operator === 'supervisor' ? 'Supervisor' : 'Operator')}</td></tr>`;
+                }).join('') : `<tr><td colspan="6" class="p-10 text-center text-gray-500">${i18n.t('No grading records yet.')}</td></tr>`;
+            },
+
             navigate(view) {
                 if (this.state.role === 'operator') {
                     if (!this.state.permissions[view]) {
@@ -944,14 +1202,14 @@
                     activeNav.classList.remove('text-slate-300', 'bg-slate-800');
                     activeNav.classList.add('bg-primary-600', 'text-white');
                 }
-                ['pos', 'inventory', 'dashboard', 'pricing', 'audit', 'settings', 'permissions'].forEach(v => {
+                ['pos', 'inventory', 'grading', 'dashboard', 'pricing', 'audit', 'settings', 'permissions'].forEach(v => {
                     document.getElementById(`view-${v}`).classList.add('hidden');
                 });
                 document.getElementById(`view-${view}`).classList.remove('hidden');
                 const mobileNav = document.getElementById('nav-links');
                 if (window.innerWidth < 768) { mobileNav.classList.add('hidden'); mobileNav.classList.remove('flex'); }
 
-                const titles = { pos: 'Point of Sale', inventory: 'Inventory Management', dashboard: 'Financial Dashboard', pricing: 'Egg Pricing', audit: 'Audit Log', settings: 'System Settings', permissions: 'Access Control' };
+                const titles = { pos: 'Point of Sale', inventory: 'Inventory Management', grading: 'Egg Grading', dashboard: 'Financial Dashboard', pricing: 'Egg Pricing', audit: 'Audit Log', settings: 'System Settings', permissions: 'Access Control' };
                 document.getElementById('page-title').innerText = i18n.t(titles[view]);
                 this.updateUI();
             },
@@ -974,7 +1232,7 @@
                     badge.classList.replace('text-yellow-800', 'text-gray-600');
                     label.innerText = i18n.t('Operator Mode');
                     if (!this.state.permissions[this.currentView]) {
-                        const pages = ['pos','inventory','dashboard','pricing','settings','permissions'];
+                        const pages = ['pos','inventory','grading','dashboard','pricing','settings','permissions'];
                         const allowedView = pages.find(k => this.state.permissions[k]);
                         this.navigate(allowedView || 'pos');
                     }
@@ -989,6 +1247,7 @@
                 const p = this.state.permissions;
                 document.getElementById('nav-pos').parentElement.style.display = (isSup || p.pos) ? 'block' : 'none';
                 document.getElementById('nav-inventory').parentElement.style.display = (isSup || p.inventory) ? 'block' : 'none';
+                document.getElementById('nav-grading').parentElement.style.display = (isSup || p.grading) ? 'block' : 'none';
                 document.getElementById('nav-dashboard').parentElement.style.display = (isSup || p.dashboard) ? 'block' : 'none';
                 document.getElementById('nav-pricing').parentElement.style.display = (isSup || p.pricing) ? 'block' : 'none';
                 document.getElementById('nav-audit').parentElement.style.display = isSup ? 'block' : 'none';
@@ -997,16 +1256,34 @@
             },
 
             getSelectedEggType() {
-                return this.state.eggTypes.find(type => type.id === this.state.selectedEggTypeId) || this.state.eggTypes[0] || this.defaultEggTypes(this.state.dailyPrice)[0];
+                return this.state.eggTypes.find(type => type.id === this.state.selectedEggTypeId) || null;
             },
 
             renderEggTypeOptions() {
                 const select = document.getElementById('pos-egg-type');
                 if (!select || !Array.isArray(this.state.eggTypes) || !this.state.eggTypes.length) return;
-                const current = this.state.eggTypes.some(type => type.id === this.state.selectedEggTypeId) ? this.state.selectedEggTypeId : this.state.eggTypes[0].id;
-                this.state.selectedEggTypeId = current;
-                select.replaceChildren(...this.state.eggTypes.map(type => new Option(type.name, type.id)));
-                select.value = current;
+                const required = this.state.saleMode === 'batch' ? this.state.batchSize : 1;
+                const stocks = this.getEggTypeStocks();
+                const options = this.state.eggTypes.map(type => {
+                    const stock = stocks[type.id] || 0;
+                    const option = new Option(`${type.name} — ${i18n.format('{count} eggs', { count: stock.toLocaleString(i18n.locale()) })}`, type.id);
+                    option.disabled = stock < required;
+                    return option;
+                });
+                const available = this.state.eggTypes.filter(type => (stocks[type.id] || 0) >= required);
+                if (!available.length) {
+                    const placeholder = new Option(i18n.t('Unavailable for selected sale option'), '', true, true);
+                    placeholder.disabled = true;
+                    select.replaceChildren(placeholder, ...options);
+                    select.disabled = true;
+                    this.state.selectedEggTypeId = '';
+                } else {
+                    const current = available.some(type => type.id === this.state.selectedEggTypeId) ? this.state.selectedEggTypeId : available[0].id;
+                    this.state.selectedEggTypeId = current;
+                    select.replaceChildren(...options);
+                    select.disabled = false;
+                    select.value = current;
+                }
                 document.getElementById('pos-sale-mode').value = this.state.saleMode;
             },
 
@@ -1057,7 +1334,7 @@
                 const saleQuantity = parseInt(document.getElementById('pos-quantity')?.value, 10) || 0;
                 const eggsPerSaleUnit = saleMode === 'batch' ? this.state.batchSize : 1;
                 const qtyEggs = saleQuantity * eggsPerSaleUnit;
-                const appliedPrice = saleMode === 'batch' ? Number(eggType.batchPrice) : Number(eggType.retailPrice);
+                const appliedPrice = eggType ? (saleMode === 'batch' ? Number(eggType.batchPrice) : Number(eggType.retailPrice)) : 0;
                 return { eggType, saleMode, saleQuantity, eggsPerSaleUnit, qtyEggs, appliedPrice, total: saleQuantity * appliedPrice };
             },
 
@@ -1067,10 +1344,12 @@
                 this.renderEggTypeOptions();
                 const selection = this.getSaleDetails();
                 
-                const totalStock = this.getTotalStock();
-                const estimatedEggs = Math.floor(totalStock / this.state.eggWeight);
-                document.getElementById('pos-stock-display').innerText = i18n.format('{kg} kg (~{eggs} eggs)', { kg: totalStock.toLocaleString(i18n.locale(), {minimumFractionDigits: 1, maximumFractionDigits: 1}), eggs: estimatedEggs.toLocaleString(i18n.locale()) });
+                const sizeStocks = this.getEggTypeStocks();
+                const totalSellableEggs = Object.values(sizeStocks).reduce((sum, stock) => sum + stock, 0);
+                document.getElementById('pos-stock-display').innerText = i18n.format('{count} eggs', { count: totalSellableEggs.toLocaleString(i18n.locale()) });
                 document.getElementById('pos-unit-price').innerText = selection.appliedPrice.toFixed(2);
+                this.renderSizeStockCards('pos-size-stock-grid', true);
+                document.getElementById('pos-stock-empty').classList.toggle('hidden', totalSellableEggs > 0);
                 
                 const todaySales = this.state.sales.filter(s => new Date(s.timestamp).toDateString() === new Date().toDateString());
                 const todayQty = todaySales.reduce((sum, s) => sum + (s.qtyEggs || 0), 0);
@@ -1085,12 +1364,13 @@
                 if (dashTrend) dashTrend.style.display = (isSup || p.dashboard_trend) ? 'block' : 'none';
 
                 if (this.currentView === 'inventory') this.renderInventory();
+                if (this.currentView === 'grading') this.renderGradingPage();
                 if (this.currentView === 'dashboard') this.renderDashboard();
                 if (this.currentView === 'pricing') { this.renderEggTypePricing(); this.renderPriceTracker(); }
                 if (this.currentView === 'audit') this.renderAuditLog();
                 if (this.currentView === 'settings') this.loadBasicSettingsUI();
                 if (this.currentView === 'permissions') {
-                    const keys = ['pos', 'pos_calc', 'pos_receipt_op', 'pos_receipt_id', 'inventory', 'inv_add', 'inv_view', 'inv_edit', 'inv_delete', 'dashboard', 'dashboard_profit', 'dashboard_trend', 'pricing', 'settings', 'permissions'];
+                    const keys = ['pos', 'pos_calc', 'pos_receipt_op', 'pos_receipt_id', 'inventory', 'inv_add', 'inv_view', 'inv_edit', 'inv_delete', 'grading', 'dashboard', 'dashboard_profit', 'dashboard_trend', 'pricing', 'settings', 'permissions'];
                     keys.forEach(k => { const el = document.getElementById('perm-'+k); if(el) el.checked = !!this.state.permissions[k]; });
                 }
                 this.calculateTotal();
@@ -1101,10 +1381,11 @@
             calculateTotal() {
                 const details = this.getSaleDetails();
                 const isBatch = details.saleMode === 'batch';
-                const weightToDeduct = details.qtyEggs * this.state.eggWeight;
+                const selectedStock = details.eggType ? this.getEggTypeStock(details.eggType.id) : 0;
 
-                document.getElementById('pos-summary-type').innerText = details.eggType.name;
+                document.getElementById('pos-summary-type').innerText = details.eggType?.name || '-';
                 document.getElementById('pos-summary-mode').innerText = isBatch ? i18n.format('Batch ({count} eggs)', { count: this.state.batchSize }) : i18n.t('Retail');
+                document.getElementById('pos-summary-stock').innerText = i18n.format('{count} eggs', { count: selectedStock.toLocaleString(i18n.locale()) });
                 document.getElementById('pos-unit-price-label').innerText = isBatch ? i18n.format('Price per batch ({count})', { count: this.state.batchSize }) : i18n.t('Price per egg');
                 document.getElementById('pos-unit-price').innerText = details.appliedPrice.toFixed(2);
                 document.getElementById('pos-summary-qty-label').innerText = i18n.t(isBatch ? 'Batch quantity' : 'Retail quantity');
@@ -1125,7 +1406,7 @@
 
                 if (!useCalc) {
                     changeDueEl.innerHTML = '';
-                    btnComplete.disabled = (details.saleQuantity <= 0 || weightToDeduct > this.getTotalStock());
+                    btnComplete.disabled = (!details.eggType || details.saleQuantity <= 0 || details.qtyEggs > selectedStock);
                     return;
                 }
 
@@ -1135,7 +1416,7 @@
                     return;
                 }
 
-                if (received >= details.total && details.saleQuantity > 0) {
+                if (received >= details.total && details.saleQuantity > 0 && details.eggType && details.qtyEggs <= selectedStock) {
                     const change = received - details.total;
                     changeDueEl.innerHTML = `<span class="text-green-600 font-bold">${i18n.t('Change Due')}: $${change.toFixed(2)}</span>`;
                     btnComplete.disabled = false;
@@ -1155,12 +1436,10 @@
                 const receivedInput = document.getElementById('pos-received');
                 const receivedAmount = useCalc ? (parseFloat(receivedInput.value) || 0) : details.total;
 
+                if (!details.eggType) return this.showToast(i18n.t('No graded egg stock is available. Record Egg Grading before selling.'), 'warning');
                 if (!details.saleQuantity || details.saleQuantity <= 0) return this.showToast(i18n.format('Please enter a valid number of {unit}.', { unit: i18n.t(details.saleMode === 'batch' ? 'batches' : 'eggs') }), 'warning');
-
-                const weightToDeduct = numEggs * this.state.eggWeight;
-                const totalStock = this.getTotalStock();
-
-                if (weightToDeduct > totalStock) return this.showToast(i18n.format('Insufficient stock! Only ~{count} eggs available.', { count: Math.floor(totalStock / this.state.eggWeight) }), 'error');
+                const availableTypeStock = this.getEggTypeStock(details.eggType.id);
+                if (numEggs > availableTypeStock) return this.showToast(i18n.format('Insufficient {type} stock. Only {count} eggs are available.', { type: details.eggType.name, count: availableTypeStock.toLocaleString(i18n.locale()) }), 'error');
                 
                 const salePrice = details.appliedPrice;
                 const totalRevenue = details.total;
@@ -1168,25 +1447,22 @@
                 if (useCalc && receivedAmount < totalRevenue) return this.showToast(i18n.t('Amount received is less than total.'), 'error');
                 const changeAmount = receivedAmount - totalRevenue;
 
-                let qtyToFulfill = weightToDeduct, totalCostBasis = 0, batchUpdates = [];
-                let sortedInventory = [...this.state.inventory].sort((a, b) => new Date(a.date) - new Date(b.date));
-
-                for (let i = 0; i < sortedInventory.length; i++) {
-                    if (qtyToFulfill === 0) break;
-                    let batch = sortedInventory[i];
-                    if (batch.remainingQty > 0) {
-                        let amountTaken = Math.min(batch.remainingQty, qtyToFulfill);
-                        batch.remainingQty -= amountTaken;
-                        qtyToFulfill -= amountTaken;
-                        totalCostBasis += (amountTaken * batch.costPrice);
-                        batchUpdates.push(batch);
-                    }
+                let eggsToFulfill = numEggs, totalCostBasis = 0;
+                const gradingAllocations = [];
+                for (const lot of this.getAvailableGradingLots(details.eggType.id)) {
+                    if (eggsToFulfill <= 0) break;
+                    const qtyEggs = Math.min(lot.available, eggsToFulfill);
+                    const batch = this.state.inventory.find(item => item.id === lot.record.importBatchId);
+                    if (!batch) continue;
+                    const expectedWeight = qtyEggs * this.state.eggWeight;
+                    const weightKg = Math.min(Number(batch.remainingQty || 0), expectedWeight);
+                    batch.remainingQty = Math.max(0, Number(batch.remainingQty || 0) - weightKg);
+                    totalCostBasis += weightKg * Number(batch.costPrice || 0);
+                    gradingAllocations.push({ gradingRecordId: lot.record.id, importBatchId: lot.record.importBatchId, eggTypeId: details.eggType.id, qtyEggs, weightKg, costPrice: Number(batch.costPrice || 0) });
+                    eggsToFulfill -= qtyEggs;
                 }
-
-                batchUpdates.forEach(updatedBatch => {
-                    const index = this.state.inventory.findIndex(b => b.id === updatedBatch.id);
-                    if(index !== -1) this.state.inventory[index] = updatedBatch;
-                });
+                if (eggsToFulfill > 0) return this.showToast(i18n.format('Insufficient {type} stock. Only {count} eggs are available.', { type: details.eggType.name, count: availableTypeStock.toLocaleString(i18n.locale()) }), 'error');
+                const weightToDeduct = gradingAllocations.reduce((sum, allocation) => sum + allocation.weightKg, 0);
 
                 const newSale = {
                     id: 'TRX-' + Date.now(), timestamp: new Date().toISOString(), operator: this.state.role,
@@ -1195,7 +1471,8 @@
                     batchSize: details.saleMode === 'batch' ? this.state.batchSize : null,
                     qtyEggs: numEggs, weightKg: weightToDeduct, unitPrice: salePrice,
                     priceUnit: details.saleMode === 'batch' ? 'batch' : 'egg', total: totalRevenue,
-                    costBasis: totalCostBasis, received: receivedAmount, change: changeAmount
+                    costBasis: totalCostBasis, received: receivedAmount, change: changeAmount,
+                    inventoryMode: 'graded', gradingAllocations
                 };
 
                 this.state.sales.push(newSale);
@@ -1246,12 +1523,15 @@
 
                 if (!date || !qty || qty <= 0) return this.showToast(i18n.t('Invalid input for import.'), 'error');
 
-                this.state.inventory.push({ id: 'B-' + Date.now(), date, time, totalQty: qty, remainingQty: qty, costPrice: cost });
+                const batchId = this.generateImportBatchId(date);
+                const batch = { id: batchId, date, time, totalQty: qty, remainingQty: qty, costPrice: cost };
+                this.state.inventory.push(batch);
+                this.logAudit('inventory', 'create', batchId, null, JSON.parse(JSON.stringify(batch)), 'Receiving batch created');
                 this.saveData();
                 e.target.reset();
                 document.getElementById('import-date').valueAsDate = new Date();
                 document.getElementById('import-time').value = new Date().toTimeString().slice(0,5);
-                this.showToast(i18n.format('Successfully received {qty} kg.', { qty }), 'success');
+                this.showToast(i18n.format('Import received as batch {batch} ({qty} kg).', { batch: batchId, qty }), 'success');
             },
 
             openEditInventoryModal(id) {
@@ -1263,8 +1543,8 @@
                 document.getElementById('edit-inv-qty').value = batch.totalQty;
                 document.getElementById('edit-inv-cost').value = batch.costPrice;
                 
-                const soldQty = batch.totalQty - batch.remainingQty;
-                document.getElementById('edit-inv-min-hint').innerText = soldQty > 0 ? `* Min limit: ${soldQty.toFixed(1)} kg (already sold)` : '';
+                const committedQty = batch.totalQty - this.getBatchUngradedWeight(batch.id);
+                document.getElementById('edit-inv-min-hint').innerText = committedQty > 0 ? `* ${i18n.format('Cannot reduce total below committed weight ({qty} kg).', { qty: committedQty.toFixed(1) })}` : '';
                 
                 document.getElementById('inv-edit-modal').classList.remove('hidden');
             },
@@ -1282,8 +1562,9 @@
                 
                 const newTotal = parseFloat(document.getElementById('edit-inv-qty').value);
                 const soldQty = batch.totalQty - batch.remainingQty;
+                const committedQty = batch.totalQty - this.getBatchUngradedWeight(batch.id);
                 
-                if (newTotal < soldQty) return this.showToast(i18n.format('Cannot reduce total below sold amount ({qty} kg).', { qty: soldQty }), 'error');
+                if (newTotal < committedQty) return this.showToast(i18n.format('Cannot reduce total below committed weight ({qty} kg).', { qty: committedQty.toFixed(1) }), 'error');
 
                 batch.date = document.getElementById('edit-inv-date').value;
                 batch.time = document.getElementById('edit-inv-time').value;
@@ -1299,6 +1580,7 @@
             deleteInventoryBatch(id) {
                 const batch = this.state.inventory.find(b => b.id === id);
                 if(!batch) return;
+                if(this.state.gradingRecords.some(record => record.importBatchId === id)) return this.showToast(i18n.t('Cannot delete a batch with grading records.'), 'error');
                 if(batch.totalQty !== batch.remainingQty) return this.showToast(i18n.t('Cannot delete a batch that has been partially sold. Edit quantity instead.'), 'error');
                 if(!confirm(`Delete batch ${id}?`)) return;
                 
@@ -1622,8 +1904,8 @@
                 this.showToast(i18n.t('Basic settings saved successfully!'),'success');
             },
 
-            permissionLabels: {pos:'Point of Sale page',pos_calc:'Amount received calculator',pos_receipt_op:'Operator name on receipt',pos_receipt_id:'Transaction ID on receipt',inventory:'Inventory page',inv_add:'Add inventory imports',inv_view:'View inventory records',inv_edit:'Edit inventory records',inv_delete:'Delete inventory records',dashboard:'Financial dashboard',dashboard_profit:'Gross profit KPI',dashboard_trend:'Sales trend graph',pricing:'Egg Pricing page',settings:'System Settings page',permissions:'Permission management page'},
-            defaultPermissions(){return {pos:true,pos_calc:true,pos_receipt_op:true,pos_receipt_id:true,inventory:true,inv_add:true,inv_view:true,inv_edit:false,inv_delete:false,dashboard:false,dashboard_profit:false,dashboard_trend:false,pricing:false,settings:false,permissions:false};},
+            permissionLabels: {pos:'Point of Sale page',pos_calc:'Amount received calculator',pos_receipt_op:'Operator name on receipt',pos_receipt_id:'Transaction ID on receipt',inventory:'Inventory page',inv_add:'Add inventory imports',inv_view:'View inventory records',inv_edit:'Edit inventory records',inv_delete:'Delete inventory records',grading:'Egg Grading page',dashboard:'Financial dashboard',dashboard_profit:'Gross profit KPI',dashboard_trend:'Sales trend graph',pricing:'Egg Pricing page',settings:'System Settings page',permissions:'Permission management page'},
+            defaultPermissions(){return {pos:true,pos_calc:true,pos_receipt_op:true,pos_receipt_id:true,inventory:true,inv_add:true,inv_view:true,inv_edit:false,inv_delete:false,grading:true,dashboard:false,dashboard_profit:false,dashboard_trend:false,pricing:false,settings:false,permissions:false};},
             logAudit(module,action,recordId,before,after,summary,changes=[]){if(!Array.isArray(this.state.auditLogs))this.state.auditLogs=[];this.state.auditLogs.push({id:'AUD-'+Date.now(),timestamp:new Date().toISOString(),actor:this.state.role,module,action,recordId,summary,changes,before,after});},
             buildPermissionChanges(before,after){return Object.keys(this.permissionLabels).filter(k=>Boolean(before[k])!==Boolean(after[k])).map(k=>({key:k,label:this.permissionLabels[k],from:Boolean(before[k]),to:Boolean(after[k])}));},
             getFilteredAudit(){let d=[...(this.state.auditLogs||[])],q=this.auditTable.search.toLowerCase();d=d.filter(x=>(!q||[x.actor,x.module,x.action,x.recordId,x.summary,JSON.stringify(x.changes)].join(' ').toLowerCase().includes(q))&&(!this.auditTable.filters.dateFrom||x.timestamp>=this.auditTable.filters.dateFrom+'T00:00:00')&&(!this.auditTable.filters.dateTo||x.timestamp<=this.auditTable.filters.dateTo+'T23:59:59')&&(this.auditTable.filters.module==='all'||x.module===this.auditTable.filters.module)&&(this.auditTable.filters.action==='all'||x.action===this.auditTable.filters.action));d.sort((a,b)=>{let x=a[this.auditTable.sortBy]||'',y=b[this.auditTable.sortBy]||'',r=x<y?-1:x>y?1:0;return this.auditTable.sortDir==='asc'?r:-r});return d;},
@@ -1651,7 +1933,7 @@
             handleAuditSearch(e){this.auditTable.search=e.target.value;this.renderAuditLog();},toggleAuditFilters(){this.auditTable.filters.show=!this.auditTable.filters.show;document.getElementById('audit-filter-panel').classList.toggle('hidden',!this.auditTable.filters.show)},applyAuditFilters(){this.auditTable.filters.dateFrom=document.getElementById('audit-date-from').value;this.auditTable.filters.dateTo=document.getElementById('audit-date-to').value;this.auditTable.filters.module=document.getElementById('audit-module').value;this.auditTable.filters.action=document.getElementById('audit-action').value;this.renderAuditLog()},clearAuditFilters(){['audit-date-from','audit-date-to','audit-search'].forEach(id=>document.getElementById(id).value='');document.getElementById('audit-module').value='all';document.getElementById('audit-action').value='all';this.auditTable.search='';this.auditTable.filters={show:this.auditTable.filters.show,dateFrom:'',dateTo:'',module:'all',action:'all'};this.renderAuditLog()},sortAudit(c){if(this.auditTable.sortBy===c)this.auditTable.sortDir=this.auditTable.sortDir==='asc'?'desc':'asc';else{this.auditTable.sortBy=c;this.auditTable.sortDir='desc'}this.renderAuditLog()},exportAuditCSV(){const d=this.auditTable.currentData;if(!d.length)return this.showToast(i18n.t('No data to export based on current filters.'),'warning');let csv='Timestamp,Actor,Module,Action,Record,Summary,Changes\n';d.forEach(x=>csv+=`"${x.timestamp}","${x.actor}","${x.module}","${x.action}","${x.recordId}","${String(x.summary||'').replaceAll('"','""')}","${JSON.stringify(x.changes||[]).replaceAll('"','""')}"\n`);this.downloadCSV(csv,`eggpro_audit_${Date.now()}.csv`)},
             updatePermissions() {
                 const before={...this.defaultPermissions(),...(this.state.permissions||{})};
-                const keys = ['pos', 'pos_calc', 'pos_receipt_op', 'pos_receipt_id', 'inventory', 'inv_add', 'inv_view', 'inv_edit', 'inv_delete', 'dashboard', 'dashboard_profit', 'dashboard_trend', 'pricing', 'settings', 'permissions'];
+                const keys = ['pos', 'pos_calc', 'pos_receipt_op', 'pos_receipt_id', 'inventory', 'inv_add', 'inv_view', 'inv_edit', 'inv_delete', 'grading', 'dashboard', 'dashboard_profit', 'dashboard_trend', 'pricing', 'settings', 'permissions'];
                 const after={}; keys.forEach(k=>{const el=document.getElementById('perm-'+k);if(el)after[k]=el.checked;});
                 this.state.permissions=after;
                 const changes=this.buildPermissionChanges(before,after);
