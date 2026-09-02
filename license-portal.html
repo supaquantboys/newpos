@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EggPro License Portal — Development Demo</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+    body{font-family:Inter,sans-serif}.field{width:100%;border:1px solid #dbe3ef;border-radius:.8rem;padding:.72rem .85rem;background:#fff;outline:none}.field:focus{border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.12)}
+    .feature:has(input:checked){border-color:#86efac;background:#f0fdf4;color:#166534}.duration.active{background:#1d4ed8;color:white;border-color:#1d4ed8}
+  </style>
+</head>
+<body class="min-h-screen bg-slate-50 text-slate-800">
+  <div class="bg-amber-950 text-amber-50 px-4 py-3 text-sm font-medium sticky top-0 z-40">
+    <div class="max-w-7xl mx-auto flex items-start gap-3"><i class="fa-solid fa-triangle-exclamation mt-0.5 text-amber-300"></i><p><b>Development Demo:</b> this static page contains a public test signer for UX validation. It is not a production license authority. Production signing must run behind company SSO/RBAC with the private key in KMS/HSM.</p></div>
+  </div>
+  <header class="bg-slate-950 text-white border-b border-slate-800">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 py-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div class="flex items-center gap-3"><span class="w-11 h-11 rounded-2xl bg-amber-400 text-slate-950 flex items-center justify-center text-xl"><i class="fa-solid fa-key"></i></span><div><p class="text-xs uppercase tracking-[.22em] text-slate-400">EggPro Operations</p><h1 class="text-xl font-bold">License Portal</h1></div></div>
+      <div class="flex items-center gap-2"><span class="px-3 py-2 rounded-xl bg-amber-400/10 text-amber-300 border border-amber-400/20 text-xs font-bold">DEVELOPMENT DEMO</span><a href="index.html" class="px-3 py-2 rounded-xl bg-white/10 hover:bg-white/15 text-sm"><i class="fa-solid fa-arrow-left mr-2"></i>EggPro Dashboard</a></div>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-7">
+    <section>
+      <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 mb-4"><div><p class="text-sm font-semibold text-blue-600">Portal overview</p><h2 class="text-2xl font-bold mt-1">License operations</h2></div><p id="portal-clock" class="text-xs text-slate-500"></p></div>
+      <div class="grid grid-cols-2 lg:grid-cols-5 gap-3">
+        <article class="bg-white border border-slate-200 rounded-2xl p-4"><p class="text-xs text-slate-500">Active</p><b id="kpi-active" class="text-3xl block mt-2">0</b></article>
+        <article class="bg-white border border-slate-200 rounded-2xl p-4"><p class="text-xs text-slate-500">Expiring &lt; 7 days</p><b id="kpi-7" class="text-3xl block mt-2 text-amber-600">0</b></article>
+        <article class="bg-white border border-slate-200 rounded-2xl p-4"><p class="text-xs text-slate-500">Expiring &lt; 30 days</p><b id="kpi-30" class="text-3xl block mt-2 text-orange-600">0</b></article>
+        <article class="bg-white border border-slate-200 rounded-2xl p-4"><p class="text-xs text-slate-500">Expired</p><b id="kpi-expired" class="text-3xl block mt-2 text-rose-600">0</b></article>
+        <article class="bg-white border border-slate-200 rounded-2xl p-4 col-span-2 lg:col-span-1"><p class="text-xs text-slate-500">Issued today</p><b id="kpi-today" class="text-3xl block mt-2 text-blue-600">0</b></article>
+      </div>
+    </section>
+
+    <section class="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_22rem] gap-6 items-start">
+      <form id="issue-form" class="bg-white border border-slate-200 rounded-3xl shadow-sm overflow-hidden">
+        <div class="p-5 sm:p-6 border-b border-slate-100"><p class="text-xs uppercase tracking-[.18em] font-bold text-blue-600">New license</p><h2 class="text-xl font-bold mt-1">Issue signed .lic</h2><p class="text-sm text-slate-500 mt-1">Paste a Machine ID or import the request exported by EggPro.</p></div>
+        <div class="p-5 sm:p-6 space-y-6">
+          <div class="rounded-2xl border-2 border-dashed border-blue-200 bg-blue-50/50 p-4">
+            <div class="flex flex-col sm:flex-row sm:items-center gap-3"><label class="inline-flex items-center justify-center px-4 py-3 rounded-xl bg-white border border-blue-200 text-blue-700 font-semibold cursor-pointer hover:bg-blue-50"><input id="request-file" type="file" accept=".json,application/json" class="sr-only"><i class="fa-solid fa-file-import mr-2"></i>Upload machine-request.json</label><span id="request-status" class="text-sm text-slate-500">No request file loaded.</span></div>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <label><span class="text-sm font-semibold block mb-2">Customer name *</span><input id="customer-name" class="field" required maxlength="100" placeholder="ABC Company"></label>
+            <label><span class="text-sm font-semibold block mb-2">Customer ID *</span><input id="customer-id" class="field" required pattern="CUS-[A-Za-z0-9-]+" placeholder="CUS-000031"></label>
+            <label class="md:col-span-2"><span class="text-sm font-semibold block mb-2">Machine ID *</span><input id="machine-id" class="field font-mono text-sm" required pattern="MID1-(WEB|WIN|MAC)-[A-Z0-9]{8}-[A-Z0-9]{8}-[A-Z0-9]{8}" placeholder="MID1-WEB-XXXXXXXX-XXXXXXXX-XXXXXXXX"><small id="machine-meta" class="text-xs text-slate-500 mt-2 block">Hashed identifier only; never enter raw hardware serial numbers.</small></label>
+            <label><span class="text-sm font-semibold block mb-2">Product</span><select id="product-id" class="field"><option value="eggpro-dashboard">EggPro Dashboard</option></select></label>
+            <label><span class="text-sm font-semibold block mb-2">Edition</span><select id="edition" class="field"><option value="enterprise">Enterprise</option><option value="professional">Professional</option><option value="trial">Trial</option></select></label>
+          </div>
+          <div>
+            <div class="flex items-center justify-between gap-3 mb-3"><h3 class="font-bold">Validity</h3><span class="text-xs text-slate-500">UTC boundaries are saved in the license.</span></div>
+            <div class="grid grid-cols-2 sm:grid-cols-5 gap-2 mb-4">
+              <button type="button" class="duration border border-slate-200 rounded-xl px-3 py-2 text-sm font-semibold" data-days="30">30 days</button><button type="button" class="duration active border border-slate-200 rounded-xl px-3 py-2 text-sm font-semibold" data-days="90">90 days</button><button type="button" class="duration border border-slate-200 rounded-xl px-3 py-2 text-sm font-semibold" data-days="180">180 days</button><button type="button" class="duration border border-slate-200 rounded-xl px-3 py-2 text-sm font-semibold" data-days="365">365 days</button><button type="button" class="duration border border-slate-200 rounded-xl px-3 py-2 text-sm font-semibold" data-days="custom">Custom</button>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4"><label><span class="text-sm font-semibold block mb-2">Start date *</span><input id="start-date" type="date" class="field" required></label><label><span class="text-sm font-semibold block mb-2">Expiration date *</span><input id="expiry-date" type="date" class="field" required></label></div>
+            <div id="date-preview" class="mt-3 rounded-xl bg-slate-50 p-3 text-xs text-slate-600"></div>
+          </div>
+          <div>
+            <h3 class="font-bold mb-3">Feature entitlements</h3>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+              <label class="feature border border-slate-200 rounded-xl p-3 flex items-start gap-3"><input type="checkbox" name="feature" value="eggpro_core" checked disabled class="mt-1"><span><b class="block text-sm">EggPro Core</b><small class="text-xs opacity-70">Required application access</small></span></label>
+              <label class="feature border border-slate-200 rounded-xl p-3 flex items-start gap-3"><input type="checkbox" name="feature" value="pos" checked class="mt-1"><span><b class="block text-sm">Point of Sale</b><small class="text-xs opacity-70">Retail and batch sales</small></span></label>
+              <label class="feature border border-slate-200 rounded-xl p-3 flex items-start gap-3"><input type="checkbox" name="feature" value="inventory" checked class="mt-1"><span><b class="block text-sm">Inventory</b><small class="text-xs opacity-70">Imports and batches</small></span></label>
+              <label class="feature border border-slate-200 rounded-xl p-3 flex items-start gap-3"><input type="checkbox" name="feature" value="grading" checked class="mt-1"><span><b class="block text-sm">Egg Grading</b><small class="text-xs opacity-70">Size-level stock</small></span></label>
+              <label class="feature border border-slate-200 rounded-xl p-3 flex items-start gap-3"><input type="checkbox" name="feature" value="dashboard" checked class="mt-1"><span><b class="block text-sm">Dashboard</b><small class="text-xs opacity-70">Reporting and charts</small></span></label>
+              <label class="feature border border-slate-200 rounded-xl p-3 flex items-start gap-3"><input type="checkbox" name="feature" value="administration" checked class="mt-1"><span><b class="block text-sm">Administration</b><small class="text-xs opacity-70">Pricing, settings and audit</small></span></label>
+            </div>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4"><label><span class="text-sm font-semibold block mb-2">Purchase order</span><input id="purchase-order" class="field" placeholder="PO-2026-0912"></label><label><span class="text-sm font-semibold block mb-2">Customer-visible note</span><input id="customer-note" class="field" maxlength="160" placeholder="Optional"></label></div>
+        </div>
+        <div class="p-5 sm:p-6 bg-slate-50 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3"><p class="text-xs text-slate-500"><i class="fa-solid fa-shield-halved mr-1"></i>Payload changes invalidate the Ed25519 signature.</p><button type="submit" class="px-5 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold"><i class="fa-solid fa-arrow-right mr-2"></i>Review license</button></div>
+      </form>
+
+      <aside class="space-y-4 xl:sticky xl:top-20">
+        <article class="rounded-3xl bg-slate-950 text-white p-5"><p class="text-xs uppercase tracking-[.18em] text-slate-400">Signing profile</p><h3 class="font-bold mt-2">eggpro-demo-2026-01</h3><dl class="mt-4 space-y-3 text-sm"><div class="flex justify-between gap-4"><dt class="text-slate-400">Algorithm</dt><dd>Ed25519</dd></div><div class="flex justify-between gap-4"><dt class="text-slate-400">Canonicalization</dt><dd>JCS-compatible</dd></div><div class="flex justify-between gap-4"><dt class="text-slate-400">Environment</dt><dd class="text-amber-300">Demo only</dd></div></dl></article>
+        <article class="rounded-3xl bg-white border border-slate-200 p-5"><h3 class="font-bold">Offline workflow</h3><ol class="mt-4 space-y-3 text-sm"><li class="flex gap-3"><b class="w-6 h-6 rounded-full bg-blue-50 text-blue-700 text-xs flex items-center justify-center shrink-0">1</b><span>Export Machine Request in EggPro.</span></li><li class="flex gap-3"><b class="w-6 h-6 rounded-full bg-blue-50 text-blue-700 text-xs flex items-center justify-center shrink-0">2</b><span>Upload it here and issue the license.</span></li><li class="flex gap-3"><b class="w-6 h-6 rounded-full bg-blue-50 text-blue-700 text-xs flex items-center justify-center shrink-0">3</b><span>Transfer the .lic file to the customer.</span></li><li class="flex gap-3"><b class="w-6 h-6 rounded-full bg-blue-50 text-blue-700 text-xs flex items-center justify-center shrink-0">4</b><span>Import it from the profile → License menu.</span></li></ol></article>
+      </aside>
+    </section>
+
+    <section class="bg-white border border-slate-200 rounded-3xl overflow-hidden">
+      <div class="p-5 sm:p-6 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3"><div><p class="text-xs uppercase tracking-[.18em] font-bold text-blue-600">Audit history</p><h2 class="text-xl font-bold mt-1">Issued licenses</h2></div><button id="clear-demo" class="text-sm text-rose-600 hover:text-rose-700 font-semibold">Clear demo history</button></div>
+      <div class="overflow-x-auto"><table class="w-full min-w-[760px] text-sm"><thead class="bg-slate-50 text-xs uppercase tracking-wider text-slate-500"><tr><th class="text-left p-4">License</th><th class="text-left p-4">Customer</th><th class="text-left p-4">Machine</th><th class="text-left p-4">Validity</th><th class="text-left p-4">Status</th><th class="text-right p-4">Artifact</th></tr></thead><tbody id="history-body" class="divide-y divide-slate-100"></tbody></table></div>
+    </section>
+  </main>
+
+  <div id="confirm-modal" class="hidden fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 p-4 items-center justify-center">
+    <div class="bg-white rounded-3xl shadow-2xl max-w-lg w-full overflow-hidden"><div class="p-5 sm:p-6 border-b border-slate-100"><p class="text-xs uppercase tracking-[.18em] font-bold text-blue-600">Final confirmation</p><h2 class="text-xl font-bold mt-1">Issue signed license?</h2></div><dl id="confirm-details" class="p-5 sm:p-6 grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm"></dl><div class="p-5 sm:p-6 bg-slate-50 flex flex-col-reverse sm:flex-row sm:justify-end gap-3"><button id="cancel-issue" class="px-4 py-3 rounded-xl bg-white border border-slate-200 font-semibold">Cancel</button><button id="confirm-issue" class="px-4 py-3 rounded-xl bg-blue-600 text-white font-bold"><i class="fa-solid fa-signature mr-2"></i>Issue & download .lic</button></div></div>
+  </div>
+  <div id="toast" class="hidden fixed right-4 bottom-4 z-[60] max-w-sm rounded-2xl bg-slate-950 text-white px-4 py-3 shadow-2xl text-sm"></div>
+
+  <script>
+    const portal = {
+      pending:null,
+      privateJwk:{kty:'OKP',crv:'Ed25519',d:'nWGxne_9WmC6hEr0kuwsxERJxWl7MmkZcDusAxyuf2A',x:'11qYAYKxCrfVS_7TyWQHOg7hcvPapiMlrwIaaPcHURo',ext:true,key_ops:['sign']},
+      canonical(value){if(value===null||typeof value!=='object')return JSON.stringify(value);if(Array.isArray(value))return'['+value.map(v=>this.canonical(v)).join(',')+']';return'{'+Object.keys(value).sort().map(k=>JSON.stringify(k)+':'+this.canonical(value[k])).join(',')+'}'},
+      b64(bytes){let value='';new Uint8Array(bytes).forEach(b=>value+=String.fromCharCode(b));return btoa(value).replaceAll('+','-').replaceAll('/','_').replace(/=+$/g,'')},
+      history(){try{return JSON.parse(localStorage.getItem('eggProDemoLicenses')||'[]')}catch{return[]}},
+      saveHistory(items){localStorage.setItem('eggProDemoLicenses',JSON.stringify(items.slice(-250)))},
+      toast(message){const el=document.getElementById('toast');el.textContent=message;el.classList.remove('hidden');clearTimeout(this.toastTimer);this.toastTimer=setTimeout(()=>el.classList.add('hidden'),3500)},
+      download(value,name){const url=URL.createObjectURL(new Blob([JSON.stringify(value,null,2)],{type:'application/json'}));const a=Object.assign(document.createElement('a'),{href:url,download:name});a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)},
+      isoStart(date){return`${date}T00:00:00.000Z`},isoEnd(date){return`${date}T23:59:59.000Z`},
+      localDate(date=new Date()){return`${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`},
+      addDays(dateString,days){const date=new Date(`${dateString}T00:00:00Z`);date.setUTCDate(date.getUTCDate()+Number(days));return date.toISOString().slice(0,10)},
+      setDuration(days){document.querySelectorAll('.duration').forEach(button=>button.classList.toggle('active',button.dataset.days===String(days)));if(days!=='custom')document.getElementById('expiry-date').value=this.addDays(document.getElementById('start-date').value,days);this.updateDatePreview()},
+      updateDatePreview(){const start=document.getElementById('start-date').value,expiry=document.getElementById('expiry-date').value;document.getElementById('date-preview').textContent=start&&expiry?`UTC: ${this.isoStart(start)} → ${this.isoEnd(expiry)} · Local dates: ${new Date(this.isoStart(start)).toLocaleDateString()} → ${new Date(this.isoEnd(expiry)).toLocaleDateString()}`:'Choose both dates.'},
+      nextId(){const year=new Date().getUTCFullYear(),prefix=`LIC-${year}-`;const max=this.history().reduce((m,item)=>Math.max(m,Number(String(item.payload?.license_id||'').replace(prefix,''))||0),0);return`${prefix}${String(max+1).padStart(6,'0')}`},
+      collect(){
+        const customer_name=document.getElementById('customer-name').value.trim(),customer_id=document.getElementById('customer-id').value.trim().toUpperCase(),machine_id=document.getElementById('machine-id').value.trim().toUpperCase(),start=document.getElementById('start-date').value,expiry=document.getElementById('expiry-date').value;
+        if(!customer_name||!/^CUS-[A-Z0-9-]+$/.test(customer_id))throw new Error('Enter a customer name and a valid CUS- customer ID.');
+        if(!/^MID1-(WEB|WIN|MAC)-[A-Z0-9]{8}-[A-Z0-9]{8}-[A-Z0-9]{8}$/.test(machine_id))throw new Error('Machine ID format is invalid.');
+        if(!start||!expiry||Date.parse(this.isoEnd(expiry))<=Date.parse(this.isoStart(start)))throw new Error('Expiration must be after the start date.');
+        const features=['eggpro_core',...Array.from(document.querySelectorAll('input[name=feature]:checked')).map(input=>input.value).filter(v=>v!=='eggpro_core')];
+        return{schema_version:1,license_id:this.nextId(),customer_id,customer_name,product_id:document.getElementById('product-id').value,edition:document.getElementById('edition').value,machine_id,issued_at:new Date().toISOString(),not_before:this.isoStart(start),expires_at:this.isoEnd(expiry),features,grace_days:0,fingerprint_version:1,rehost_generation:0,metadata:{purchase_order:document.getElementById('purchase-order').value.trim(),customer_note:document.getElementById('customer-note').value.trim(),environment:'development-demo'}}
+      },
+      review(event){event.preventDefault();try{this.pending=this.collect();const p=this.pending;document.getElementById('confirm-details').innerHTML=[['Customer',p.customer_name],['License ID',p.license_id],['Machine ID',p.machine_id],['Edition',p.edition],['Valid from',new Date(p.not_before).toLocaleString()],['Valid until',new Date(p.expires_at).toLocaleString()],['Features',p.features.join(', ')]].map(([k,v])=>`<div class="${k==='Machine ID'||k==='Features'?'sm:col-span-2':''}"><dt class="text-xs uppercase tracking-wider text-slate-400">${k}</dt><dd class="font-semibold mt-1 break-all">${this.escape(v)}</dd></div>`).join('');document.getElementById('confirm-modal').classList.remove('hidden');document.getElementById('confirm-modal').classList.add('flex')}catch(error){this.toast(error.message)}},
+      escape(value){const el=document.createElement('div');el.textContent=String(value);return el.innerHTML},
+      async issue(){if(!this.pending)return;try{const key=await crypto.subtle.importKey('jwk',this.privateJwk,{name:'Ed25519'},false,['sign']);const signature=this.b64(await crypto.subtle.sign({name:'Ed25519'},key,new TextEncoder().encode(this.canonical(this.pending))));const license={format:'offline-license-v1',alg:'Ed25519',kid:'eggpro-demo-2026-01',payload:this.pending,signature};const items=this.history();items.push(license);this.saveHistory(items);this.download(license,`${this.pending.license_id}.lic`);this.pending=null;this.closeConfirm();this.render();this.toast('Signed license created and downloaded.')}catch(error){this.toast(`Signing failed: ${error.message}`)}},
+      closeConfirm(){document.getElementById('confirm-modal').classList.add('hidden');document.getElementById('confirm-modal').classList.remove('flex')},
+      async loadRequest(event){const file=event.target.files?.[0];if(!file)return;try{const request=JSON.parse(await file.text());if(Number(request.schema_version)!==1||!request.machine_id)throw new Error('Unsupported machine request.');document.getElementById('machine-id').value=String(request.machine_id).toUpperCase();document.getElementById('machine-meta').textContent=`${request.platform||'Unknown platform'} · App ${request.app_version||'unknown'} · Generated ${request.generated_at?new Date(request.generated_at).toLocaleString():'unknown'}`;document.getElementById('request-status').textContent=`Loaded ${file.name}`;this.toast('Machine request loaded.')}catch(error){this.toast(error.message)}finally{event.target.value=''}},
+      status(payload){const now=Date.now(),expiry=Date.parse(payload.expires_at);if(now>expiry)return['Expired','bg-rose-50 text-rose-700'];const days=(expiry-now)/86400000;if(days<=7)return['Expiring','bg-amber-50 text-amber-700'];return['Active','bg-emerald-50 text-emerald-700']},
+      render(){const items=this.history().sort((a,b)=>new Date(b.payload.issued_at)-new Date(a.payload.issued_at)),now=Date.now(),today=this.localDate();const active=items.filter(x=>now<=Date.parse(x.payload.expires_at)),exp=items.filter(x=>now>Date.parse(x.payload.expires_at));document.getElementById('kpi-active').textContent=active.length;document.getElementById('kpi-7').textContent=active.filter(x=>(Date.parse(x.payload.expires_at)-now)/86400000<=7).length;document.getElementById('kpi-30').textContent=active.filter(x=>(Date.parse(x.payload.expires_at)-now)/86400000<=30).length;document.getElementById('kpi-expired').textContent=exp.length;document.getElementById('kpi-today').textContent=items.filter(x=>x.payload.issued_at.slice(0,10)===today).length;document.getElementById('history-body').innerHTML=items.length?items.map((lic,index)=>{const p=lic.payload,[label,klass]=this.status(p);return`<tr><td class="p-4 font-mono font-semibold">${this.escape(p.license_id)}</td><td class="p-4"><b>${this.escape(p.customer_name)}</b><small class="block text-slate-500">${this.escape(p.customer_id)}</small></td><td class="p-4 font-mono text-xs">${this.escape(p.machine_id)}</td><td class="p-4 text-xs">${new Date(p.not_before).toLocaleDateString()} → ${new Date(p.expires_at).toLocaleDateString()}</td><td class="p-4"><span class="px-2.5 py-1 rounded-full text-xs font-bold ${klass}">${label}</span></td><td class="p-4 text-right"><button onclick="portal.redownload(${index})" class="px-3 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 font-semibold"><i class="fa-solid fa-download mr-1"></i>.lic</button></td></tr>`}).join(''):`<tr><td colspan="6" class="p-10 text-center text-slate-500">No licenses issued in this browser yet.</td></tr>`},
+      redownload(index){const items=this.history().sort((a,b)=>new Date(b.payload.issued_at)-new Date(a.payload.issued_at)),license=items[index];if(license)this.download(license,`${license.payload.license_id}.lic`)},
+      init(){const today=this.localDate();document.getElementById('start-date').value=today;this.setDuration(90);document.getElementById('portal-clock').textContent=`UTC ${new Date().toISOString().replace('T',' ').slice(0,19)} · Local ${new Date().toLocaleString()}`;document.getElementById('issue-form').addEventListener('submit',e=>this.review(e));document.getElementById('request-file').addEventListener('change',e=>this.loadRequest(e));document.getElementById('start-date').addEventListener('change',()=>this.setDuration(document.querySelector('.duration.active')?.dataset.days||'custom'));document.getElementById('expiry-date').addEventListener('change',()=>{document.querySelectorAll('.duration').forEach(b=>b.classList.toggle('active',b.dataset.days==='custom'));this.updateDatePreview()});document.querySelectorAll('.duration').forEach(button=>button.addEventListener('click',()=>this.setDuration(button.dataset.days)));document.getElementById('cancel-issue').addEventListener('click',()=>this.closeConfirm());document.getElementById('confirm-issue').addEventListener('click',()=>this.issue());document.getElementById('clear-demo').addEventListener('click',()=>{if(confirm('Clear local demo license history?')){localStorage.removeItem('eggProDemoLicenses');this.render()}});this.render()}
+    };
+    document.addEventListener('DOMContentLoaded',()=>portal.init());
+  </script>
+</body>
+</html>
