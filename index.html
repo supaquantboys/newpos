@@ -122,6 +122,15 @@
         .table-action-delete:hover { background: #fff1f2; color: #f43f5e; }
         html.dark .table-action-delete { background: #334155; color: #fda4af; }
         html.dark .table-action-delete:hover { background: #4c1d2a; color: #fecdd3; }
+
+        .profile-menu-panel { opacity: 0; visibility: hidden; transform: translateY(-.35rem); pointer-events: none; transition: opacity .16s ease, transform .16s ease, visibility .16s; }
+        #profile-menu:hover .profile-menu-panel, #profile-menu:focus-within .profile-menu-panel, #profile-menu.profile-open .profile-menu-panel { opacity: 1; visibility: visible; transform: translateY(0); pointer-events: auto; }
+        body.license-locked nav, body.license-locked #main-scroll-area, body.license-locked footer { filter: grayscale(1); opacity: .42; pointer-events: none; user-select: none; }
+        #license-watermark { display: none; }
+        body.license-locked #license-watermark { display: flex; }
+        .license-watermark-text { color: rgba(185,28,28,.16); font-size: clamp(2.4rem, 7vw, 7rem); font-weight: 800; letter-spacing: .12em; line-height: 1.15; transform: rotate(-22deg); white-space: nowrap; }
+        html.dark .license-watermark-text { color: rgba(252,165,165,.18); }
+        @media (max-width: 639px) { .profile-menu-panel { position: fixed !important; left: .75rem !important; right: .75rem !important; top: 4.5rem !important; width: auto !important; } }
     </style>
 </head>
 <body class="bg-gray-50 text-gray-800 min-h-screen md:h-screen overflow-x-hidden md:overflow-hidden flex flex-col md:flex-row">
@@ -210,9 +219,23 @@
         <header class="bg-white shadow-sm z-10 px-4 sm:px-6 py-3 sm:py-4 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
             <h2 id="page-title" class="text-xl sm:text-2xl font-semibold text-gray-800 self-start">Point of Sale</h2>
             <div class="flex items-center justify-end gap-2 sm:gap-4 w-full sm:w-auto">
-                <div class="flex items-center gap-2 text-sm text-gray-500">
-                    <div id="user-badge" class="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 font-bold">O</div>
-                    <span id="user-role-label" class="hidden sm:inline font-medium">Operator Mode</span>
+                <div id="profile-menu" class="relative text-sm text-gray-500">
+                    <button id="profile-menu-button" type="button" onclick="app.toggleProfileMenu()" aria-haspopup="menu" aria-expanded="false" class="flex items-center gap-2 rounded-xl px-2 py-1.5 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500">
+                        <div id="user-badge" class="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 font-bold">O</div>
+                        <span id="user-role-label" class="hidden sm:inline font-medium">Operator Mode</span>
+                        <i class="fa-solid fa-chevron-down text-[10px] text-gray-400"></i>
+                    </button>
+                    <div class="profile-menu-panel absolute right-0 top-full mt-2 w-64 rounded-2xl bg-white border border-gray-200 shadow-2xl p-2 z-[70]" role="menu">
+                        <div class="px-3 py-2 border-b border-gray-100 mb-1">
+                            <p class="text-xs text-gray-400 uppercase tracking-wider">Account</p>
+                            <p class="font-semibold text-gray-800 mt-1">EggPro User</p>
+                        </div>
+                        <button type="button" onclick="app.openLicenseModal()" class="w-full flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-gray-50 text-left" role="menuitem">
+                            <span class="w-9 h-9 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center"><i class="fa-solid fa-key"></i></span>
+                            <span class="min-w-0 flex-1"><b class="block text-gray-800">License</b><small id="profile-license-status" class="block text-gray-500 truncate">Checking license…</small></span>
+                            <span id="profile-license-dot" class="w-2.5 h-2.5 rounded-full bg-amber-400"></span>
+                        </button>
+                    </div>
                 </div>
             </div>
         </header>
@@ -815,6 +838,39 @@
         </footer>
     </main>
 
+    <div id="license-watermark" aria-hidden="true" class="fixed inset-0 z-[45] pointer-events-none flex-col items-center justify-evenly overflow-hidden">
+        <span class="license-watermark-text">UNLICENSED</span><span class="license-watermark-text">LICENSE REQUIRED</span><span class="license-watermark-text">UNLICENSED</span>
+    </div>
+
+    <div id="license-modal" class="hidden fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-[80] flex items-center justify-center p-3 sm:p-5" role="dialog" aria-modal="true" aria-labelledby="license-modal-title">
+        <div class="bg-white rounded-3xl max-w-2xl w-full shadow-2xl max-h-[94vh] overflow-y-auto">
+            <div class="sticky top-0 bg-white/95 backdrop-blur border-b border-gray-100 p-5 sm:p-6 flex items-start justify-between gap-4 z-10">
+                <div><p class="text-xs font-semibold tracking-[.18em] text-primary-600 uppercase">EggPro Offline Activation</p><h3 id="license-modal-title" class="text-2xl font-bold text-gray-900 mt-1">License</h3></div>
+                <button type="button" onclick="app.closeLicenseModal()" class="w-10 h-10 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-500" aria-label="Close"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="p-5 sm:p-6 space-y-5">
+                <div id="license-status-card" class="rounded-2xl border border-amber-200 bg-amber-50 p-4 flex gap-3">
+                    <span id="license-status-icon" class="w-10 h-10 shrink-0 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center"><i class="fa-solid fa-lock"></i></span>
+                    <div><p id="license-status-title" class="font-bold text-gray-900">License required</p><p id="license-status-message" class="text-sm text-gray-600 mt-1">Import a valid license file to unlock EggPro.</p><code id="license-error-code" class="text-xs text-amber-700 mt-2 block">ERR_LICENSE_MISSING</code></div>
+                </div>
+                <div class="rounded-2xl border border-gray-200 p-4">
+                    <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+                        <div class="min-w-0"><p class="text-xs uppercase tracking-wider text-gray-400">Machine ID</p><code id="license-machine-id" class="block mt-2 text-sm font-semibold text-gray-800 break-all">Generating…</code><p class="text-xs text-gray-500 mt-2">Send this ID to your license administrator. It does not expose raw hardware identifiers.</p></div>
+                        <div class="flex sm:flex-col gap-2 shrink-0"><button type="button" onclick="app.copyMachineId()" class="flex-1 px-3 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 text-sm font-medium"><i class="fa-regular fa-copy mr-2"></i>Copy</button><button type="button" onclick="app.exportMachineRequest()" class="flex-1 px-3 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 text-sm font-medium"><i class="fa-solid fa-download mr-2"></i>Export Request</button></div>
+                    </div>
+                </div>
+                <div id="license-details" class="hidden rounded-2xl border border-emerald-200 bg-emerald-50/60 p-4 grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                    <div><span class="text-gray-500">Customer</span><b id="license-customer" class="block text-gray-800 mt-1">—</b></div><div><span class="text-gray-500">License ID</span><b id="license-id" class="block text-gray-800 mt-1">—</b></div><div><span class="text-gray-500">Valid from</span><b id="license-valid-from" class="block text-gray-800 mt-1">—</b></div><div><span class="text-gray-500">Valid until</span><b id="license-valid-until" class="block text-gray-800 mt-1">—</b></div><div class="sm:col-span-2"><span class="text-gray-500">Features</span><div id="license-features" class="flex flex-wrap gap-2 mt-2"></div></div>
+                </div>
+                <label class="block rounded-2xl border-2 border-dashed border-primary-200 bg-primary-50/50 hover:bg-primary-50 p-5 text-center cursor-pointer transition-colors">
+                    <input id="license-file-input" type="file" accept=".lic,application/json" class="sr-only" onchange="app.importLicenseFile(event)">
+                    <i class="fa-solid fa-file-arrow-up text-2xl text-primary-600"></i><span class="block font-semibold text-gray-800 mt-2">Import .lic file</span><span class="block text-xs text-gray-500 mt-1">The signature, Machine ID, product and validity dates are checked before activation.</span>
+                </label>
+                <div class="flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between text-xs text-gray-500"><span>Format: offline-license-v1 · Ed25519</span><a href="license-portal.html" class="font-semibold text-primary-600 hover:text-primary-700">Open License Portal <i class="fa-solid fa-arrow-up-right-from-square ml-1"></i></a></div>
+            </div>
+        </div>
+    </div>
+
     <div id="inv-edit-modal" class="hidden fixed inset-0 bg-black/60 z-[60] flex items-center justify-center p-4">
         <div class="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl relative">
             <h3 class="text-xl font-bold mb-4 text-gray-800">Edit Inventory Batch</h3>
@@ -1030,6 +1086,8 @@
         Object.assign(i18n.translations['my'], {"AI Sample Data": "AI နမူနာဒေတာ", "Auto-Generate Sample Data": "နမူနာဒေတာ အလိုအလျောက်ထုတ်ရန်", "Pick the scenarios to inject, then check every admin page, the sales screen, and the printed receipt.": "ထည့်သွင်းလိုသော အခြေအနေများကို ရွေးပြီး စီမံခန့်ခွဲမှုစာမျက်နှာများ၊ အရောင်းမျက်နှာပြင်နှင့် ပုံနှိပ်ပြေစာကို စမ်းသပ်ပါ။", "Search scenarios, fields, or feature names...": "အခြေအနေ၊ အကွက် သို့မဟုတ် လုပ်ဆောင်ချက်အမည် ရှာရန်...", "Select All": "အားလုံးရွေးရန်", "Clear All": "အားလုံးရှင်းရန်", "{count} selected": "ရွေးထားသည် {count} ခု", "0 selected": "ရွေးထားသည် ၀ ခု", "Every scenario writes data straight into the app, exactly as if it had been entered by hand. Scenarios that need stock will create the receiving batch and grading record they depend on.": "အခြေအနေတိုင်းသည် လက်ဖြင့်ထည့်သွင်းသကဲ့သို့ ဒေတာကို တိုက်ရိုက်ရေးသွင်းသည်။ လက်ကျန်လိုအပ်သော အခြေအနေများသည် လိုအပ်သော ကုန်ဝင်အသုတ်နှင့် အရွယ်ခွဲမှတ်တမ်းကို အလိုအလျောက် ဖန်တီးပေးသည်။", "Showing {count} of {total}": "{total} ခုအနက် {count} ခု ပြသနေသည်", "{count} available": "{count} ခု ရနိုင်သည်", "Clear existing inventory, sales, and history first": "ထည့်မီ လက်ရှိကုန်စာရင်း၊ အရောင်းနှင့် မှတ်တမ်းများကို ရှင်းပါ", "Inject {count} Scenarios": "အခြေအနေ {count} ခု ထည့်ရန်", "Inject 0 Scenarios": "အခြေအနေ ၀ ခု ထည့်ရန်", "No scenarios match your search.": "ရှာဖွေမှုနှင့် ကိုက်ညီသော အခြေအနေ မတွေ့ပါ။", "Only Supervisor can generate sample data.": "ကြီးကြပ်သူသာ နမူနာဒေတာ ထုတ်နိုင်သည်။", "Select at least one scenario first.": "အနည်းဆုံး အခြေအနေတစ်ခု ရွေးပါ။", "This clears all existing inventory, grading, sales, price history, and audit records. Continue?": "ဤလုပ်ဆောင်ချက်သည် လက်ရှိကုန်စာရင်း၊ အရွယ်ခွဲမှု၊ အရောင်း၊ စျေးနှုန်းမှတ်တမ်းနှင့် စစ်ဆေးမှတ်တမ်းအားလုံးကို ရှင်းလင်းမည်။ ဆက်လုပ်မလား။", "Injected {count} scenarios and created {records} records.": "အခြေအနေ {count} ခု ထည့်ပြီး မှတ်တမ်း {records} ခု ဖန်တီးပြီးပါပြီ။", "{count} scenarios could not run: {codes}": "အခြေအနေ {count} ခု အလုပ်မလုပ်ပါ- {codes}", "Sample data generated": "နမူနာဒေတာ ထုတ်ပြီး", "Receiving batch updated": "လက်ခံအသုတ် ပြင်ဆင်ပြီး", "Receiving batch deleted": "လက်ခံအသုတ် ဖျက်ပြီး", "Basic settings updated": "အခြေခံဆက်တင် ပြင်ဆင်ပြီး", "Permission settings updated": "ခွင့်ပြုချက်ဆက်တင် ပြင်ဆင်ပြီး", "Inventory & Imports": "ကုန်စာရင်းနှင့် ကုန်ဝင်", "Sales & Receipts": "အရောင်းနှင့် ပြေစာ", "Dashboard & Audit": "ဒက်ရှ်ဘုတ်နှင့် စစ်ဆေးမှု", "End-to-End": "အစမှအဆုံး", "7-Day Import Run": "၇ ရက် ကုန်ဝင်စဉ်", "30-Day Import History": "၃၀ ရက် ကုန်ဝင်မှတ်တမ်း", "Today's 120 kg Import": "ယနေ့ ၁၂၀ kg ကုန်ဝင်", "Editable / Deletable Batch": "ပြင်နိုင်／ဖျက်နိုင်သော အသုတ်", "Depleted Batch": "ကုန်သွားသော အသုတ်", "Grade Every Egg Type": "ဥအမျိုးအစားအားလုံး အရွယ်ခွဲ", "Partially Graded Batch": "တစ်ပိုင်းတစ်စ အရွယ်ခွဲထားသော အသုတ်", "Single Type Grading": "အမျိုးအစားတစ်ခုတည်း အရွယ်ခွဲ", "Today's Retail Sales": "ယနေ့ လက်လီအရောင်း", "Batch (30-egg) Sales": "အသုတ် (ဥ ၃၀) အရောင်း", "7-Day Sales Trend": "၇ ရက် အရောင်းလမ်းကြောင်း", "120-Day Sales History": "၁၂၀ ရက် အရောင်းမှတ်တမ်း", "Printable Receipt": "ပုံနှိပ်နိုင်သော ပြေစာ", "Sold-Out Egg Type": "ကုန်သွားသော ဥအမျိုးအစား", "Rising Price History": "စျေးတက်မှတ်တမ်း", "Falling Price History": "စျေးကျမှတ်တမ်း", "Volatile Price History": "စျေးအတက်အကျ မှတ်တမ်း", "Permission Change Log": "ခွင့်ပြုချက်ပြောင်းလဲမှု မှတ်တမ်း", "Mixed Audit Trail": "ရောနှောစစ်ဆေးမှု မှတ်တမ်း", "Full Month Operation": "တစ်လလုံး လည်ပတ်မှု", "One receiving batch per day for the last 7 days, 60-180 kg each with drifting cost prices.": "ပြီးခဲ့သော ၇ ရက်အတွင်း တစ်ရက်လျှင် အသုတ်တစ်ခုစီ၊ တစ်ခုလျှင် ၆၀-၁၈၀ kg နှင့် ကုန်ကျစရိတ် အပြောင်းအလဲရှိသည်။", "Thirty daily batches so the inventory table, filters, sorting, and CSV export have real volume.": "နေ့စဉ်အသုတ် ၃၀ ခုဖြင့် ကုန်စာရင်းဇယား၊ စစ်ထုတ်မှု၊ အစဉ်လိုက်စီမှုနှင့် CSV ထုတ်ယူမှုကို စမ်းသပ်နိုင်သည်။", "A single 120 kg batch received this morning, left ungraded and ready for the grading page.": "ယနေ့မနက် လက်ခံရရှိသော ၁၂၀ kg အသုတ်တစ်ခု၊ အရွယ်မခွဲရသေးဘဲ အရွယ်ခွဲစာမျက်နှာအတွက် အသင့်ရှိသည်။", "An untouched batch with no grading or sales attached, so Edit and Delete can both be exercised.": "အရွယ်မခွဲ၊ မရောင်းရသေးသော အသုတ်တစ်ခု၊ ပြင်ဆင်ခြင်းနှင့် ဖျက်ခြင်းကို စမ်းသပ်နိုင်သည်။", "A fully consumed batch so the Depleted status badge and status filter have a row to show.": "လုံးဝကုန်သွားသော အသုတ်တစ်ခု၊ \"ကုန်သွားပြီ\" အခြေအနေတံဆိပ်နှင့် စစ်ထုတ်မှုကို ပြသနိုင်သည်။", "Grades a fresh 180 kg batch across every configured egg type using each type’s own weight.": "၁၈၀ kg အသုတ်အသစ်ကို ဥအမျိုးအစားတိုင်း၏ ကိုယ်ပိုင်အလေးချိန်ဖြင့် ခွဲခြားပေးသည်။", "Grades only half of a 150 kg batch, leaving ungraded weight for a second grading pass.": "၁၅၀ kg အသုတ်၏ တစ်ဝက်ကိုသာ ခွဲပြီး ကျန်အလေးချိန်ကို ဒုတိယအကြိမ်ခွဲရန် ချန်ထားသည်။", "Sends one whole batch into the first egg type only, to check lopsided size-level stock.": "အသုတ်တစ်ခုလုံးကို ပထမဥအမျိုးအစားထဲသာ ထည့်ပြီး လက်ကျန်မညီမျှမှုကို စစ်ဆေးသည်။", "Eight retail transactions spread across today and across the available egg types.": "ယနေ့အတွင်း ဥအမျိုးအစားအမျိုးမျိုးဖြင့် လက်လီအရောင်း ၈ ကြိမ်။", "Four batch-mode sales so batch pricing, the batch quantity label, and the batch receipt can be checked.": "အသုတ်စျေး၊ အသုတ်အရေအတွက်နှင့် အသုတ်ပြေစာကို စစ်ဆေးရန် အသုတ်အရောင်း ၄ ကြိမ်။", "Two to four sales on each of the last 7 days, enough to fill the dashboard trend chart.": "ပြီးခဲ့သော ၇ ရက်စီတွင် အရောင်း ၂ မှ ၄ ကြိမ်၊ ဒက်ရှ်ဘုတ်ဂရပ်အတွက် လုံလောက်သည်။", "A long sales history for the 30-day and 365-day chart ranges, dashboard filters, and CSV export.": "၃၀ ရက်နှင့် ၃၆၅ ရက် ဂရပ်အပိုင်းအခြား၊ စစ်ထုတ်မှုနှင့် CSV ထုတ်ယူမှုအတွက် ရှည်လျားသော အရောင်းမှတ်တမ်း။", "Leaves one finished transaction loaded so Print Last Receipt prints straight away.": "ပြီးဆုံးသွားသော အရောင်းတစ်ခုကို ချန်ထားပြီး \"နောက်ဆုံးပြေစာ ပုံနှိပ်ရန်\" ကို ချက်ချင်းသုံးနိုင်သည်။", "Sells the last egg type down to zero so the out-of-stock guard and disabled option can be checked.": "နောက်ဆုံးဥအမျိုးအစားကို သုညအထိ ရောင်းပြီး လက်ကျန်မရှိချိန် ကာကွယ်မှုကို စစ်ဆေးသည်။", "Five price snapshots trending upward for every egg type, with matching audit entries.": "ဥအမျိုးအစားတိုင်းအတွက် တက်လာသော စျေးနှုန်းမှတ်တမ်း ၅ ခုနှင့် သက်ဆိုင်ရာ စစ်ဆေးမှတ်တမ်းများ။", "Four snapshots trending downward, so red and green change indicators both appear in the table.": "ကျဆင်းသော မှတ်တမ်း ၄ ခု၊ ဇယားတွင် အနီနှင့် အစိမ်း ပြောင်းလဲမှုအမှတ်အသားများ ပေါ်လာသည်။", "Twelve alternating up-and-down snapshots to fill the 30 / 90 / custom chart ranges.": "အတက်အကျ လှည့်ပတ်သော မှတ်တမ်း ၁၂ ခု၊ ၃၀ / ၉၀ / စိတ်ကြိုက် ဂရပ်အပိုင်းအခြားများကို ဖြည့်ပေးသည်။", "Three permission updates so the audit log shows readable Allowed / Blocked comparisons.": "ခွင့်ပြုချက်ပြောင်းလဲမှု ၃ ခု၊ စစ်ဆေးမှတ်တမ်းတွင် \"ခွင့်ပြု / ပိတ်ထား\" နှိုင်းယှဉ်ချက် ပေါ်လာသည်။", "Create, update, and delete entries across inventory, pricing, and settings for the audit filters.": "ကုန်စာရင်း၊ စျေးနှုန်းနှင့် ဆက်တင်များတွင် ဖန်တီး၊ ပြင်ဆင်၊ ဖျက်မှတ်တမ်းများ။", "A complete month: daily imports, grading, two price changes, and sales every day, end to end.": "တစ်လပြည့်- နေ့စဉ်ကုန်ဝင်၊ အရွယ်ခွဲ၊ စျေးနှုန်းပြောင်းလဲမှု ၂ ကြိမ်နှင့် နေ့စဉ်အရောင်း အစမှအဆုံး။"});
         Object.assign(i18n.translations['zh-TW'], {"Egg Types": "蛋的種類", "Define each egg type name and its approximate weight. Every other page inherits these values.": "定義每種蛋的名稱與大約重量，其他頁面都會沿用這裡的設定。", "{count} / {max} egg types": "{count} / {max} 種蛋", "Egg type name": "蛋種名稱", "Weight per egg (g)": "每顆重量（公克）", "Add Egg Type": "新增蛋種", "Save Egg Types": "儲存蛋種設定", "Minimum 1 and maximum 7 egg types. Names must be unique.": "最少 1 種、最多 7 種，名稱不可重複。", "Remove egg type": "刪除蛋種", "Average weight": "平均重量", "New Egg Type": "新蛋種", "Only Supervisor can update egg type settings.": "只有主管可以修改蛋種設定。", "At least one egg type is required.": "至少需要一種蛋。", "You can define up to {max} egg types.": "最多只能設定 {max} 種蛋。", "Every egg weight must be between 0 and 500 g.": "每顆蛋的重量必須介於 0 到 500 公克之間。", "Cannot remove {type}: it still has stock or historical records.": "無法刪除 {type}：仍有庫存或歷史紀錄。", "No egg type changes to save.": "沒有需要儲存的蛋種變更。", "Egg types saved successfully!": "蛋種設定已成功儲存！", "Egg type settings updated": "蛋種設定已更新", "Egg Type Prices": "蛋種價格", "Set retail and 30-egg batch prices for every egg type. Names and weights come from System Settings.": "為每種蛋設定零售價與每批 30 顆價格；名稱與重量來自系統設定。", "Prices are saved together. Names and weights are managed in System Settings.": "所有價格會一併儲存；名稱與重量請於系統設定管理。", "Save Prices": "儲存價格", "Egg Type Price History": "蛋種價格歷史", "Compare retail and 30-egg batch prices across every egg type.": "比較每種蛋的零售價與每批 30 顆價格。", "Retail prices": "零售價格", "Batch prices": "整批價格", "Retail + Batch prices": "零售＋整批價格", "Egg Price Records": "蛋價紀錄", "No egg type price records found.": "找不到蛋種價格紀錄。", "Egg type prices updated": "蛋種價格已更新", "{count} of {total} rows changed": "共 {total} 列中有 {count} 列變更", "Egg type prices saved successfully!": "蛋種價格已成功儲存！", "Review pricing; Supervisor manages egg type prices.": "查看定價；蛋種價格由主管管理。", "Grade each receiving batch into the sellable egg types.": "將每個進貨批次分級為可販售的蛋種。", "Calculated from the per-type weights in System Settings.": "依系統設定中各蛋種的重量計算。"});
         Object.assign(i18n.translations['my'], {"Egg Types": "ဥအမျိုးအစားများ", "Define each egg type name and its approximate weight. Every other page inherits these values.": "ဥအမျိုးအစားတစ်ခုစီ၏ အမည်နှင့် ခန့်မှန်းအလေးချိန်ကို သတ်မှတ်ပါ။ အခြားစာမျက်နှာအားလုံးက ဤတန်ဖိုးများကို အသုံးပြုသည်။", "{count} / {max} egg types": "ဥအမျိုးအစား {count} / {max}", "Egg type name": "ဥအမျိုးအစားအမည်", "Weight per egg (g)": "တစ်လုံးအလေးချိန် (ဂရမ်)", "Add Egg Type": "ဥအမျိုးအစား ထည့်ရန်", "Save Egg Types": "ဥအမျိုးအစားများ သိမ်းရန်", "Minimum 1 and maximum 7 egg types. Names must be unique.": "အနည်းဆုံး ၁ မျိုး၊ အများဆုံး ၇ မျိုး။ အမည်များ မတူညီရပါ။", "Remove egg type": "ဥအမျိုးအစား ဖျက်ရန်", "Average weight": "ပျမ်းမျှအလေးချိန်", "New Egg Type": "ဥအမျိုးအစားအသစ်", "Only Supervisor can update egg type settings.": "ကြီးကြပ်သူသာ ဥအမျိုးအစားဆက်တင်များကို ပြင်နိုင်သည်။", "At least one egg type is required.": "အနည်းဆုံး ဥအမျိုးအစား တစ်မျိုး လိုအပ်သည်။", "You can define up to {max} egg types.": "ဥအမျိုးအစား အများဆုံး {max} မျိုးသာ သတ်မှတ်နိုင်သည်။", "Every egg weight must be between 0 and 500 g.": "ဥအလေးချိန်တိုင်း ၀ နှင့် ၅၀၀ ဂရမ်ကြား ဖြစ်ရမည်။", "Cannot remove {type}: it still has stock or historical records.": "{type} ကို ဖျက်၍မရပါ။ လက်ကျန် သို့မဟုတ် မှတ်တမ်းများ ရှိနေသေးသည်။", "No egg type changes to save.": "သိမ်းရန် ဥအမျိုးအစား ပြောင်းလဲမှု မရှိပါ။", "Egg types saved successfully!": "ဥအမျိုးအစားများကို အောင်မြင်စွာ သိမ်းပြီးပါပြီ။", "Egg type settings updated": "ဥအမျိုးအစားဆက်တင် ပြင်ဆင်ပြီး", "Egg Type Prices": "ဥအမျိုးအစား စျေးနှုန်းများ", "Set retail and 30-egg batch prices for every egg type. Names and weights come from System Settings.": "ဥအမျိုးအစားတိုင်းအတွက် လက်လီနှင့် ဥ ၃၀ အသုတ်စျေးကို သတ်မှတ်ပါ။ အမည်နှင့် အလေးချိန်များကို စနစ်ဆက်တင်မှ ရယူသည်။", "Prices are saved together. Names and weights are managed in System Settings.": "စျေးနှုန်းများကို အတူတကွ သိမ်းသည်။ အမည်နှင့် အလေးချိန်များကို စနစ်ဆက်တင်တွင် စီမံပါ။", "Save Prices": "စျေးနှုန်းများ သိမ်းရန်", "Egg Type Price History": "ဥအမျိုးအစား စျေးနှုန်းမှတ်တမ်း", "Compare retail and 30-egg batch prices across every egg type.": "ဥအမျိုးအစားတိုင်း၏ လက်လီနှင့် ဥ ၃၀ အသုတ်စျေးများကို နှိုင်းယှဉ်ပါ။", "Retail prices": "လက်လီစျေးများ", "Batch prices": "အသုတ်စျေးများ", "Retail + Batch prices": "လက်လီ + အသုတ်စျေးများ", "Egg Price Records": "ဥစျေးနှုန်းမှတ်တမ်းများ", "No egg type price records found.": "ဥအမျိုးအစား စျေးနှုန်းမှတ်တမ်း မတွေ့ပါ။", "Egg type prices updated": "ဥအမျိုးအစားစျေးနှုန်းများ ပြင်ဆင်ပြီး", "{count} of {total} rows changed": "စုစုပေါင်း {total} ကြောင်းအနက် {count} ကြောင်း ပြောင်းလဲထားသည်", "Egg type prices saved successfully!": "ဥအမျိုးအစားစျေးနှုန်းများကို အောင်မြင်စွာ သိမ်းပြီးပါပြီ။", "Review pricing; Supervisor manages egg type prices.": "စျေးနှုန်းကြည့်ရန်၊ ဥအမျိုးအစားစျေးများကို ကြီးကြပ်သူက စီမံသည်။", "Grade each receiving batch into the sellable egg types.": "လက်ခံအသုတ်တိုင်းကို ရောင်းချနိုင်သော ဥအမျိုးအစားများအဖြစ် ခွဲပါ။", "Calculated from the per-type weights in System Settings.": "စနစ်ဆက်တင်ရှိ အမျိုးအစားအလိုက် အလေးချိန်များဖြင့် တွက်ချက်ထားသည်။"});
+        Object.assign(i18n.translations['zh-TW'], {"Account":"帳戶","EggPro User":"EggPro 使用者","License":"授權","Checking license…":"正在檢查授權…","EggPro Offline Activation":"EggPro 離線啟用","License required":"需要授權","Import a valid license file to unlock EggPro.":"匯入有效的授權檔案以解鎖 EggPro。","Machine ID":"機器 ID","Generating…":"產生中…","Send this ID to your license administrator. It does not expose raw hardware identifiers.":"將此 ID 提供給授權管理員；其中不含原始硬體識別碼。","Copy":"複製","Export Request":"匯出申請檔","Customer":"客戶","License ID":"授權編號","Valid from":"有效起日","Valid until":"有效期限","Features":"功能","Import .lic file":"匯入 .lic 授權檔","The signature, Machine ID, product and validity dates are checked before activation.":"啟用前會檢查簽章、機器 ID、產品與有效日期。","Open License Portal":"開啟授權入口網站","Active until {date}":"有效至 {date}","License active":"授權有效","License activated successfully.":"授權啟用成功。","Machine ID copied.":"已複製機器 ID。","Machine request exported.":"已匯出機器申請檔。","UNLICENSED":"尚未授權","LICENSE REQUIRED":"需要授權","License file could not be read.":"無法讀取授權檔案。","Your license is valid and EggPro is unlocked.":"授權有效，EggPro 已解鎖。"});
+        Object.assign(i18n.translations['my'], {"Account":"အကောင့်","EggPro User":"EggPro အသုံးပြုသူ","License":"လိုင်စင်","Checking license…":"လိုင်စင်စစ်ဆေးနေသည်…","EggPro Offline Activation":"EggPro အော့ဖ်လိုင်း အသက်သွင်းခြင်း","License required":"လိုင်စင်လိုအပ်သည်","Import a valid license file to unlock EggPro.":"EggPro ကိုဖွင့်ရန် မှန်ကန်သော လိုင်စင်ဖိုင်ကို ထည့်ပါ။","Machine ID":"စက် ID","Generating…":"ထုတ်လုပ်နေသည်…","Send this ID to your license administrator. It does not expose raw hardware identifiers.":"ဤ ID ကို လိုင်စင်စီမံသူထံ ပို့ပါ။ မူရင်းဟာ့ဒ်ဝဲ ID မပါဝင်ပါ။","Copy":"ကူးယူရန်","Export Request":"တောင်းဆိုချက် ထုတ်ရန်","Customer":"ဖောက်သည်","License ID":"လိုင်စင် ID","Valid from":"စတင်သက်တမ်း","Valid until":"သက်တမ်းကုန်ရက်","Features":"လုပ်ဆောင်ချက်များ","Import .lic file":".lic ဖိုင် ထည့်ရန်","The signature, Machine ID, product and validity dates are checked before activation.":"အသက်မသွင်းမီ လက်မှတ်၊ စက် ID၊ ထုတ်ကုန်နှင့် သက်တမ်းကို စစ်ဆေးပါမည်။","Open License Portal":"လိုင်စင် Portal ဖွင့်ရန်","Active until {date}":"{date} အထိ အသုံးပြုနိုင်သည်","License active":"လိုင်စင် အသုံးပြုနိုင်သည်","License activated successfully.":"လိုင်စင် အသက်သွင်းပြီးပါပြီ။","Machine ID copied.":"စက် ID ကူးယူပြီးပါပြီ။","Machine request exported.":"စက်တောင်းဆိုချက် ထုတ်ပြီးပါပြီ။","UNLICENSED":"လိုင်စင်မရှိ","LICENSE REQUIRED":"လိုင်စင်လိုအပ်သည်","License file could not be read.":"လိုင်စင်ဖိုင်ကို ဖတ်မရပါ။","Your license is valid and EggPro is unlocked.":"လိုင်စင်မှန်ကန်ပြီး EggPro ကို ဖွင့်ထားပါပြီ။"});
         const app = {
             state: {
                 role: 'operator',
@@ -1068,6 +1126,11 @@
             maxEggTypes: 7,
             minEggTypes: 1,
             eggTypeDraft: null,
+            machineId: '',
+            licenseState: { valid: false, code: 'ERR_LICENSE_MISSING', message: 'Import a valid license file to unlock EggPro.', document: null },
+            licenseProductId: 'eggpro-dashboard',
+            licenseKeyId: 'eggpro-demo-2026-01',
+            licensePublicJwk: { kty:'OKP', crv:'Ed25519', x:'11qYAYKxCrfVS_7TyWQHOg7hcvPapiMlrwIaaPcHURo', ext:true, key_ops:['verify'] },
 
             defaultEggTypes(seedPrice = 0.15) {
                 const retailPrice = Number(seedPrice) > 0 ? Number(seedPrice) : 0.15;
@@ -1108,8 +1171,120 @@
                 return `${grams >= 100 ? grams.toFixed(0) : grams.toFixed(1)} g`;
             },
 
+            canonicalJson(value) {
+                if (value === null || typeof value !== 'object') return JSON.stringify(value);
+                if (Array.isArray(value)) return '[' + value.map(item => this.canonicalJson(item)).join(',') + ']';
+                return '{' + Object.keys(value).sort().map(key => JSON.stringify(key) + ':' + this.canonicalJson(value[key])).join(',') + '}';
+            },
+            base64UrlToBytes(value) {
+                const normalized = String(value || '').replaceAll('-', '+').replaceAll('_', '/');
+                const binary = atob(normalized + '='.repeat((4 - normalized.length % 4) % 4));
+                return Uint8Array.from(binary, char => char.charCodeAt(0));
+            },
+            bytesToBase64Url(bytes) {
+                let binary = ''; bytes.forEach(byte => { binary += String.fromCharCode(byte); });
+                return btoa(binary).replaceAll('+', '-').replaceAll('/', '_').replace(/=+$/g, '');
+            },
+            async generateMachineId() {
+                let seed = localStorage.getItem('eggProMachineSeed');
+                if (!seed) { const bytes = crypto.getRandomValues(new Uint8Array(24)); seed = this.bytesToBase64Url(bytes); localStorage.setItem('eggProMachineSeed', seed); }
+                const digest = new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(`EGGPRO-DASHBOARD|MID1|WEB|${seed}`)));
+                const token = this.bytesToBase64Url(digest).replace(/[^A-Za-z0-9]/g, '').toUpperCase().slice(0, 24);
+                this.machineId = `MID1-WEB-${token.slice(0,8)}-${token.slice(8,16)}-${token.slice(16,24)}`;
+                this.renderLicenseUI();
+                return this.machineId;
+            },
+            licenseError(code, message) { const error = new Error(message); error.code = code; return error; },
+            async validateLicenseDocument(documentValue) {
+                if (!documentValue || typeof documentValue !== 'object') throw this.licenseError('ERR_LICENSE_PARSE', 'License file could not be read.');
+                if (documentValue.format !== 'offline-license-v1' || !documentValue.payload || Number(documentValue.payload.schema_version) !== 1) throw this.licenseError('ERR_LICENSE_SCHEMA', 'Unsupported license format.');
+                if (documentValue.alg !== 'Ed25519') throw this.licenseError('ERR_LICENSE_SCHEMA', 'Unsupported signing algorithm.');
+                if (documentValue.kid !== this.licenseKeyId) throw this.licenseError('ERR_KEY_UNKNOWN', 'The signing key is not trusted.');
+                if (!documentValue.signature) throw this.licenseError('ERR_SIGNATURE_INVALID', 'The license signature is missing.');
+                let verified = false;
+                try {
+                    const key = await crypto.subtle.importKey('jwk', this.licensePublicJwk, { name:'Ed25519' }, false, ['verify']);
+                    verified = await crypto.subtle.verify({ name:'Ed25519' }, key, this.base64UrlToBytes(documentValue.signature), new TextEncoder().encode(this.canonicalJson(documentValue.payload)));
+                } catch (error) { throw this.licenseError('ERR_SIGNATURE_INVALID', 'The license signature could not be verified.'); }
+                if (!verified) throw this.licenseError('ERR_SIGNATURE_INVALID', 'The license has been changed or is not authentic.');
+                const payload = documentValue.payload;
+                if (payload.product_id !== this.licenseProductId) throw this.licenseError('ERR_PRODUCT_MISMATCH', 'This license belongs to another product.');
+                if (payload.machine_id !== this.machineId) throw this.licenseError('ERR_MACHINE_MISMATCH', 'This license belongs to another machine.');
+                if (!Array.isArray(payload.features) || !payload.features.includes('eggpro_core')) throw this.licenseError('ERR_FEATURE_NOT_LICENSED', 'EggPro core is not enabled in this license.');
+                const now = Date.now(), notBefore = Date.parse(payload.not_before), expiresAt = Date.parse(payload.expires_at);
+                if (!Number.isFinite(notBefore) || !Number.isFinite(expiresAt)) throw this.licenseError('ERR_LICENSE_SCHEMA', 'License dates are invalid.');
+                const lastTrusted = Number(localStorage.getItem('eggProLicenseTrustedTime') || 0);
+                if (lastTrusted && now < lastTrusted - 300000) throw this.licenseError('ERR_CLOCK_ROLLBACK', 'The system clock appears to have moved backward.');
+                localStorage.setItem('eggProLicenseTrustedTime', String(Math.max(now, lastTrusted)));
+                if (now < notBefore) throw this.licenseError('ERR_NOT_YET_VALID', 'This license is not valid yet.');
+                if (now > expiresAt) throw this.licenseError('ERR_LICENSE_EXPIRED', 'This license has expired.');
+                return documentValue;
+            },
+            async initializeLicense() {
+                this.applyLicenseGate(false, 'ERR_LICENSE_MISSING', 'Import a valid license file to unlock EggPro.');
+                try { await this.generateMachineId(); }
+                catch (error) { this.applyLicenseGate(false, 'ERR_MACHINE_ID_UNAVAILABLE', 'A stable Machine ID could not be generated.'); return; }
+                const stored = localStorage.getItem('eggProOfflineLicense');
+                if (!stored) { this.openLicenseModal(); return; }
+                try { const value = JSON.parse(stored); await this.validateLicenseDocument(value); this.applyLicenseGate(true, null, 'Your license is valid and EggPro is unlocked.', value); }
+                catch (error) { this.applyLicenseGate(false, error.code || 'ERR_LICENSE_PARSE', error.message); this.openLicenseModal(); }
+            },
+            async revalidateInstalledLicense() {
+                const stored = localStorage.getItem('eggProOfflineLicense');
+                if (!stored || !this.machineId) return;
+                try { const value = JSON.parse(stored); await this.validateLicenseDocument(value); this.applyLicenseGate(true, null, 'Your license is valid and EggPro is unlocked.', value); }
+                catch (error) { this.applyLicenseGate(false, error.code || 'ERR_LICENSE_PARSE', error.message); }
+            },
+            isLicenseActive() {
+                const payload = this.licenseState.document?.payload;
+                return !!(this.licenseState.valid && payload && Date.now() >= Date.parse(payload.not_before) && Date.now() <= Date.parse(payload.expires_at));
+            },
+            applyLicenseGate(valid, code, message, documentValue = null) {
+                this.licenseState = { valid: !!valid, code: code || null, message: message || '', document: documentValue };
+                document.body.classList.toggle('license-locked', !valid);
+                ['nav', '#main-scroll-area', '#role-switcher-container', 'footer'].forEach(selector => document.querySelector(selector)?.toggleAttribute('inert', !valid));
+                this.renderLicenseUI();
+            },
+            renderLicenseUI() {
+                const valid = this.isLicenseActive(), payload = this.licenseState.document?.payload;
+                const set = (id, value) => { const element = document.getElementById(id); if (element) element.textContent = value; };
+                set('license-machine-id', this.machineId || i18n.t('Generating…'));
+                set('profile-license-status', valid && payload ? i18n.format('Active until {date}', { date:new Date(payload.expires_at).toLocaleDateString(i18n.locale()) }) : i18n.t('License required'));
+                const dot = document.getElementById('profile-license-dot'); if (dot) dot.className = `w-2.5 h-2.5 rounded-full ${valid ? 'bg-emerald-500' : 'bg-amber-400'}`;
+                const card = document.getElementById('license-status-card'); if (card) card.className = `rounded-2xl border p-4 flex gap-3 ${valid ? 'border-emerald-200 bg-emerald-50' : 'border-amber-200 bg-amber-50'}`;
+                const icon = document.getElementById('license-status-icon'); if (icon) { icon.className = `w-10 h-10 shrink-0 rounded-xl flex items-center justify-center ${valid ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`; icon.innerHTML = `<i class="fa-solid ${valid ? 'fa-unlock-keyhole' : 'fa-lock'}"></i>`; }
+                set('license-status-title', i18n.t(valid ? 'License active' : 'License required'));
+                set('license-status-message', i18n.t(this.licenseState.message || 'Import a valid license file to unlock EggPro.'));
+                set('license-error-code', valid ? '' : (this.licenseState.code || 'ERR_LICENSE_MISSING'));
+                const details = document.getElementById('license-details'); if (details) details.classList.toggle('hidden', !valid);
+                if (valid && payload) {
+                    set('license-customer', payload.customer_name || payload.customer_id || '—'); set('license-id', payload.license_id || '—');
+                    set('license-valid-from', new Date(payload.not_before).toLocaleString(i18n.locale())); set('license-valid-until', new Date(payload.expires_at).toLocaleString(i18n.locale()));
+                    const features = document.getElementById('license-features'); if (features) features.innerHTML = payload.features.map(feature => `<span class="px-2.5 py-1 rounded-full bg-white border border-emerald-200 text-emerald-700 text-xs font-semibold">${this.escapeHtml(feature)}</span>`).join('');
+                }
+            },
+            toggleProfileMenu() { const menu = document.getElementById('profile-menu'); const open = menu.classList.toggle('profile-open'); document.getElementById('profile-menu-button')?.setAttribute('aria-expanded', String(open)); },
+            openLicenseModal() { document.getElementById('profile-menu')?.classList.remove('profile-open'); document.getElementById('license-modal')?.classList.remove('hidden'); this.renderLicenseUI(); },
+            closeLicenseModal() { document.getElementById('license-modal')?.classList.add('hidden'); },
+            async copyMachineId() { if (!this.machineId) return; await navigator.clipboard.writeText(this.machineId); this.showToast(i18n.t('Machine ID copied.'), 'success'); },
+            downloadJson(value, filename) { const blob = new Blob([JSON.stringify(value, null, 2)], { type:'application/json' }); const url = URL.createObjectURL(blob); const anchor = Object.assign(document.createElement('a'), { href:url, download:filename }); anchor.click(); setTimeout(() => URL.revokeObjectURL(url), 1000); },
+            exportMachineRequest() {
+                if (!this.machineId) return this.showToast(i18n.t('Generating…'), 'warning');
+                this.downloadJson({ schema_version:1, request_id:`REQ-${crypto.randomUUID().replaceAll('-','').toUpperCase()}`, machine_id:this.machineId, platform:'web', app_product:this.licenseProductId, app_version:'1.0.0', fingerprint_version:1, generated_at:new Date().toISOString(), nonce:this.bytesToBase64Url(crypto.getRandomValues(new Uint8Array(12))) }, 'eggpro-machine-request.json');
+                this.showToast(i18n.t('Machine request exported.'), 'success');
+            },
+            async importLicenseFile(event) {
+                const input = event.target, file = input.files?.[0]; if (!file) return;
+                try {
+                    const value = JSON.parse(await file.text()); await this.validateLicenseDocument(value); localStorage.setItem('eggProOfflineLicense', JSON.stringify(value));
+                    this.applyLicenseGate(true, null, 'Your license is valid and EggPro is unlocked.', value); this.showToast(i18n.t('License activated successfully.'), 'success');
+                } catch (error) { if (!this.licenseState.valid) this.applyLicenseGate(false, error.code || 'ERR_LICENSE_PARSE', error.message || 'License file could not be read.'); else { this.licenseState.message = error.message; this.licenseState.code = error.code; this.renderLicenseUI(); } this.showToast(`${error.code || 'ERR_LICENSE_PARSE'}: ${i18n.t(error.message || 'License file could not be read.')}`, 'error'); }
+                input.value = '';
+            },
+
             init() {
                 i18n.init();
+                this.initializeLicense();
                 this.loadData();
                 this.ensurePermissions();
                 this.ensureEggTypes();
@@ -1158,6 +1333,7 @@
                 });
                 document.getElementById('pos-received').addEventListener('input', () => this.calculateTotal());
                 document.getElementById('grading-batch').addEventListener('change', () => this.updateGradingSummary());
+                window.setInterval(() => this.revalidateInstalledLicense(), 60000);
             },
 
             loadData() {
@@ -1447,6 +1623,7 @@
             },
 
             navigate(view) {
+                if (!this.isLicenseActive()) { this.openLicenseModal(); this.showToast(i18n.t('Import a valid license file to unlock EggPro.'), 'warning'); return; }
                 if (this.state.role === 'operator') {
                     if (!this.state.permissions[view]) {
                         this.showToast(i18n.t('Access denied by Supervisor settings.'), 'error');
@@ -1644,6 +1821,7 @@
                     keys.forEach(k => { const el = document.getElementById('perm-'+k); if(el) el.checked = !!this.state.permissions[k]; });
                 }
                 this.calculateTotal();
+                this.renderLicenseUI();
             },
 
             getTotalStock() { return this.state.inventory.reduce((sum, batch) => sum + batch.remainingQty, 0); },
