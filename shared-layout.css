@@ -1,0 +1,39 @@
+/* Shared surfaces and spacing for the dashboard and license portal. */
+:root {
+    --ui-border: #e2e8f0;
+    --ui-surface: #fff;
+    --ui-muted: #f8fafc;
+    --ui-text: #0f172a;
+    --ui-accent: var(--primary-600, #2563eb);
+    --ui-radius: 1rem;
+}
+html.dark {
+    --ui-border: #334155;
+    --ui-surface: #1e293b;
+    --ui-muted: #0f172a;
+    --ui-text: #f1f5f9;
+}
+body { -webkit-font-smoothing: antialiased; }
+body main > header { border-bottom: 1px solid var(--ui-border); box-shadow: none; min-height: 76px; z-index: 50; flex-direction: row; align-items: center; }
+body main > header > div { width: auto; flex-shrink: 0; }
+body #page-title { align-self: center; letter-spacing: -.025em; }
+body #main-scroll-area { padding: clamp(1rem, 2.5vw, 2rem); }
+body #main-scroll-area > section { width: 100%; max-width: 80rem; margin-inline: auto; }
+body #main-scroll-area .bg-white, body #issue-form, body article.bg-white { border: 1px solid var(--ui-border); border-radius: var(--ui-radius); box-shadow: 0 2px 6px rgb(15 23 42 / .03); }
+body input:not([type=checkbox]):not([type=radio]):not([type=file]):not([type=range]):not([type=color]), body select, body .field { min-height: 42px; border-radius: .65rem; }
+body button:focus-visible, body a:focus-visible, body input:focus-visible, body select:focus-visible { outline: 2px solid var(--ui-accent); outline-offset: 3px; }
+body .nav-item { border-radius: .75rem; }
+body #profile-menu-button { border: 1px solid var(--ui-border); min-height: 44px; padding: .35rem .65rem; }
+body .profile-menu-panel { width: 19rem; padding: .5rem; border-color: var(--ui-border); background: var(--ui-surface); box-shadow: 0 16px 48px rgb(15 23 42 / .16); }
+body .profile-menu-panel [role=menuitem] { min-height: 64px; }
+body .free-unlock-action { display: flex; align-items: center; gap: .75rem; width: 100%; padding: .75rem; border: 1px solid var(--ui-accent); border-radius: .75rem; background: var(--ui-accent); color: white; text-align: left; font-size: .875rem; cursor: pointer; transition: filter .15s ease; }
+body .free-unlock-action[hidden] { display: none; }
+body .free-unlock-action:hover { filter: brightness(.94); }
+body .free-unlock-action small { opacity: .85; font-size: .75rem; margin-top: .2rem; }
+.account-action-icon { display: flex; align-items: center; justify-content: center; width: 2.25rem; height: 2.25rem; flex-shrink: 0; border-radius: .65rem; background: rgb(255 255 255 / .16); }
+body #license-modal > div { border-radius: var(--ui-radius); }
+body #license-details b { overflow-wrap: anywhere; }
+html.dark #license-modal > div, html.dark #license-modal .sticky { background: var(--ui-surface); }
+html.dark #license-status-card, html.dark #license-details { background: var(--ui-muted); border-color: var(--ui-border); }
+html.dark .profile-menu-panel [role=menuitem]:not(.free-unlock-action):hover { background: var(--ui-muted); }
+@media (prefers-reduced-motion: reduce) { body .profile-menu-panel, body .free-unlock-action { transition: none; } }

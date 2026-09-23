@@ -25,6 +25,7 @@
     </script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="shared-layout.css">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
         
@@ -220,12 +221,12 @@
             <h2 id="page-title" class="text-xl sm:text-2xl font-semibold text-gray-800 self-start">Point of Sale</h2>
             <div class="flex items-center justify-end gap-2 sm:gap-4 w-full sm:w-auto">
                 <div id="profile-menu" class="relative text-sm text-gray-500">
-                    <button id="profile-menu-button" type="button" onclick="app.toggleProfileMenu()" aria-haspopup="menu" aria-expanded="false" class="flex items-center gap-2 rounded-xl px-2 py-1.5 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500">
+                    <button id="profile-menu-button" type="button" onclick="app.toggleProfileMenu()" aria-label="Account" aria-controls="profile-menu-panel" aria-haspopup="menu" aria-expanded="false" class="flex items-center gap-2 rounded-xl px-2 py-1.5 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500">
                         <div id="user-badge" class="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 font-bold">O</div>
                         <span id="user-role-label" class="hidden sm:inline font-medium">Operator Mode</span>
                         <i class="fa-solid fa-chevron-down text-[10px] text-gray-400"></i>
                     </button>
-                    <div class="profile-menu-panel absolute right-0 top-full mt-2 w-64 rounded-2xl bg-white border border-gray-200 shadow-2xl p-2 z-[70]" role="menu">
+                    <div id="profile-menu-panel" class="profile-menu-panel absolute right-0 top-full mt-2 w-64 rounded-2xl bg-white border border-gray-200 shadow-2xl p-2 z-[70]" role="menu" aria-labelledby="profile-menu-button">
                         <div class="px-3 py-2 border-b border-gray-100 mb-1">
                             <p class="text-xs text-gray-400 uppercase tracking-wider">Account</p>
                             <p class="font-semibold text-gray-800 mt-1">EggPro User</p>
@@ -234,6 +235,10 @@
                             <span class="w-9 h-9 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center"><i class="fa-solid fa-key"></i></span>
                             <span class="min-w-0 flex-1"><b class="block text-gray-800">License</b><small id="profile-license-status" class="block text-gray-500 truncate">Checking license…</small></span>
                             <span id="profile-license-dot" class="w-2.5 h-2.5 rounded-full bg-amber-400"></span>
+                        </button>
+                        <button id="free-unlock-button" type="button" onclick="app.activateFreeLicense()" class="free-unlock-action" role="menuitem">
+                            <span class="account-action-icon"><i class="fa-solid fa-unlock-keyhole" aria-hidden="true"></i></span>
+                            <span><b class="block">Free Unlock License</b><small class="block">All features · No expiration</small></span>
                         </button>
                     </div>
                 </div>
@@ -862,6 +867,7 @@
                 <div id="license-details" class="hidden rounded-2xl border border-emerald-200 bg-emerald-50/60 p-4 grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
                     <div><span class="text-gray-500">Customer</span><b id="license-customer" class="block text-gray-800 mt-1">—</b></div><div><span class="text-gray-500">License ID</span><b id="license-id" class="block text-gray-800 mt-1">—</b></div><div><span class="text-gray-500">Valid from</span><b id="license-valid-from" class="block text-gray-800 mt-1">—</b></div><div><span class="text-gray-500">Valid until</span><b id="license-valid-until" class="block text-gray-800 mt-1">—</b></div><div class="sm:col-span-2"><span class="text-gray-500">Features</span><div id="license-features" class="flex flex-wrap gap-2 mt-2"></div></div>
                 </div>
+                <button id="modal-free-unlock-button" type="button" onclick="app.activateFreeLicense()" class="free-unlock-action"><span class="account-action-icon"><i class="fa-solid fa-unlock-keyhole" aria-hidden="true"></i></span><span><b class="block">Free Unlock License</b><small class="block">All features · No expiration</small></span></button>
                 <label class="block rounded-2xl border-2 border-dashed border-primary-200 bg-primary-50/50 hover:bg-primary-50 p-5 text-center cursor-pointer transition-colors">
                     <input id="license-file-input" type="file" accept=".lic,application/json" class="sr-only" onchange="app.importLicenseFile(event)">
                     <i class="fa-solid fa-file-arrow-up text-2xl text-primary-600"></i><span class="block font-semibold text-gray-800 mt-2">Import .lic file</span><span class="block text-xs text-gray-500 mt-1">The signature, Machine ID, product and validity dates are checked before activation.</span>
@@ -1091,6 +1097,20 @@
         Object.assign(i18n.translations['my'], {"Account":"အကောင့်","EggPro User":"EggPro အသုံးပြုသူ","License":"လိုင်စင်","Checking license…":"လိုင်စင်စစ်ဆေးနေသည်…","EggPro Offline Activation":"EggPro အော့ဖ်လိုင်း အသက်သွင်းခြင်း","License required":"လိုင်စင်လိုအပ်သည်","Import a valid license file to unlock EggPro.":"EggPro ကိုဖွင့်ရန် မှန်ကန်သော လိုင်စင်ဖိုင်ကို ထည့်ပါ။","Machine ID":"စက် ID","Generating…":"ထုတ်လုပ်နေသည်…","Send this ID to your license administrator. It does not expose raw hardware identifiers.":"ဤ ID ကို လိုင်စင်စီမံသူထံ ပို့ပါ။ မူရင်းဟာ့ဒ်ဝဲ ID မပါဝင်ပါ။","Copy":"ကူးယူရန်","Export Request":"တောင်းဆိုချက် ထုတ်ရန်","Customer":"ဖောက်သည်","License ID":"လိုင်စင် ID","Valid from":"စတင်သက်တမ်း","Valid until":"သက်တမ်းကုန်ရက်","Features":"လုပ်ဆောင်ချက်များ","Import .lic file":".lic ဖိုင် ထည့်ရန်","The signature, Machine ID, product and validity dates are checked before activation.":"အသက်မသွင်းမီ လက်မှတ်၊ စက် ID၊ ထုတ်ကုန်နှင့် သက်တမ်းကို စစ်ဆေးပါမည်။","Open License Portal":"လိုင်စင် Portal ဖွင့်ရန်","Active until {date}":"{date} အထိ အသုံးပြုနိုင်သည်","License active":"လိုင်စင် အသုံးပြုနိုင်သည်","License activated successfully.":"လိုင်စင် အသက်သွင်းပြီးပါပြီ။","Machine ID copied.":"စက် ID ကူးယူပြီးပါပြီ။","Machine request exported.":"စက်တောင်းဆိုချက် ထုတ်ပြီးပါပြီ။","UNLICENSED":"လိုင်စင်မရှိ","LICENSE REQUIRED":"လိုင်စင်လိုအပ်သည်","License file could not be read.":"လိုင်စင်ဖိုင်ကို ဖတ်မရပါ။","Your license is valid and EggPro is unlocked.":"လိုင်စင်မှန်ကန်ပြီး EggPro ကို ဖွင့်ထားပါပြီ။"});
         Object.assign(i18n.translations['zh-TW'], {"Remove License":"移除授權","No installed license to remove.":"目前沒有可移除的授權。","Remove this license from this device? EggPro will lock, but your business data and Machine ID will be kept.":"要從此裝置移除授權嗎？EggPro 將會鎖定，但營運資料與機器 ID 都會保留。","License removed. EggPro is now locked.":"授權已移除，EggPro 現已鎖定。"});
         Object.assign(i18n.translations['my'], {"Remove License":"လိုင်စင် ဖယ်ရှားရန်","No installed license to remove.":"ဖယ်ရှားရန် ထည့်သွင်းထားသော လိုင်စင် မရှိပါ။","Remove this license from this device? EggPro will lock, but your business data and Machine ID will be kept.":"ဤစက်မှ လိုင်စင်ကို ဖယ်ရှားမလား။ EggPro ကို ပိတ်သွားမည်ဖြစ်သော်လည်း လုပ်ငန်းဒေတာနှင့် စက် ID ကို ထိန်းသိမ်းထားမည်။","License removed. EggPro is now locked.":"လိုင်စင်ကို ဖယ်ရှားပြီး EggPro ကို ယခု ပိတ်ထားသည်။"});
+        Object.assign(i18n.translations['zh-TW'], {
+            'Free Unlock License': '免費解鎖授權', 'All features · No expiration': '全部功能 · 永久有效',
+            'Free license · No expiration': '免費授權 · 永久有效', 'No expiration': '永久有效',
+            'Free license activated.': '免費授權已啟用。',
+            'Free license active on this browser. All features are unlocked.': '此瀏覽器已啟用免費授權，全部功能皆已解鎖。',
+            'Unable to save the free license. Allow browser storage and try again.': '無法儲存免費授權，請允許瀏覽器儲存資料後重試。'
+        });
+        Object.assign(i18n.translations['my'], {
+            'Free Unlock License': 'အခမဲ့ လိုင်စင်ဖွင့်ရန်', 'All features · No expiration': 'လုပ်ဆောင်ချက်အားလုံး · သက်တမ်းမကုန်',
+            'Free license · No expiration': 'အခမဲ့လိုင်စင် · သက်တမ်းမကုန်', 'No expiration': 'သက်တမ်းမကုန်',
+            'Free license activated.': 'အခမဲ့လိုင်စင် ဖွင့်ပြီးပါပြီ။',
+            'Free license active on this browser. All features are unlocked.': 'ဤဘရောက်ဆာတွင် အခမဲ့လိုင်စင်ဖြင့် လုပ်ဆောင်ချက်အားလုံးကို ဖွင့်ထားပါသည်။',
+            'Unable to save the free license. Allow browser storage and try again.': 'အခမဲ့လိုင်စင်ကို မသိမ်းနိုင်ပါ။ ဘရောက်ဆာတွင် ဒေတာသိမ်းခွင့်ပြုပြီး ထပ်ကြိုးစားပါ။'
+        });
         const app = {
             state: {
                 role: 'operator',
@@ -1226,13 +1246,15 @@
             async initializeLicense() {
                 this.applyLicenseGate(false, 'ERR_LICENSE_MISSING', 'Import a valid license file to unlock EggPro.');
                 try { await this.generateMachineId(); }
-                catch (error) { this.applyLicenseGate(false, 'ERR_MACHINE_ID_UNAVAILABLE', 'A stable Machine ID could not be generated.'); return; }
+                catch (error) { if (!this.restoreFreeLicense()) this.applyLicenseGate(false, 'ERR_MACHINE_ID_UNAVAILABLE', 'A stable Machine ID could not be generated.'); return; }
+                if (this.restoreFreeLicense()) return;
                 const stored = localStorage.getItem('eggProOfflineLicense');
                 if (!stored) { this.openLicenseModal(); return; }
                 try { const value = JSON.parse(stored); await this.validateLicenseDocument(value); this.applyLicenseGate(true, null, 'Your license is valid and EggPro is unlocked.', value); }
                 catch (error) { this.applyLicenseGate(false, error.code || 'ERR_LICENSE_PARSE', error.message); this.openLicenseModal(); }
             },
             async revalidateInstalledLicense() {
+                if (this.restoreFreeLicense()) return;
                 const stored = localStorage.getItem('eggProOfflineLicense');
                 if (!stored || !this.machineId) return;
                 try { const value = JSON.parse(stored); await this.validateLicenseDocument(value); this.applyLicenseGate(true, null, 'Your license is valid and EggPro is unlocked.', value); }
@@ -1240,7 +1262,26 @@
             },
             isLicenseActive() {
                 const payload = this.licenseState.document?.payload;
+                if (this.licenseState.document?.format === 'eggpro-free-v1') return this.licenseState.valid && localStorage.getItem('eggProFreeLicense') === '1';
                 return !!(this.licenseState.valid && payload && Date.now() >= Date.parse(payload.not_before) && Date.now() <= Date.parse(payload.expires_at));
+            },
+            restoreFreeLicense() {
+                if (localStorage.getItem('eggProFreeLicense') !== '1') return false;
+                this.applyLicenseGate(true, null, 'Free license active on this browser. All features are unlocked.', {
+                    format: 'eggpro-free-v1',
+                    payload: { license_id: 'FREE', customer_name: i18n.t('EggPro User'), features: ['eggpro_core', 'pos', 'inventory', 'grading', 'dashboard', 'administration'] }
+                });
+                return true;
+            },
+            activateFreeLicense() {
+                if (this.isLicenseActive()) return;
+                try {
+                    localStorage.setItem('eggProFreeLicense', '1');
+                    this.restoreFreeLicense();
+                    this.closeProfileMenu();
+                    this.closeLicenseModal();
+                    this.showToast(i18n.t('Free license activated.'), 'success');
+                } catch (error) { this.showToast(i18n.t('Unable to save the free license. Allow browser storage and try again.'), 'error'); }
             },
             applyLicenseGate(valid, code, message, documentValue = null) {
                 this.licenseState = { valid: !!valid, code: code || null, message: message || '', document: documentValue };
@@ -1250,9 +1291,11 @@
             },
             renderLicenseUI() {
                 const valid = this.isLicenseActive(), payload = this.licenseState.document?.payload;
+                const free = valid && this.licenseState.document?.format === 'eggpro-free-v1';
                 const set = (id, value) => { const element = document.getElementById(id); if (element) element.textContent = value; };
                 set('license-machine-id', this.machineId || i18n.t('Generating…'));
-                set('profile-license-status', valid && payload ? i18n.format('Active until {date}', { date:new Date(payload.expires_at).toLocaleDateString(i18n.locale()) }) : i18n.t('License required'));
+                set('profile-license-status', free ? i18n.t('Free license · No expiration') : valid && payload ? i18n.format('Active until {date}', { date:new Date(payload.expires_at).toLocaleDateString(i18n.locale()) }) : i18n.t('License required'));
+                ['free-unlock-button', 'modal-free-unlock-button'].forEach(id => { const button = document.getElementById(id); if (button) button.hidden = valid; });
                 const dot = document.getElementById('profile-license-dot'); if (dot) dot.className = `w-2.5 h-2.5 rounded-full ${valid ? 'bg-emerald-500' : 'bg-amber-400'}`;
                 const card = document.getElementById('license-status-card'); if (card) card.className = `rounded-2xl border p-4 flex gap-3 ${valid ? 'border-emerald-200 bg-emerald-50' : 'border-amber-200 bg-amber-50'}`;
                 const icon = document.getElementById('license-status-icon'); if (icon) { icon.className = `w-10 h-10 shrink-0 rounded-xl flex items-center justify-center ${valid ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`; icon.innerHTML = `<i class="fa-solid ${valid ? 'fa-unlock-keyhole' : 'fa-lock'}"></i>`; }
@@ -1262,17 +1305,17 @@
                 const details = document.getElementById('license-details'); if (details) details.classList.toggle('hidden', !valid);
                 if (valid && payload) {
                     set('license-customer', payload.customer_name || payload.customer_id || '—'); set('license-id', payload.license_id || '—');
-                    set('license-valid-from', new Date(payload.not_before).toLocaleString(i18n.locale())); set('license-valid-until', new Date(payload.expires_at).toLocaleString(i18n.locale()));
+                    set('license-valid-from', free ? '—' : new Date(payload.not_before).toLocaleString(i18n.locale())); set('license-valid-until', free ? i18n.t('No expiration') : new Date(payload.expires_at).toLocaleString(i18n.locale()));
                     const features = document.getElementById('license-features'); if (features) features.innerHTML = payload.features.map(feature => `<span class="px-2.5 py-1 rounded-full bg-white border border-emerald-200 text-emerald-700 text-xs font-semibold">${this.escapeHtml(feature)}</span>`).join('');
                 }
-                document.getElementById('remove-license-button')?.classList.toggle('hidden', !localStorage.getItem('eggProOfflineLicense'));
+                document.getElementById('remove-license-button')?.classList.toggle('hidden', !localStorage.getItem('eggProOfflineLicense') && !localStorage.getItem('eggProFreeLicense'));
             },
             toggleProfileMenu() { const menu = document.getElementById('profile-menu'); const open = menu.classList.toggle('profile-open'); document.getElementById('profile-menu-button')?.setAttribute('aria-expanded', String(open)); },
             closeProfileMenu() { document.getElementById('profile-menu')?.classList.remove('profile-open'); document.getElementById('profile-menu-button')?.setAttribute('aria-expanded', 'false'); },
             setupProfileMenu() { document.addEventListener('click', event => { const menu = document.getElementById('profile-menu'); if (menu && !menu.contains(event.target)) this.closeProfileMenu(); }); document.addEventListener('keydown', event => { if (event.key === 'Escape') this.closeProfileMenu(); }); },
             openLicenseModal() { this.closeProfileMenu(); document.getElementById('license-modal')?.classList.remove('hidden'); this.renderLicenseUI(); },
             closeLicenseModal() { document.getElementById('license-modal')?.classList.add('hidden'); },
-            removeInstalledLicense() { if (!localStorage.getItem('eggProOfflineLicense')) return this.showToast(i18n.t('No installed license to remove.'), 'warning'); if (!confirm(i18n.t('Remove this license from this device? EggPro will lock, but your business data and Machine ID will be kept.'))) return; localStorage.removeItem('eggProOfflineLicense'); this.applyLicenseGate(false, 'ERR_LICENSE_MISSING', 'Import a valid license file to unlock EggPro.'); this.openLicenseModal(); this.showToast(i18n.t('License removed. EggPro is now locked.'), 'success'); },
+            removeInstalledLicense() { if (!localStorage.getItem('eggProOfflineLicense') && !localStorage.getItem('eggProFreeLicense')) return this.showToast(i18n.t('No installed license to remove.'), 'warning'); if (!confirm(i18n.t('Remove this license from this device? EggPro will lock, but your business data and Machine ID will be kept.'))) return; localStorage.removeItem('eggProOfflineLicense'); localStorage.removeItem('eggProFreeLicense'); this.applyLicenseGate(false, 'ERR_LICENSE_MISSING', 'Import a valid license file to unlock EggPro.'); this.openLicenseModal(); this.showToast(i18n.t('License removed. EggPro is now locked.'), 'success'); },
             async copyMachineId() { if (!this.machineId) return; await navigator.clipboard.writeText(this.machineId); this.showToast(i18n.t('Machine ID copied.'), 'success'); },
             downloadJson(value, filename) { const blob = new Blob([JSON.stringify(value, null, 2)], { type:'application/json' }); const url = URL.createObjectURL(blob); const anchor = Object.assign(document.createElement('a'), { href:url, download:filename }); anchor.click(); setTimeout(() => URL.revokeObjectURL(url), 1000); },
             exportMachineRequest() {
@@ -1284,6 +1327,7 @@
                 const input = event.target, file = input.files?.[0]; if (!file) return;
                 try {
                     const value = JSON.parse(await file.text()); await this.validateLicenseDocument(value); localStorage.setItem('eggProOfflineLicense', JSON.stringify(value));
+                    localStorage.removeItem('eggProFreeLicense');
                     this.applyLicenseGate(true, null, 'Your license is valid and EggPro is unlocked.', value); this.showToast(i18n.t('License activated successfully.'), 'success');
                 } catch (error) { if (!this.licenseState.valid) this.applyLicenseGate(false, error.code || 'ERR_LICENSE_PARSE', error.message || 'License file could not be read.'); else { this.licenseState.message = error.message; this.licenseState.code = error.code; this.renderLicenseUI(); } this.showToast(`${error.code || 'ERR_LICENSE_PARSE'}: ${i18n.t(error.message || 'License file could not be read.')}`, 'error'); }
                 input.value = '';

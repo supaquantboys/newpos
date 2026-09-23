@@ -1,0 +1,55 @@
+/* Portal shell follows the dashboard's 256px navigation and 76px header. */
+html[data-theme="blue"] { --primary-50: #eff6ff; --primary-100: #dbeafe; --primary-600: #2563eb; --primary-700: #1d4ed8; }
+html[data-theme="green"] { --primary-50: #f0fdf4; --primary-100: #dcfce7; --primary-600: #16a34a; --primary-700: #15803d; }
+html[data-theme="purple"] { --primary-50: #faf5ff; --primary-100: #f3e8ff; --primary-600: #9333ea; --primary-700: #7e22ce; }
+html[data-theme="gray"] { --primary-50: #f8fafc; --primary-100: #f1f5f9; --primary-600: #475569; --primary-700: #334155; }
+body.license-portal { background: var(--ui-muted); color: var(--ui-text); }
+.portal-sidebar { position: fixed; inset: 0 auto 0 0; width: 16rem; display: flex; flex-direction: column; background: #0f172a; color: #cbd5e1; }
+.portal-brand { min-height: 65px; display: flex; align-items: center; justify-content: center; gap: .5rem; border-bottom: 1px solid #334155; color: white; font-size: 1.25rem; font-weight: 700; letter-spacing: .05em; }
+.portal-brand i { color: #facc15; font-size: 1.5rem; }
+.portal-navigation { display: flex; flex-direction: column; gap: .25rem; padding: 1rem .5rem; }
+.license-portal .portal-tab { display: flex; align-items: center; gap: .75rem; padding: .75rem 1rem; border-radius: .75rem; color: #cbd5e1; background: transparent; text-align: left; font-size: 1rem; font-weight: 500; }
+.portal-tab i { width: 1.25rem; text-align: center; }
+.license-portal .portal-tab:hover, .portal-back:hover { background: #1e293b; }
+.license-portal .portal-tab[aria-current="page"] { color: white; background: var(--ui-accent); }
+.portal-back { display: flex; align-items: center; gap: .75rem; margin-top: auto; padding: 1.25rem; border-top: 1px solid #334155; font-size: .875rem; }
+.portal-workspace { margin-left: 16rem; min-width: 0; min-height: 100vh; display: flex; flex-direction: column; }
+.portal-header { min-height: 76px; padding: 1rem 1.5rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem; background: var(--ui-surface); border-bottom: 1px solid var(--ui-border); }
+.portal-header h1 { letter-spacing: -.025em; }
+.portal-demo-badge { padding: .4rem .65rem; border: 1px solid #fde68a; border-radius: .5rem; background: #fffbeb; color: #92400e; font-size: .65rem; font-weight: 700; white-space: nowrap; }
+.portal-workspace > main { width: 100%; padding: clamp(1rem, 2.5vw, 2rem); flex: 1; min-width: 0; }
+.portal-notice { display: flex; align-items: flex-start; gap: .75rem; padding: 1rem; margin-bottom: 1.5rem; border: 1px solid #fde68a; border-radius: var(--ui-radius); background: #fffbeb; color: #92400e; font-size: .75rem; line-height: 1.6; }
+.portal-notice > i { margin-top: .2rem; }
+.portal-footer { padding: .75rem; text-align: center; color: #94a3b8; border-top: 1px solid var(--ui-border); background: var(--ui-surface); font-size: .75rem; }
+.license-portal .bg-white { background: var(--ui-surface); }
+.license-portal .bg-slate-50, .license-portal .bg-slate-100 { background: var(--ui-muted); }
+.license-portal :is(.border-slate-100, .border-slate-200) { border-color: var(--ui-border); }
+.license-portal .rounded-3xl { border-radius: var(--ui-radius); }
+.license-portal .field { color: var(--ui-text); background: var(--ui-surface); border-color: var(--ui-border); }
+.license-portal .field.pl-11 { padding-left: 2.75rem; }
+.license-portal .field:focus { border-color: var(--ui-accent); box-shadow: 0 0 0 3px var(--primary-100); }
+.license-portal .bg-blue-600, .license-portal .duration.active { background: var(--ui-accent); border-color: var(--ui-accent); color: white; }
+.license-portal .bg-blue-600:hover { background: var(--primary-700); }
+.license-portal :is(.text-blue-600, .text-blue-700) { color: var(--ui-accent); }
+.license-portal :is(.bg-blue-50, [class~="bg-blue-50/50"]) { background: var(--primary-50); }
+.license-portal .border-blue-200 { border-color: var(--primary-100); }
+.license-portal input[type="checkbox"] { accent-color: var(--ui-accent); }
+.license-portal .feature:has(input:checked) { background: var(--primary-50); border-color: var(--primary-600); color: var(--primary-700); }
+.license-portal #confirm-modal > div { max-height: 90dvh; overflow-y: auto; }
+.license-portal #confirm-details dd { overflow-wrap: anywhere; }
+html.dark .license-portal :is(.text-slate-400, .text-slate-500, .text-slate-600) { color: #94a3b8; }
+html.dark .license-portal :is(.text-slate-700, .text-slate-800, .text-slate-900) { color: #e2e8f0; }
+html.dark .license-portal :is(.text-blue-600, .text-blue-700) { color: #93c5fd; }
+html.dark .license-portal :is(.bg-blue-50, [class~="bg-blue-50/50"], .feature:has(input:checked)) { background: #172554; color: #bfdbfe; }
+html.dark .license-portal :is(.portal-notice, .portal-demo-badge) { background: #422006; border-color: #854d0e; color: #fde68a; }
+html.dark .license-portal .divide-slate-100 > :not([hidden]) ~ :not([hidden]) { border-color: var(--ui-border); }
+@media (max-width: 767px) {
+    .portal-sidebar { position: static; width: 100%; }
+    .portal-brand { min-height: 60px; justify-content: flex-start; padding-inline: 1rem; }
+    .portal-navigation { flex-direction: row; padding: .5rem; }
+    .license-portal .portal-tab { flex: 1; font-size: .875rem; }
+    .portal-back { padding: .75rem 1rem; }
+    .portal-workspace { margin-left: 0; min-height: calc(100vh - 160px); }
+    .portal-header { padding: 1rem; flex-wrap: wrap; }
+    .portal-workspace .min-w-36 { min-width: 0; }
+}

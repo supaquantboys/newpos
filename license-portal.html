@@ -6,28 +6,31 @@
   <title>EggPro License Portal — Development Demo</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <link rel="stylesheet" href="shared-layout.css">
+  <link rel="stylesheet" href="portal-layout.css">
+  <script src="portal-theme.js"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
     body{font-family:Inter,sans-serif}.field{width:100%;border:1px solid #dbe3ef;border-radius:.8rem;padding:.72rem .85rem;background:#fff;outline:none}.field:focus{border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.12)}
     .feature:has(input:checked){border-color:#86efac;background:#f0fdf4;color:#166534}.duration.active{background:#1d4ed8;color:white;border-color:#1d4ed8}
   </style>
 </head>
-<body class="min-h-screen bg-slate-50 text-slate-800">
-  <div class="bg-amber-950 text-amber-50 px-4 py-3 text-sm font-medium sticky top-0 z-40">
-    <div class="max-w-7xl mx-auto flex items-start gap-3"><i class="fa-solid fa-triangle-exclamation mt-0.5 text-amber-300"></i><p><b>Development Demo:</b> this static page contains a public test signer for UX validation. It is not a production license authority. Production signing must run behind company SSO/RBAC with the private key in KMS/HSM.</p></div>
-  </div>
-  <header class="bg-slate-950 text-white border-b border-slate-800">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 py-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-      <div class="flex items-center gap-3"><span class="w-11 h-11 rounded-2xl bg-amber-400 text-slate-950 flex items-center justify-center text-xl"><i class="fa-solid fa-key"></i></span><div><p class="text-xs uppercase tracking-[.22em] text-slate-400">EggPro Operations</p><h1 class="text-xl font-bold">License Portal</h1></div></div>
-      <div class="flex items-center gap-2"><span class="px-3 py-2 rounded-xl bg-amber-400/10 text-amber-300 border border-amber-400/20 text-xs font-bold">DEVELOPMENT DEMO</span><a href="index.html" class="px-3 py-2 rounded-xl bg-white/10 hover:bg-white/15 text-sm"><i class="fa-solid fa-arrow-left mr-2"></i>EggPro Dashboard</a></div>
-    </div>
-    <nav class="max-w-7xl mx-auto px-4 sm:px-6 pb-4 flex gap-2 overflow-x-auto" aria-label="Portal sections">
-      <button id="portal-tab-licenses" type="button" onclick="portal.showView('licenses')" class="portal-tab whitespace-nowrap px-4 py-2.5 rounded-xl bg-white text-slate-950 font-bold text-sm" aria-current="page"><i class="fa-solid fa-file-signature mr-2"></i>Issue Licenses</button>
-      <button id="portal-tab-customers" type="button" onclick="portal.showView('customers')" class="portal-tab whitespace-nowrap px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/15 text-slate-200 font-bold text-sm"><i class="fa-solid fa-address-book mr-2"></i>Customers</button>
+<body class="license-portal min-h-screen bg-slate-50 text-slate-800">
+  <aside class="portal-sidebar">
+    <a href="index.html" class="portal-brand"><i class="fa-solid fa-egg" aria-hidden="true"></i><span>EggPro</span></a>
+    <nav class="portal-navigation" aria-label="Portal sections">
+      <button id="portal-tab-licenses" type="button" onclick="portal.showView('licenses')" class="portal-tab" aria-current="page"><i class="fa-solid fa-file-signature" aria-hidden="true"></i><span>Issue Licenses</span></button>
+      <button id="portal-tab-customers" type="button" onclick="portal.showView('customers')" class="portal-tab"><i class="fa-solid fa-address-book" aria-hidden="true"></i><span>Customers</span></button>
     </nav>
+    <a href="index.html" class="portal-back"><i class="fa-solid fa-arrow-left" aria-hidden="true"></i><span>EggPro Dashboard</span></a>
+  </aside>
+  <div class="portal-workspace">
+  <header class="portal-header">
+    <h1 class="text-xl sm:text-2xl font-semibold">License Portal</h1>
+    <span class="portal-demo-badge">DEVELOPMENT DEMO</span>
   </header>
-
   <main class="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
+    <div class="portal-notice"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i><p><b>Development Demo:</b> this static page contains a public test signer for UX validation. It is not a production license authority. Production signing must run behind company SSO/RBAC with the private key in KMS/HSM.</p></div>
     <div id="portal-view-licenses" class="space-y-7">
     <section>
       <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 mb-4"><div><p class="text-sm font-semibold text-blue-600">Portal overview</p><h2 class="text-2xl font-bold mt-1">License operations</h2></div><p id="portal-clock" class="text-xs text-slate-500"></p></div>
@@ -113,6 +116,8 @@
       </div>
     </section>
   </main>
+  <footer class="portal-footer">Built 2026 by EggsPro</footer>
+  </div>
 
   <div id="confirm-modal" class="hidden fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 p-4 items-center justify-center">
     <div class="bg-white rounded-3xl shadow-2xl max-w-lg w-full overflow-hidden"><div class="p-5 sm:p-6 border-b border-slate-100"><p class="text-xs uppercase tracking-[.18em] font-bold text-blue-600">Final confirmation</p><h2 class="text-xl font-bold mt-1">Issue signed license?</h2></div><dl id="confirm-details" class="p-5 sm:p-6 grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm"></dl><div class="p-5 sm:p-6 bg-slate-50 flex flex-col-reverse sm:flex-row sm:justify-end gap-3"><button id="cancel-issue" class="px-4 py-3 rounded-xl bg-white border border-slate-200 font-semibold">Cancel</button><button id="confirm-issue" class="px-4 py-3 rounded-xl bg-blue-600 text-white font-bold"><i class="fa-solid fa-signature mr-2"></i>Issue & download .lic</button></div></div>
